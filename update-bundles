@@ -60,7 +60,7 @@ end
 File.open("doc/bundles.txt", "w") do |doc|
   doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
   doc.puts "These are the bundles installed on your system, along with their\n" +
-    "versions and release dates.\n"
+    "versions and release dates.  Downloaded on #{Time.now}.\n"
   FileUtils.cd(bundles_dir)
 
   puts "Trashing everything.  Look out!"
