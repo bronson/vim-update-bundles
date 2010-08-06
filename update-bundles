@@ -21,6 +21,7 @@ bundles = {
     git://github.com/tpope/vim-surround.git
     git://github.com/bronson/vim-taglist.git
     git://github.com/bronson/vim-indexedsearch.git
+    git://github.com/bronson/vim-ruby-block-conv.git
     git://github.com/tsaleh/vim-align.git
     git://github.com/tpope/vim-endwise.git
     git://github.com/tpope/vim-repeat.git
