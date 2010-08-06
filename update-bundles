@@ -79,3 +79,7 @@ File.open("doc/bundles.txt", "w") do |doc|
   doc.puts "\n"
 end
 
+puts "updating helptags..."
+`vim -e -c "call pathogen#helptags()" -c q`
+puts "done!"
+
