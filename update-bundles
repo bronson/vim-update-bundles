@@ -12,7 +12,9 @@ bundles = {
     git://github.com/bronson/vim-bufexplorer.git
     git://github.com/bronson/vim-closebuffer.git
     git://github.com/vim-ruby/vim-ruby.git
-    git://github.com/astashov/vim-ruby-debugger.git
+# dir layout doesn't work with pathogen, not sure if it's worth using anyway
+# http://tammersaleh.com/posts/the-modern-vim-config-with-pathogen#comment_348
+#      git://github.com/astashov/vim-ruby-debugger.git
     git://github.com/tpope/vim-rails.git
     git://github.com/msanders/snipmate.vim.git
     git://github.com/scrooloose/snipmate-snippets.git
