@@ -3,6 +3,9 @@
 require 'fileutils'
 require 'open-uri'
 
+# TODO: if the dir already exists, it should just do a git pull.
+# No need to blow everything away.
+
 VERSION = "0.1"
 
 bundles = {
