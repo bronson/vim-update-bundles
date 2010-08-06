@@ -55,14 +55,15 @@ def download(dir, url, doc)
     date = `git log -1 --pretty=format:%ai`.chomp
   end
   doc.printf "  - %-30s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
-  FileUtils.rm_rf(File.join(dir, ".git"))  # should this be optional?
+  # FileUtils.rm_rf(File.join(dir, ".git"))
 end
 
 
 File.open("doc/bundles.txt", "w") do |doc|
   doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
   doc.puts "These are the bundles installed on your system, along with their\n" +
-    "versions and release dates.  Downloaded on #{Time.now}.\n"
+    "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
+    "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
   FileUtils.cd(bundles_dir)
 
   puts "Trashing everything.  Look out!"
