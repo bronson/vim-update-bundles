@@ -3,8 +3,11 @@
 require 'fileutils'
 require 'open-uri'
 
-# TODO: if the dir already exists, it should just do a git pull.
-# No need to blow everything away.
+# TODO:
+# - if the dir already exists, it should just do a git pull.
+# - read bundles from a config file, not right out of the script.
+# - pull stuff off vimscripts too.
+# - convert this script to Perl?  Should be more worldly than Ruby.
 
 VERSION = "0.1"
 
@@ -29,6 +32,7 @@ bundles = {
     git://github.com/tpope/vim-endwise.git
     git://github.com/tpope/vim-repeat.git
     git://github.com/tsaleh/vim-supertab.git
+    git://github.com/mikezackles/Bisect.git
     git://github.com/bronson/vim-scrollcolors.git
   ",
   "Syntax Files" => "
