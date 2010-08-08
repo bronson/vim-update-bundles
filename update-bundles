@@ -29,6 +29,7 @@ bundles = {
     git://github.com/tpope/vim-endwise.git
     git://github.com/tpope/vim-repeat.git
     git://github.com/tsaleh/vim-supertab.git
+    git://github.com/bronson/vim-scrollcolors.git
   ",
   "Syntax Files" => "
     git://github.com/bronson/vim-jquery.git
