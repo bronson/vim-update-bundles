@@ -33,6 +33,7 @@ bundles = {
     git://github.com/tpope/vim-repeat.git
     git://github.com/tsaleh/vim-supertab.git
     git://github.com/mikezackles/Bisect.git
+    git://github.com/rson/vim-conque.git
     git://github.com/bronson/vim-scrollcolors.git
   ",
   "Syntax Files" => "
