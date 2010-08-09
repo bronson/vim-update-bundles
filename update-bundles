@@ -17,6 +17,7 @@ bundles = {
     git://github.com/scrooloose/nerdcommenter.git
     git://github.com/bronson/vim-bufexplorer.git
     git://github.com/bronson/vim-closebuffer.git
+    git://git.wincent.com/command-t.git
     git://github.com/vim-ruby/vim-ruby.git
 # dir layout doesn't work with pathogen, not sure if it's worth using anyway
 # http://tammersaleh.com/posts/the-modern-vim-config-with-pathogen#comment_348
