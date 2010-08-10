@@ -84,6 +84,7 @@ File.open("doc/bundles.txt", "w") do |doc|
     "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
   FileUtils.cd(bundles_dir)
 
+  existing_bundles = Dir['*']
   bundles.each do |name,val|
     doc.puts "\n\n#{name}\n#{"-" * name.length}\n\n"
     val.each_line do |line|
@@ -91,7 +92,13 @@ File.open("doc/bundles.txt", "w") do |doc|
       next if url == '' || url[0,1] == '#'  # skip blanks and comments
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
       download(dir, url, doc)
+      existing_bundles.delete(dir)
     end
+  end
+
+  existing_bundles.each do |dir|
+    puts "Blowing away #{dir}"
+    FileUtils.rm_rf(dir)
   end
 
   doc.puts "\n"
