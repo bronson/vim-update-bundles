@@ -4,9 +4,7 @@ require 'fileutils'
 require 'open-uri'
 
 # TODO:
-# - if the dir already exists, it should just do a git pull.
 # - read bundles from a config file, not right out of the script.
-# - pull stuff off vimscripts too.
 # - convert this script to Perl?  Should be more worldly than Ruby.
 
 VERSION = "0.1"
@@ -55,9 +53,8 @@ bundles = {
 
 bundles_dir = File.join(File.dirname(__FILE__), "bundle")
 
-def download(dir, url, doc)
-  puts "cloning #{dir} from #{url}"
-  `git clone -q #{url} #{dir}`
+
+def document_bundle(dir, doc)
   version = date = ''
   FileUtils.cd(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
@@ -65,7 +62,18 @@ def download(dir, url, doc)
     date = `git log -1 --pretty=format:%ai`.chomp
   end
   doc.printf "  - %-30s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
-  # FileUtils.rm_rf(File.join(dir, ".git"))
+end
+
+
+def download(dir, url, doc)
+  if test ?d, dir
+    puts "updating #{dir} from #{url}"
+    FileUtils.cd(dir) { `git pull` }
+  else
+    puts "cloning #{dir} from #{url}"
+    `git clone -q #{url} #{dir}`
+  end
+  document_bundle(dir, doc)
 end
 
 
@@ -75,9 +83,6 @@ File.open("doc/bundles.txt", "w") do |doc|
     "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
     "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
   FileUtils.cd(bundles_dir)
-
-  puts "Trashing everything.  Look out!"
-  Dir["*"].each {|d| FileUtils.rm_rf(d) }
 
   bundles.each do |name,val|
     doc.puts "\n\n#{name}\n#{"-" * name.length}\n\n"
