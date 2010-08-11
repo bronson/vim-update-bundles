@@ -5,13 +5,22 @@
 # as needed.  It also deletes bundles that are no longer used.
 #
 # To specify a bundle in your .vimrc, just add a line like this:
-# " --- BUNDLE: git://git.wincent.com/command-t.git
+#   " --- BUNDLE: git://git.wincent.com/command-t.git
+# If you want a branch other than 'master', add the branch name on the end:
+#   " --- BUNDLE: git://github.com/vim-ruby/vim-ruby.git noisy
+# Or tag or sha1: (this results in a detached head, see 'git help checkout')
+#   " --- BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
+#   " --- BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
 
 require 'fileutils'
 require 'open-uri'
 
+# todo: not a fan of " --- BUNDLE:", hoping someone suggests something better.
+# todo: make a way to execute shell commands after a plugin is downloaded?
+#   i.e. run 'which rvm >/dev/null 2>&1 && rvm use system; rake make' in command-t
 
-def document_bundle(dir, doc)
+
+def print_bundle(dir, doc)
   version = date = ''
   FileUtils.cd(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
@@ -22,15 +31,18 @@ def document_bundle(dir, doc)
 end
 
 
-def download(dir, url, doc)
+def download(dir, url, tag, doc)
+  tagstr = " at #{tag}" if tag
   if test ?d, dir
-    puts "updating #{dir} from #{url}"
-    FileUtils.cd(dir) { `git pull` }
+    puts "updating #{dir} from #{url}#{tagstr}"
+    FileUtils.cd(dir) { `git fetch` }
   else
-    puts "cloning #{dir} from #{url}"
+    puts "cloning #{dir} from #{url}#{tagstr}"
     `git clone -q #{url} #{dir}`
   end
-  document_bundle(dir, doc)
+
+  FileUtils.cd(dir) { `git checkout -q #{tag || 'master'}` }
+  print_bundle(dir, doc)
 end
 
 
@@ -38,7 +50,7 @@ def read_vimrc
   bundles = []
   File.open("#{ENV['HOME']}/.vimrc") do |file|
     file.each_line do |line|
-      bundles.push $1 if line =~ /^"\s*-*\s*BUNDLE:\s*(\S*)/
+      bundles.push $1 if line =~ /^\s*"\s*-*\s*BUNDLE:\s*(.*)$/
     end
   end
   bundles
@@ -49,9 +61,10 @@ def update_bundles(doc)
   existing_bundles = Dir['*']
   vimrc_bundles = read_vimrc
 
-  vimrc_bundles.each do |url|
+  vimrc_bundles.each do |line|
+    url, tag = line.split
     dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
-    download(dir, url, doc)
+    download(dir, url, tag, doc)
     existing_bundles.delete(dir)
   end
 
