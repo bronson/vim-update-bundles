@@ -9,15 +9,16 @@ Use Pathogen and Git to manage your Vim plugins.
 DESCRIPTION
 
 This script reads comments in your vimrc to determine which plugins you want to
-use, then updates your .vim/bundle directory to match.  For example, this tells
-git-update-bundles to install the latest version of scrooloose's nerdtree:
+use, then updates the .vim/bundle directory to match.  For example, this
+snippet brings in the latest version of scrooloose's nerdtree, then binds
+\d to open and close it:
 
     " --- BUNDLE: git://github.com/scrooloose/nerdtree.git
     nmap <leader>d :NERDTreeToggle<cr>
-    nmap <leader>D :NERDTreeFind<cr>
 
-Any time you modify the plugins listed in your .vimrc, run vim-update-bundles
-and your plugins, syntax files, and color schemes will all be updated.
+Any time you modify the plugins listed in your .vimrc, running
+vim-update-bundles will ensure your plugins, syntax files, and color schemes
+will all be kept up to date.
 
 
 INSTALL
@@ -33,8 +34,7 @@ INSTALL
    $ cd vim-update-bundles
    $ ./vim-update-bundles
 
-4. Now all your bundles are up to date.  What will you do with all your time
-   now that you don't need to spend it manually updating vim plugins?
+4. Now all your bundles are up to date!  Hit :help bundles to see them.
 
 
 YOUR VIMRC
