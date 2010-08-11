@@ -1,57 +1,14 @@
 #!/usr/bin/env ruby
 
+# Reads the bundles you want installed out of your $HOME/.vimrc file,
+# then synchronizes .vim/bundles to match, downloading new repositories
+# as needed.  It also deletes bundles that are no longer used.
+#
+# To specify a bundle in your .vimrc, just add a line like this:
+# " --- BUNDLE: git://git.wincent.com/command-t.git
+
 require 'fileutils'
 require 'open-uri'
-
-# TODO:
-# - read bundles from a config file, not right out of the script.
-# - convert this script to Perl?  Should be more worldly than Ruby.
-
-VERSION = "0.1"
-
-bundles = {
-  "Plugins" => "
-    git://github.com/scrooloose/nerdtree.git
-    git://github.com/scrooloose/nerdcommenter.git
-    git://github.com/bronson/vim-bufexplorer.git
-    git://github.com/bronson/vim-closebuffer.git
-    git://git.wincent.com/command-t.git
-    git://github.com/vim-ruby/vim-ruby.git
-# dir layout doesn't work with pathogen, not sure if it's worth using anyway
-# http://tammersaleh.com/posts/the-modern-vim-config-with-pathogen#comment_348
-#      git://github.com/astashov/vim-ruby-debugger.git
-    git://github.com/tpope/vim-rails.git
-    git://github.com/msanders/snipmate.vim.git
-    git://github.com/scrooloose/snipmate-snippets.git
-    git://github.com/tpope/vim-surround.git
-    git://github.com/bronson/vim-taglist.git
-    git://github.com/bronson/vim-indexedsearch.git
-    git://github.com/bronson/vim-ruby-block-conv.git
-    git://github.com/tsaleh/vim-align.git
-    git://github.com/tpope/vim-endwise.git
-    git://github.com/tpope/vim-repeat.git
-    git://github.com/tsaleh/vim-supertab.git
-    git://github.com/mikezackles/Bisect.git
-    git://github.com/rson/vim-conque.git
-    git://github.com/bronson/vim-scrollcolors.git
-  ",
-  "Syntax Files" => "
-    git://github.com/bronson/vim-jquery.git
-    git://github.com/tsaleh/vim-shoulda.git
-    git://github.com/tpope/vim-git.git
-    git://github.com/tpope/vim-cucumber.git
-    git://github.com/tpope/vim-haml.git
-    git://github.com/tpope/vim-markdown.git
-    git://github.com/timcharper/textile.vim.git
-    git://github.com/kchmck/vim-coffee-script.git
-  ",
-  "Color Schemes" => "
-    git://github.com/tpope/vim-vividchalk.git
-  ",
-}
-
-
-bundles_dir = File.join(File.dirname(__FILE__), "bundle")
 
 
 def document_bundle(dir, doc)
@@ -77,29 +34,43 @@ def download(dir, url, doc)
 end
 
 
-File.open("doc/bundles.txt", "w") do |doc|
-  doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
-  doc.puts "These are the bundles installed on your system, along with their\n" +
-    "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
-    "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
-  FileUtils.cd(bundles_dir)
-
-  existing_bundles = Dir['*']
-  bundles.each do |name,val|
-    doc.puts "\n\n#{name}\n#{"-" * name.length}\n\n"
-    val.each_line do |line|
-      url = line.gsub(/^\s*|\s*$/, '')
-      next if url == '' || url[0,1] == '#'  # skip blanks and comments
-      dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
-      download(dir, url, doc)
-      existing_bundles.delete(dir)
+def read_vimrc
+  bundles = []
+  File.open("#{ENV['HOME']}/.vimrc") do |file|
+    file.each_line do |line|
+      bundles.push $1 if line =~ /^"\s*-*\s*BUNDLE:\s*(\S*)/
     end
+  end
+  bundles
+end
+
+
+def update_bundles(doc)
+  existing_bundles = Dir['*']
+  vimrc_bundles = read_vimrc
+
+  vimrc_bundles.each do |url|
+    dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
+    download(dir, url, doc)
+    existing_bundles.delete(dir)
   end
 
   existing_bundles.each do |dir|
     puts "Blowing away #{dir}"
     FileUtils.rm_rf(dir)
   end
+end
+
+
+File.open("doc/bundles.txt", "w") do |doc|
+  doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
+  doc.puts "These are the bundles installed on your system, along with their\n" +
+    "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
+    "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
+
+  bundles_dir = File.join(File.dirname(__FILE__), "bundle")
+  FileUtils.cd(bundles_dir)
+  update_bundles(doc)
 
   doc.puts "\n"
 end
