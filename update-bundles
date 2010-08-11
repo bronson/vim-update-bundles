@@ -69,6 +69,7 @@ File.open("doc/bundles.txt", "w") do |doc|
     "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
 
   bundles_dir = File.join(File.dirname(__FILE__), "bundle")
+  Dir.mkdir bundles_dir unless test ?d, bundles_dir
   FileUtils.cd(bundles_dir)
   update_bundles(doc)
 
