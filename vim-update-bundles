@@ -75,13 +75,13 @@ def update_bundles(doc)
 end
 
 
-File.open("doc/bundles.txt", "w") do |doc|
+File.open("#{ENV['HOME']}/.vim/doc/bundles.txt", "w") do |doc|
   doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
   doc.puts "These are the bundles installed on your system, along with their\n" +
     "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
     "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
 
-  bundles_dir = File.join(File.dirname(__FILE__), "bundle")
+  bundles_dir = "#{ENV['HOME']}/.vim/bundle"
   Dir.mkdir bundles_dir unless test ?d, bundles_dir
   FileUtils.cd(bundles_dir)
   update_bundles(doc)

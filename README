@@ -1,6 +1,6 @@
-vim-update-bundles
-Scott Bronson
-5 Aug 2010
+
+
+                      vim-update-bundles
 
 
 Use Pathogen and Git to manage your Vim plugins.
