@@ -76,6 +76,8 @@ def update_bundles(doc)
 end
 
 
+doc_dir = "#{ENV['HOME']}/.vim/doc"
+Dir.mkdir doc_dir unless test ?d, doc_dir
 File.open("#{ENV['HOME']}/.vim/doc/bundles.txt", "w") do |doc|
   doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
   doc.puts "These are the bundles installed on your system, along with their\n" +
