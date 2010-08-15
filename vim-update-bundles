@@ -16,6 +16,7 @@ require 'fileutils'
 require 'open-uri'
 
 # todo: not a fan of " --- BUNDLE:", hoping someone suggests something better.
+# todo: if no .vim dir, then create one.  if pathogen isn't installed, offer to install it.
 # todo: make a way to execute shell commands after a plugin is downloaded?
 #   i.e. run 'which rvm >/dev/null 2>&1 && rvm use system; rake make' in command-t
 
@@ -81,9 +82,9 @@ File.open("#{ENV['HOME']}/.vim/doc/bundles.txt", "w") do |doc|
     "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
     "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
 
-  bundles_dir = "#{ENV['HOME']}/.vim/bundle"
-  Dir.mkdir bundles_dir unless test ?d, bundles_dir
-  FileUtils.cd(bundles_dir)
+  bundle_dir = "#{ENV['HOME']}/.vim/bundle"
+  Dir.mkdir bundle_dir unless test ?d, bundle_dir
+  FileUtils.cd(bundle_dir)
   update_bundles(doc)
 
   doc.puts "\n"

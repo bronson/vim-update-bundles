@@ -62,6 +62,15 @@ date of the last commit.  In Vim, hit ':help bundles' to see the bundles you
 have installed.
 
 
+ALTERNATIVES
+
+vim-addon-manager: http://www.vim.org/scripts/script.php?script_id=2905
+  http://github.com/MarcWeber/vim-addon-manager
+  Written in vimscript, doesn't need pathogen(?)
+Vimana: http://github.com/c9s/Vimana
+  Written in Perl, dumps everything into .vimrc (no pathogen)
+
+
 HISTORY
 
 This script came from Tammer Saleh's blog post in March 2010:
