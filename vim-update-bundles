@@ -15,10 +15,14 @@
 require 'fileutils'
 require 'open-uri'
 
+# todo: what happens when i change a repo but the dirname stays the same?
+#       i.e. github.com/wincent/command-t to github.com/kain/command-t
+#       answer: nothing.  it just pulls from the old repo.
 # todo: not a fan of " --- BUNDLE:", hoping someone suggests something better.
-# todo: if no .vim dir, then create one.  if pathogen isn't installed, offer to install it.
+# todo: if no .vim dir, then create one.  if pathogen isn't installed, install it.
 # todo: make a way to execute shell commands after a plugin is downloaded?
 #   i.e. run 'which rvm >/dev/null 2>&1 && rvm use system; rake make' in command-t
+# todo: add --no-update which will only add/delete bundles, not update them?
 
 
 def print_bundle(dir, doc)
@@ -58,6 +62,14 @@ def read_vimrc
 end
 
 
+def remove_bundle(dir)
+  trash_dir = "#{ENV['HOME']}/.vim/Trashed-Bundles"
+  Dir.mkdir trash_dir unless test ?d, trash_dir
+  puts "Erasing #{dir}, find it in #{trash_dir}"
+  FileUtils.mv(dir, trash_dir)
+end
+
+
 def update_bundles(doc)
   existing_bundles = Dir['*']
   vimrc_bundles = read_vimrc
@@ -69,10 +81,7 @@ def update_bundles(doc)
     existing_bundles.delete(dir)
   end
 
-  existing_bundles.each do |dir|
-    puts "Blowing away #{dir}"
-    FileUtils.rm_rf(dir)
-  end
+  existing_bundles.each { |dir| remove_bundle(dir) }
 end
 
 
