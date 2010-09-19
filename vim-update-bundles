@@ -5,12 +5,12 @@
 # as needed.  It also deletes bundles that are no longer used.
 #
 # To specify a bundle in your .vimrc, just add a line like this:
-#   " --- BUNDLE: git://git.wincent.com/command-t.git
+#   " BUNDLE: git://git.wincent.com/command-t.git
 # If you want a branch other than 'master', add the branch name on the end:
-#   " --- BUNDLE: git://github.com/vim-ruby/vim-ruby.git noisy
+#   " BUNDLE: git://github.com/vim-ruby/vim-ruby.git noisy
 # Or tag or sha1: (this results in a detached head, see 'git help checkout')
-#   " --- BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
-#   " --- BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
+#   " BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
+#   " BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
 
 require 'fileutils'
 require 'open-uri'
@@ -18,7 +18,7 @@ require 'open-uri'
 # todo: what happens when i change a repo but the dirname stays the same?
 #       i.e. github.com/wincent/command-t to github.com/kain/command-t
 #       answer: nothing.  it just pulls from the old repo.
-# todo: not a fan of " --- BUNDLE:", hoping someone suggests something better.
+# todo: not a fan of " BUNDLE:", hoping someone suggests something better.
 # todo: if no .vim dir, then create one.  if pathogen isn't installed, install it.
 # todo: make a way to execute shell commands after a plugin is downloaded?
 #   i.e. run 'which rvm >/dev/null 2>&1 && rvm use system; rake make' in command-t
@@ -55,7 +55,7 @@ def read_vimrc
   bundles = []
   File.open("#{ENV['HOME']}/.vimrc") do |file|
     file.each_line do |line|
-      bundles.push $1 if line =~ /^\s*"\s*-*\s*BUNDLE:\s*(.*)$/
+      bundles.push $1 if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
     end
   end
   bundles
@@ -187,43 +187,43 @@ au BufWinEnter * if &buftype == 'quickfix' | setl wrap | endif
 runtime macros/matchit.vim  " enable vim's built-in matchit script (make % bounce between tags, begin/end, etc)
 
 
-" # --- BUNDLE: git://github.com/scrooloose/nerdtree.git
-" # --- BUNDLE: git://github.com/scrooloose/nerdcommenter.git
-" # --- BUNDLE: git://github.com/tpope/vim-surround.git
-" # --- BUNDLE: http://github.com/vim-scripts/taglist.vim
-" # --- BUNDLE: git://github.com/bronson/vim-bufexplorer.git
-" # --- BUNDLE: git://github.com/bronson/Command-T.git
-" # --- BUNDLE: git://github.com/bronson/vim-closebuffer.git
-" # --- BUNDLE: git://github.com/vim-ruby/vim-ruby.git
-" # --- BUNDLE: git://github.com/tpope/vim-rails.git
-" # --- BUNDLE: git://github.com/tpope/vim-rake.git
-" # --- BUNDLE: git://github.com/msanders/snipmate.vim.git
-" # --- BUNDLE: git://github.com/scrooloose/snipmate-snippets.git
-" # --- BUNDLE: git://github.com/bronson/vim-indexedsearch.git
-" # --- BUNDLE: git://github.com/bronson/vim-ruby-block-conv.git
-" # --- BUNDLE: git://github.com/janx/vim-rubytest.git
-" # --- BUNDLE: git://github.com/tsaleh/vim-align.git
-" # --- BUNDLE: git://github.com/tpope/vim-endwise.git
-" # --- BUNDLE: git://github.com/tpope/vim-repeat.git
-" # --- BUNDLE: git://github.com/tpope/vim-fugitive.git
-" # --- BUNDLE: git://github.com/tsaleh/vim-supertab.git
-" # --- BUNDLE: git://github.com/mikezackles/Bisect.git
-" # --- BUNDLE: git://github.com/rson/vim-conque.git
-" # --- BUNDLE: git://github.com/bronson/vim-scrollcolors.git
-" # --- BUNDLE: git://github.com/bronson/vim-visual-star-search.git
-" # --- BUNDLE: git://github.com/bronson/vim-trailing-whitespace.git
-" # --- BUNDLE: git://github.com/bronson/vim-toggle-wrap.git
-" # --- BUNDLE: git://github.com/Raimondi/YAIFA.git
-" # --- BUNDLE: git://github.com/bronson/vim-jquery.git
-" # --- BUNDLE: git://github.com/tsaleh/vim-shoulda.git
-" # --- BUNDLE: git://github.com/tpope/vim-git.git
-" # --- BUNDLE: git://github.com/tpope/vim-cucumber.git
-" # --- BUNDLE: git://github.com/tpope/vim-haml.git
-" # --- BUNDLE: git://github.com/tpope/vim-markdown.git
-" # --- BUNDLE: git://github.com/timcharper/textile.vim.git
-" # --- BUNDLE: git://github.com/kchmck/vim-coffee-script.git
-" # --- BUNDLE: git://github.com/tpope/vim-vividchalk.git
-" # --- BUNDLE git://github.com/astashov/vim-ruby-debugger.git
+" # BUNDLE: git://github.com/scrooloose/nerdtree.git
+" # BUNDLE: git://github.com/scrooloose/nerdcommenter.git
+" # BUNDLE: git://github.com/tpope/vim-surround.git
+" # BUNDLE: http://github.com/vim-scripts/taglist.vim
+" # BUNDLE: git://github.com/bronson/vim-bufexplorer.git
+" # BUNDLE: git://github.com/bronson/Command-T.git
+" # BUNDLE: git://github.com/bronson/vim-closebuffer.git
+" # BUNDLE: git://github.com/vim-ruby/vim-ruby.git
+" # BUNDLE: git://github.com/tpope/vim-rails.git
+" # BUNDLE: git://github.com/tpope/vim-rake.git
+" # BUNDLE: git://github.com/msanders/snipmate.vim.git
+" # BUNDLE: git://github.com/scrooloose/snipmate-snippets.git
+" # BUNDLE: git://github.com/bronson/vim-indexedsearch.git
+" # BUNDLE: git://github.com/bronson/vim-ruby-block-conv.git
+" # BUNDLE: git://github.com/janx/vim-rubytest.git
+" # BUNDLE: git://github.com/tsaleh/vim-align.git
+" # BUNDLE: git://github.com/tpope/vim-endwise.git
+" # BUNDLE: git://github.com/tpope/vim-repeat.git
+" # BUNDLE: git://github.com/tpope/vim-fugitive.git
+" # BUNDLE: git://github.com/tsaleh/vim-supertab.git
+" # BUNDLE: git://github.com/mikezackles/Bisect.git
+" # BUNDLE: git://github.com/rson/vim-conque.git
+" # BUNDLE: git://github.com/bronson/vim-scrollcolors.git
+" # BUNDLE: git://github.com/bronson/vim-visual-star-search.git
+" # BUNDLE: git://github.com/bronson/vim-trailing-whitespace.git
+" # BUNDLE: git://github.com/bronson/vim-toggle-wrap.git
+" # BUNDLE: git://github.com/Raimondi/YAIFA.git
+" # BUNDLE: git://github.com/bronson/vim-jquery.git
+" # BUNDLE: git://github.com/tsaleh/vim-shoulda.git
+" # BUNDLE: git://github.com/tpope/vim-git.git
+" # BUNDLE: git://github.com/tpope/vim-cucumber.git
+" # BUNDLE: git://github.com/tpope/vim-haml.git
+" # BUNDLE: git://github.com/tpope/vim-markdown.git
+" # BUNDLE: git://github.com/timcharper/textile.vim.git
+" # BUNDLE: git://github.com/kchmck/vim-coffee-script.git
+" # BUNDLE: git://github.com/tpope/vim-vividchalk.git
+" # BUNDLE: git://github.com/astashov/vim-ruby-debugger.git
 
 EOL
   }
