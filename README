@@ -3,63 +3,59 @@
                       vim-update-bundles
 
 
-Use Pathogen and Git to manage your Vim plugins.
+Use Pathogen and Git to manage all your Vim plugins.
 
 
 DESCRIPTION
 
-This script reads comments in your vimrc to determine which plugins you want to
-use, then updates the .vim/bundle directory to match.  For example, this
-snippet brings in the latest version of scrooloose's nerdtree, then binds
-\d to open and close it:
+This script maintains your vim plugins.  It reads BUNDLE: directives
+from your .vimrc, then updates the .vim/bundle directory to match.
+For example, to load NERDTree, add this line to your .vimrc:
 
-    " --- BUNDLE: git://github.com/scrooloose/nerdtree.git
-    nmap <leader>d :NERDTreeToggle<cr>
-
-Any time you modify the plugins listed in your .vimrc, running
-vim-update-bundles will ensure your plugins, syntax files, and color schemes
-will all be kept up to date.
+    " BUNDLE: git://github.com/scrooloose/nerdtree.git
 
 
 INSTALL
 
-1. Install Pathogen (copy pathogen.vim into ~/.vim/autoload).
-   http://github.com/tpope/vim-pathogen
+NOTE: If you currently use vim, it's best to move your ~/.vim directory
+and ~/.vimrc file out of the way and start fresh.
 
-2. Name your plugins with lines like:
-      " --- BUNDLE: git://github.com/bronson/vim-closebuffer.git
-   in your ~/.vimrc.  See the examples included in this repo for more.
+  $ wget http://github.com/bronson/vim-update-bundles/raw/master/vim-update-bundles
+  $ ruby vim-update-bundles
 
-3. $ git clone http://github.com/bronson/vim-update-bundles
-   $ cd vim-update-bundles
-   $ ./vim-update-bundles
-
-4. Now all your bundles are up to date!  Hit :help bundles to see them.
+Now you have a working barebones install.  Open ~/.vimrc, enable a few
+plugins (remove the leading #), and run the script again.  You can install
+any git url, for instance one from http://github.com/vim-scripts
 
 
-YOUR VIMRC
+USAGE
 
-Any line of the format '" --- BUNDLE: URL [REV]' will be interpreted as a
+From within Vim, run ':help bundles' to list all the bundles you have
+installed, along with hotlinks to their help pages.
+
+Run vim-update-bundles whenever you want to ensure your plugins, syntax
+files, and color schemes are all up to date.
+
+
+VIMRC
+
+Any line of the format '" BUNDLE: URL [REV]' will be interpreted as a
 bundle to download.  URL is a git repository url, and REV is an optional
-refspec that allows you to lock the plugin at a particular tag, branch or sha1.
+git refspec that allows you to lock the plugin at a particular tag, branch
+or sha1.
 
-    " --- BUNDLE: git://github.com/scrooloose/nerdtree.git 4.0.0
+    " BUNDLE: git://github.com/scrooloose/nerdtree.git 4.0.0
 
-This will ensure your NerdTree remains at version 4.0.0.  If NerdTree releases
-a new version, just bump the version number and re-run vim-update-bundles.  If
-you don't specify a branch, tag, or sha1, vim-update-bundles checks out the
-master branch.
-
-If you remove a bundle from your vimrc, vim-update-bundles will delete it from
-~/.vim/bundles.  Be careful!
+This ensures your NerdTree remains at version 4.0.0.  If NerdTree releases
+a new version, just bump the version number and re-run vim-update-bundles.
+If you don't specify a branch, tag, or sha1, vim-update-bundles checks out
+the master branch.
 
 
 BUNDLES.TXT
 
-When it runs, vim-update-bundles produces a list of the bundles downloaded in
-doc/bundles.txt.  It also lists version numbers (via 'git describe') and the
-date of the last commit.  In Vim, hit ':help bundles' to see the bundles you
-have installed.
+From within Vim, type ':help bundles' to show a list of the bundes you
+have installed.  vim-update-bundles produces this file every time it runs.
 
 
 ALTERNATIVES
@@ -73,10 +69,6 @@ Vimana: http://github.com/c9s/Vimana
 
 HISTORY
 
-This script came from Tammer Saleh's blog post in March 2010:
+This script was inspired by Tammer Saleh's blog post in March 2010:
   http://tammersaleh.com/posts/the-modern-vim-config-with-pathogen
-
-It grew for a while in Vimsy (a full set of Vim dotfiles and plugins) before
-being released on its own on 11 Aug 2010.
-  http://github.com/bronson/vimsy
 

@@ -259,5 +259,5 @@ end
 
 puts "updating helptags..."
 `vim -e -c "call pathogen#helptags()" -c q`
-puts "done!"
+puts "done!  Start Vim and type ':help bundles' to see what you have installed."
 
