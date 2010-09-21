@@ -39,7 +39,7 @@ def print_bundle dir, doc
 end
 
 
-def download dir, url, tag, doc
+def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
     puts "updating #{dir} from #{url}#{tagstr}"
@@ -80,7 +80,7 @@ def update_bundles doc
   vimrc_bundles.each do |line|
     url, tag = line.split
     dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
-    download(dir, url, tag, doc)
+    download_bundle(dir, url, tag, doc)
     existing_bundles.delete(dir)
   end
 
@@ -88,7 +88,7 @@ def update_bundles doc
 end
 
 
-def download url, file
+def download_file url, file
   open(url) do |r|
     File.open(file, 'w') do |w|
       w.write(r.read)
@@ -102,12 +102,12 @@ def create_new_vim_environment
 
   puts "Downloading default vimrc..."
   Dir.mkdir dotvim
-  download "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
+  download_file "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
   `ln -s '#{dotvim 'vimrc'}' '#{ENV['HOME']}/.vimrc'`
 
   puts "Downloading Pathogen..."
   Dir.mkdir dotvim('autoload') unless test ?d, dotvim('autoload')
-  download "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim", dotvim('autoload', 'pathogen.vim')
+  download_file "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim", dotvim('autoload', 'pathogen.vim')
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end
