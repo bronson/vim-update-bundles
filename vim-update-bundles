@@ -85,75 +85,28 @@ def update_bundles(doc)
 end
 
 
-def create_new_vim_environment
-  puts 'Creating a new Vim environment'
-
-  Dir.mkdir  "#{ENV['HOME']}/.vim"
-  File.open("#{ENV['HOME']}/.vim/vimrc", 'w') { |f| f.write <<EOL
-" Don't use abbreviations!  Spelling things out makes grepping easy.
-
-" Load plugins using Pathogen. Don't worry if this bit doesn't make sense.
-filetype off
-call pathogen#runtime_append_all_bundles()
-filetype indent plugin on
-syntax on
-set nocompatible
-
-
-" That's all you need for a working Vim setup.
-" Enable any of the following plugins by deleting the #
-" and add some of your own!
-
-" Generally Useful:
-" # BUNDLE: git://github.com/scrooloose/nerdtree.git
-" # BUNDLE: git://github.com/bronson/vim-bufexplorer.git
-" # BUNDLE: git://github.com/bronson/Command-T.git
-" # BUNDLE: git://github.com/bronson/vim-closebuffer.git
-" # BUNDLE: git://github.com/bronson/vim-indexedsearch.git
-" # BUNDLE: git://github.com/bronson/vim-scrollcolors.git
-" # BUNDLE: git://github.com/bronson/vim-visual-star-search.git
-" # BUNDLE: git://github.com/bronson/vim-trailing-whitespace.git
-" # BUNDLE: git://github.com/bronson/vim-toggle-wrap.git
-" # BUNDLE: git://github.com/Raimondi/YAIFA.git
-" # BUNDLE: git://github.com/tpope/vim-vividchalk.git
-
-" Programming:
-" # BUNDLE: git://github.com/scrooloose/nerdcommenter.git
-" # BUNDLE: git://github.com/tpope/vim-surround.git
-" # BUNDLE: git://github.com/vim-scripts/taglist.vim
-" # BUNDLE: git://github.com/msanders/snipmate.vim.git
-" # BUNDLE: git://github.com/scrooloose/snipmate-snippets.git
-" # BUNDLE: git://github.com/tsaleh/vim-align.git
-" # BUNDLE: git://github.com/tpope/vim-endwise.git
-" # BUNDLE: git://github.com/tpope/vim-repeat.git
-" # BUNDLE: git://github.com/tpope/vim-fugitive.git
-" # BUNDLE: git://github.com/tsaleh/vim-supertab.git
-" # BUNDLE: git://github.com/bronson/vim-jquery.git
-" # BUNDLE: git://github.com/tpope/vim-git.git
-" # BUNDLE: git://github.com/tpope/vim-markdown.git
-" # BUNDLE: git://github.com/timcharper/textile.vim.git
-" # BUNDLE: git://github.com/kchmck/vim-coffee-script.git
-
-" Ruby/Rails Programming:
-" # BUNDLE: git://github.com/vim-ruby/vim-ruby.git
-" # BUNDLE: git://github.com/tpope/vim-rails.git
-" # BUNDLE: git://github.com/tpope/vim-rake.git
-" # BUNDLE: git://github.com/bronson/vim-ruby-block-conv.git
-" # BUNDLE: git://github.com/janx/vim-rubytest.git
-" # BUNDLE: git://github.com/tsaleh/vim-shoulda.git
-" # BUNDLE: git://github.com/tpope/vim-cucumber.git
-" # BUNDLE: git://github.com/tpope/vim-haml.git
-" # BUNDLE: git://github.com/astashov/vim-ruby-debugger.git
-
-EOL
-  }
-
-  Dir.mkdir "#{ENV['HOME']}/.vim/autoload" unless test ?d, "#{ENV['HOME']}/.vim/autoload"
-  open("http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim") do |r|
-    File.open("#{ENV['HOME']}/.vim/autoload/pathogen.vim", 'w') { |w| w.write(r.read) }
+def download(url, file)
+  open(url) do |r|
+    File.open(file, 'w') do |w|
+      w.write(r.read)
+    end
   end
+end
 
+
+def create_new_vim_environment
+  puts 'Creating a new Vim environment.'
+
+  puts "Downloading default vimrc..."
+  Dir.mkdir  "#{ENV['HOME']}/.vim"
+  download "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter",
+    "#{ENV['HOME']}/.vim/vimrc"
   `ln -s '#{ENV['HOME']}/.vim/vimrc' '#{ENV['HOME']}/.vimrc'`
+
+  puts "Downloading Pathogen..."
+  Dir.mkdir "#{ENV['HOME']}/.vim/autoload" unless test ?d, "#{ENV['HOME']}/.vim/autoload"
+  download "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim",
+    "#{ENV['HOME']}/.vim/autoload/pathogen.vim"
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end

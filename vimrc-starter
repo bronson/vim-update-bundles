@@ -1,0 +1,60 @@
+" Don't use abbreviations!  Spelling things out makes grepping easy.
+
+" Load plugins using Pathogen. Don't worry if this bit doesn't make sense.
+filetype off
+call pathogen#runtime_append_all_bundles()
+filetype indent plugin on
+syntax on
+set nocompatible
+
+" That's all you need for a working Vim setup.
+
+" Now set some directives...
+" set incsearch         " find the next match as we type the search
+" set hlsearch          " hilight searches by default
+" ... etc
+
+" And enable some plugins or -- better -- and add some of your own!
+" Putting text before BUNDLE disables it: "no BUNDLE", "# BUNDLE", etc.
+
+" Generally Useful:
+" # BUNDLE: git://github.com/scrooloose/nerdtree.git
+" # BUNDLE: git://github.com/bronson/vim-bufexplorer.git
+" # BUNDLE: git://github.com/bronson/Command-T.git
+" # BUNDLE: git://github.com/bronson/vim-closebuffer.git
+" # BUNDLE: git://github.com/bronson/vim-indexedsearch.git
+" # BUNDLE: git://github.com/bronson/vim-scrollcolors.git
+" # BUNDLE: git://github.com/bronson/vim-visual-star-search.git
+" # BUNDLE: git://github.com/bronson/vim-trailing-whitespace.git
+" # BUNDLE: git://github.com/bronson/vim-toggle-wrap.git
+" # BUNDLE: git://github.com/Raimondi/YAIFA.git
+" # BUNDLE: git://github.com/tpope/vim-vividchalk.git
+
+" Programming:
+" # BUNDLE: git://github.com/scrooloose/nerdcommenter.git
+" # BUNDLE: git://github.com/tpope/vim-surround.git
+" # BUNDLE: git://github.com/vim-scripts/taglist.vim
+" # BUNDLE: git://github.com/msanders/snipmate.vim.git
+" # BUNDLE: git://github.com/scrooloose/snipmate-snippets.git
+" # BUNDLE: git://github.com/tsaleh/vim-align.git
+" # BUNDLE: git://github.com/tpope/vim-endwise.git
+" # BUNDLE: git://github.com/tpope/vim-repeat.git
+" # BUNDLE: git://github.com/tpope/vim-fugitive.git
+" # BUNDLE: git://github.com/tsaleh/vim-supertab.git
+" # BUNDLE: git://github.com/bronson/vim-jquery.git
+" # BUNDLE: git://github.com/tpope/vim-git.git
+" # BUNDLE: git://github.com/tpope/vim-markdown.git
+" # BUNDLE: git://github.com/timcharper/textile.vim.git
+" # BUNDLE: git://github.com/kchmck/vim-coffee-script.git
+
+" Ruby/Rails Programming:
+" # BUNDLE: git://github.com/vim-ruby/vim-ruby.git
+" # BUNDLE: git://github.com/tpope/vim-rails.git
+" # BUNDLE: git://github.com/tpope/vim-rake.git
+" # BUNDLE: git://github.com/bronson/vim-ruby-block-conv.git
+" # BUNDLE: git://github.com/janx/vim-rubytest.git
+" # BUNDLE: git://github.com/tsaleh/vim-shoulda.git
+" # BUNDLE: git://github.com/tpope/vim-cucumber.git
+" # BUNDLE: git://github.com/tpope/vim-haml.git
+" # BUNDLE: git://github.com/astashov/vim-ruby-debugger.git
+
