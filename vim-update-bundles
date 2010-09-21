@@ -15,12 +15,8 @@
 require 'fileutils'
 require 'open-uri'
 
-# todo: what happens when i change a repo but the dirname stays the same?
-#       i.e. github.com/wincent/command-t to github.com/kain/command-t
-#       answer: nothing.  it just pulls from the old repo.
 # todo: make a way to execute shell commands after a plugin is downloaded?
 #   i.e. run 'which rvm >/dev/null 2>&1 && rvm use system; rake make' in command-t
-# todo: add --no-update which will only add/delete bundles, not update them?
 
 
 def dotvim *path
@@ -44,14 +40,27 @@ def print_bundle dir, doc
 end
 
 
+def clone_bundle dir, url, tagstr
+  puts "cloning #{dir} from #{url}#{tagstr}"
+  `git clone -q #{url} #{dir}`
+end
+
+
 def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
-    puts "updating #{dir} from #{url}#{tagstr}"
-    FileUtils.cd(dir) { `git fetch` }
+    remote = ''   # shame FileUtils.cd doesn't return the retval of the block
+    FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
+    if remote == url
+      puts "updating #{dir} from #{url}#{tagstr}"
+      FileUtils.cd(dir) { `git fetch` }
+    else
+      puts "repo has changed from #{remote} to #{url}"
+      remove_bundle dir
+      clone_bundle dir, url, tagstr
+    end
   else
-    puts "cloning #{dir} from #{url}#{tagstr}"
-    `git clone -q #{url} #{dir}`
+    clone_bundle dir, url, tagstr
   end
 
   FileUtils.cd(dir) { `git checkout -q #{tag || 'master'}` }
