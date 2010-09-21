@@ -3,29 +3,28 @@
                       vim-update-bundles
 
 
-Use Pathogen and Git to manage all your Vim plugins.
+Use Pathogen and Git to easily set up and manage your Vim plugins.
 
 
 DESCRIPTION
 
-This script maintains your vim plugins.  It reads BUNDLE: directives
-from your .vimrc, then updates the .vim/bundle directory to match.
-For example, to load NERDTree, add this line to your .vimrc:
+This script reads BUNDLE: directives from your .vimrc, then updates the
+.vim/bundle directory to match.  For example, to load NERDTree, add this
+line to your .vimrc:
 
     " BUNDLE: git://github.com/scrooloose/nerdtree.git
 
 
 INSTALL
 
-NOTE: If you currently use vim, it's best to move your ~/.vim directory
-and ~/.vimrc file out of the way and start fresh.
+NOTE: If you currently use vim, it's best to rename your ~/.vim directory
+and ~/.vimrc file and start fresh.
 
   $ wget http://github.com/bronson/vim-update-bundles/raw/master/vim-update-bundles
   $ ruby vim-update-bundles
 
-Now you have a working barebones install.  Open ~/.vimrc, enable a few
-plugins (remove the leading #), and run the script again.  You can install
-any git url, for instance one from http://github.com/vim-scripts
+Now you have a working barebones environment.  Open ~/.vimrc, enable a few
+plugins, then run vim-update-bundles again to apply your changes.
 
 
 USAGE
@@ -33,23 +32,22 @@ USAGE
 From within Vim, run ':help bundles' to list all the bundles you have
 installed, along with hotlinks to their help pages.
 
-Run vim-update-bundles whenever you want to ensure your plugins, syntax
-files, and color schemes are all up to date.
+Run vim-update-bundles at any time to ensure your plugins, syntax files,
+and color schemes are all up to date.
 
 
 VIMRC
 
 Any line of the format '" BUNDLE: URL [REV]' will be interpreted as a
 bundle to download.  URL is a git repository url, and REV is an optional
-git refspec that allows you to lock the plugin at a particular tag, branch
-or sha1.
+git refspec (branch name, tag name, or sha1) that allows you to lock a
+plugin to a particular revision:
 
     " BUNDLE: git://github.com/scrooloose/nerdtree.git 4.0.0
 
 This ensures your NerdTree remains at version 4.0.0.  If NerdTree releases
-a new version, just bump the version number and re-run vim-update-bundles.
-If you don't specify a branch, tag, or sha1, vim-update-bundles checks out
-the master branch.
+a new version, just update the version number in your vimrc and re-run
+vim-update-bundles.
 
 
 BUNDLES.TXT

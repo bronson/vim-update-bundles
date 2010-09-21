@@ -18,14 +18,17 @@ require 'open-uri'
 # todo: what happens when i change a repo but the dirname stays the same?
 #       i.e. github.com/wincent/command-t to github.com/kain/command-t
 #       answer: nothing.  it just pulls from the old repo.
-# todo: not a fan of " BUNDLE:", hoping someone suggests something better.
-# todo: if no .vim dir, then create one.  if pathogen isn't installed, install it.
 # todo: make a way to execute shell commands after a plugin is downloaded?
 #   i.e. run 'which rvm >/dev/null 2>&1 && rvm use system; rake make' in command-t
 # todo: add --no-update which will only add/delete bundles, not update them?
 
 
-def print_bundle(dir, doc)
+def dotvim *path
+  File.join ENV['HOME'], '.vim', *path
+end
+
+
+def print_bundle dir, doc
   version = date = ''
   FileUtils.cd(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
@@ -36,7 +39,7 @@ def print_bundle(dir, doc)
 end
 
 
-def download(dir, url, tag, doc)
+def download dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
     puts "updating #{dir} from #{url}#{tagstr}"
@@ -62,15 +65,15 @@ def read_vimrc
 end
 
 
-def remove_bundle(dir)
-  trash_dir = "#{ENV['HOME']}/.vim/Trashed-Bundles"
+def remove_bundle dir
+  trash_dir = dotvim("Trashed-Bundles")
   Dir.mkdir trash_dir unless test ?d, trash_dir
   puts "Erasing #{dir}, find it in #{trash_dir}"
   FileUtils.mv(dir, trash_dir)
 end
 
 
-def update_bundles(doc)
+def update_bundles doc
   existing_bundles = Dir['*']
   vimrc_bundles = read_vimrc
 
@@ -85,7 +88,7 @@ def update_bundles(doc)
 end
 
 
-def download(url, file)
+def download url, file
   open(url) do |r|
     File.open(file, 'w') do |w|
       w.write(r.read)
@@ -98,21 +101,19 @@ def create_new_vim_environment
   puts 'Creating a new Vim environment.'
 
   puts "Downloading default vimrc..."
-  Dir.mkdir  "#{ENV['HOME']}/.vim"
-  download "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter",
-    "#{ENV['HOME']}/.vim/vimrc"
-  `ln -s '#{ENV['HOME']}/.vim/vimrc' '#{ENV['HOME']}/.vimrc'`
+  Dir.mkdir dotvim
+  download "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
+  `ln -s '#{dotvim 'vimrc'}' '#{ENV['HOME']}/.vimrc'`
 
   puts "Downloading Pathogen..."
-  Dir.mkdir "#{ENV['HOME']}/.vim/autoload" unless test ?d, "#{ENV['HOME']}/.vim/autoload"
-  download "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim",
-    "#{ENV['HOME']}/.vim/autoload/pathogen.vim"
+  Dir.mkdir dotvim('autoload') unless test ?d, dotvim('autoload')
+  download "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim", dotvim('autoload', 'pathogen.vim')
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end
 
 
-create_new_vim_environment unless test ?d, "#{ENV['HOME']}/.vim"
+create_new_vim_environment unless test ?d, dotvim
 
 doc_dir = "#{ENV['HOME']}/.vim/doc"
 Dir.mkdir doc_dir unless test ?d, doc_dir

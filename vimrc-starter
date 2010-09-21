@@ -1,21 +1,23 @@
-" Don't use abbreviations!  Spelling things out makes grepping easy.
+" default .vimrc installed by vim-update-bundles.
+" Avoid abbreviations!  Spelling everything out makes grepping easy.
 
 " Load plugins using Pathogen. Don't worry if this bit doesn't make sense.
 filetype off
 call pathogen#runtime_append_all_bundles()
 filetype indent plugin on
+
+
+" Now you have a working Vim setup.  Customize everything from here on.
+
+" set some directives...
 syntax on
 set nocompatible
-
-" That's all you need for a working Vim setup.
-
-" Now set some directives...
 " set incsearch         " find the next match as we type the search
 " set hlsearch          " hilight searches by default
-" ... etc
+" etc.  See http://github.com/bronson/vimsy/blob/master/vimrc for inspiration
 
-" And enable some plugins or -- better -- and add some of your own!
-" Putting text before BUNDLE disables it: "no BUNDLE", "# BUNDLE", etc.
+" Enable some plugins or add some of your own!
+" Remove any text (like the '#') before BUNDLE to enable a plugin.
 
 " Generally Useful:
 " # BUNDLE: git://github.com/scrooloose/nerdtree.git
