@@ -102,6 +102,23 @@ def download_file url, file
 end
 
 
+def update_bundles_and_docs
+  File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
+    doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
+    doc.puts "These are the bundles installed on your system, along with their\n" +
+      "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
+      "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
+  
+    bundle_dir = dotvim('bundle')
+    ensure_dir bundle_dir
+    FileUtils.cd(bundle_dir)
+    update_bundles(doc)
+  
+    doc.puts "\n"
+  end
+end
+
+
 def create_new_vim_environment
   puts 'Creating a new Vim environment.'
 
@@ -122,20 +139,7 @@ if ensure_dir dotvim
   create_new_vim_environment
 else
   ensure_dir dotvim('doc')
-  File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
-    doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
-    doc.puts "These are the bundles installed on your system, along with their\n" +
-      "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
-      "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
-  
-    bundle_dir = dotvim('bundle')
-    ensure_dir bundle_dir
-    FileUtils.cd(bundle_dir)
-    update_bundles(doc)
-  
-    doc.puts "\n"
-  end
-  
+  update_bundles_and_docs
   puts "updating helptags..."
   `vim -e -c "call pathogen#helptags()" -c q`
   puts "done!  Start Vim and type ':help bundles' to see what you have installed."
