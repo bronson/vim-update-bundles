@@ -28,6 +28,11 @@ def dotvim *path
 end
 
 
+def ensure_dir dir
+  Dir.mkdir dir unless test ?d, dir
+end
+
+
 def print_bundle dir, doc
   version = date = ''
   FileUtils.cd(dir) do
@@ -67,7 +72,7 @@ end
 
 def remove_bundle dir
   trash_dir = dotvim("Trashed-Bundles")
-  Dir.mkdir trash_dir unless test ?d, trash_dir
+  ensure_dir trash_dir
   puts "Erasing #{dir}, find it in #{trash_dir}"
   FileUtils.mv(dir, trash_dir)
 end
@@ -101,37 +106,38 @@ def create_new_vim_environment
   puts 'Creating a new Vim environment.'
 
   puts "Downloading default vimrc..."
-  Dir.mkdir dotvim
+  ensure_dir dotvim
   download_file "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
   `ln -s '#{dotvim 'vimrc'}' '#{ENV['HOME']}/.vimrc'`
 
   puts "Downloading Pathogen..."
-  Dir.mkdir dotvim('autoload') unless test ?d, dotvim('autoload')
+  ensure_dir dotvim('autoload')
   download_file "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim", dotvim('autoload', 'pathogen.vim')
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end
 
 
-create_new_vim_environment unless test ?d, dotvim
-
-doc_dir = "#{ENV['HOME']}/.vim/doc"
-Dir.mkdir doc_dir unless test ?d, doc_dir
-File.open("#{ENV['HOME']}/.vim/doc/bundles.txt", "w") do |doc|
-  doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
-  doc.puts "These are the bundles installed on your system, along with their\n" +
-    "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
-    "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
-
-  bundle_dir = "#{ENV['HOME']}/.vim/bundle"
-  Dir.mkdir bundle_dir unless test ?d, bundle_dir
-  FileUtils.cd(bundle_dir)
-  update_bundles(doc)
-
-  doc.puts "\n"
+if ensure_dir dotvim
+  create_new_vim_environment
+else
+  ensure_dir dotvim('doc')
+  File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
+    doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
+    doc.puts "These are the bundles installed on your system, along with their\n" +
+      "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
+      "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
+  
+    bundle_dir = dotvim('bundle')
+    ensure_dir bundle_dir
+    FileUtils.cd(bundle_dir)
+    update_bundles(doc)
+  
+    doc.puts "\n"
+  end
+  
+  puts "updating helptags..."
+  `vim -e -c "call pathogen#helptags()" -c q`
+  puts "done!  Start Vim and type ':help bundles' to see what you have installed."
 end
-
-puts "updating helptags..."
-`vim -e -c "call pathogen#helptags()" -c q`
-puts "done!  Start Vim and type ':help bundles' to see what you have installed."
 
