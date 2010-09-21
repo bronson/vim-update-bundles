@@ -69,13 +69,9 @@ end
 
 
 def read_vimrc
-  bundles = []
   File.open("#{ENV['HOME']}/.vimrc") do |file|
-    file.each_line do |line|
-      bundles.push $1 if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
-    end
+    file.each_line { |line| yield line }
   end
-  bundles
 end
 
 
@@ -89,7 +85,10 @@ end
 
 def update_bundles doc
   existing_bundles = Dir['*']
-  vimrc_bundles = read_vimrc
+  vimrc_bundles = []
+  read_vimrc do |line|
+    vimrc_bundles.push $1 if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
+  end
 
   vimrc_bundles.each do |line|
     url, tag = line.split
@@ -117,12 +116,12 @@ def update_bundles_and_docs
     doc.puts "These are the bundles installed on your system, along with their\n" +
       "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
       "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
-  
+
     bundle_dir = dotvim('bundle')
     ensure_dir bundle_dir
     FileUtils.cd(bundle_dir)
     update_bundles(doc)
-  
+
     doc.puts "\n"
   end
 end
