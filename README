@@ -33,7 +33,8 @@ From within Vim, run ':help bundles' to list all the bundles you have
 installed, along with hotlinks to their help pages.
 
 Run vim-update-bundles at any time to ensure your plugins, syntax files,
-and color schemes are all up to date.
+and color schemes are all up to date.  You can find more plugins to
+install on http://github.com/vim-scripts
 
 
 VIMRC
@@ -49,11 +50,30 @@ This ensures your NerdTree remains at version 4.0.0.  If NerdTree releases
 a new version, just update the version number in your vimrc and re-run
 vim-update-bundles.
 
+You can put any number of BUNDLE-COMMAND: directives after BUNDLE.
+This will execute the given shell commands from the bundle's directory.
+For instance, to automatically build Command-T every time
+git-update-bundles is run:
+
+    " BUNDLE: git://github.com/bronson/Command-T.git
+    " BUNDLE-COMMAND: rake make
+
 
 BUNDLES.TXT
 
 From within Vim, type ':help bundles' to show a list of the bundes you
 have installed.  vim-update-bundles produces this file every time it runs.
+
+
+Q&A
+
+Q: How do I install a plugin?
+A: Add a line like this to your ~/.vimrc
+     " BUNDLE: git://github.com/bronson/vim-closebuffer.git
+   (use your own url of course) then run git-update-bundles.
+
+Q: How do I remove a plugin?
+A: Delete the BUNDLE: line and run git-update-bundles.
 
 
 ALTERNATIVES

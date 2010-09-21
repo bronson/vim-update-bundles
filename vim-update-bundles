@@ -15,9 +15,6 @@
 require 'fileutils'
 require 'open-uri'
 
-# todo: make a way to execute shell commands after a plugin is downloaded?
-#   i.e. run 'which rvm >/dev/null 2>&1 && rvm use system; rake make' in command-t
-
 
 def dotvim *path
   File.join ENV['HOME'], '.vim', *path
@@ -79,18 +76,23 @@ def remove_bundle dir
   trash_dir = dotvim("Trashed-Bundles")
   ensure_dir trash_dir
   puts "Erasing #{dir}, find it in #{trash_dir}"
-  FileUtils.mv(dir, trash_dir)
+  FileUtils.mv dir, trash_dir
 end
 
 
 def update_bundles doc
   existing_bundles = Dir['*']
+  dir = nil
   read_vimrc do |line|
     if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
-      download_bundle(dir, url, tag, doc)
-      existing_bundles.delete(dir)
+      download_bundle dir, url, tag, doc
+      existing_bundles.delete dir
+    elsif line =~ /^\s*"\s*BUNDLE-COMMAND:\s*(.*)$/
+      raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
+      puts "  running: #{$1}"
+      FileUtils.cd(dir) { system($1) }
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
