@@ -115,9 +115,7 @@ def update_bundles_and_docs
 
     bundle_dir = dotvim('bundle')
     ensure_dir bundle_dir
-    FileUtils.cd(bundle_dir)
-    update_bundles(doc)
-
+    FileUtils.cd(bundle_dir) { update_bundles(doc) }
     doc.puts "\n"
   end
 end
