@@ -17,7 +17,7 @@ require 'open-uri'
 
 
 def dotvim *path
-  File.join ENV['HOME'], '.vim', *path
+  File.join ENV['HOME'], '.dotfiles/vim', *path
 end
 
 
