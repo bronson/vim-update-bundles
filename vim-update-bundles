@@ -21,10 +21,15 @@ def gitroot
 end
 
 def dotvim *path
+    # return vim's runtimepath folder
+    # make sure this is set to your vim folder
+    # normally ".vim"
   File.join ENV['HOME'], '.dotfiles/vim', *path
 end
 
 def bundlepath *path
+    # path to vim's bundle folder relative to git's root
+    # make sure this is set correctly
     File.join 'vim/bundle', *path
 end
 
