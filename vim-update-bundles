@@ -147,7 +147,7 @@ def create_new_vim_environment
 
   puts "Downloading default vimrc..."
   ensure_dir dotvim
-  download_file "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
+  download_file "http://github.com/steeef/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
   `ln -s '#{dotvim 'vimrc'}' '#{ENV['HOME']}/.vimrc'`
 
   puts "Downloading Pathogen..."
