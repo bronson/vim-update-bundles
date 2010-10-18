@@ -15,16 +15,22 @@
 require 'fileutils'
 require 'open-uri'
 
-
-def dotvim *path
-  File.join ENV['HOME'], '.vim', *path
+def gitroot
+    # return root of git repository
+    `readlink -fn ./$(git rev-parse --show-cdup)`
 end
 
+def dotvim *path
+  File.join ENV['HOME'], '.dotfiles/vim', *path
+end
+
+def bundlepath *path
+    File.join 'vim/bundle', *path
+end
 
 def ensure_dir dir
   Dir.mkdir dir unless test ?d, dir
 end
-
 
 def print_bundle dir, doc
   version = date = ''
@@ -36,12 +42,18 @@ def print_bundle dir, doc
   doc.printf "  - %-30s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
 end
 
-
 def clone_bundle dir, url, tagstr
-  puts "cloning #{dir} from #{url}#{tagstr}"
-  `git clone -q #{url} #{dir}`
+    puts "adding submodule #{dir} from #{url}#{tagstr}"
+    FileUtils.cd(gitroot) {
+        `git submodule add #{url} #{bundlepath(dir)}`
+        unless system("grep -q \"doc/tags\" \"#{bundlepath(dir)}/.git/info/exclude\"")
+            puts"  exclude #{dir}'s helptags from git..."
+            open("#{bundlepath(dir)}/.git/info/exclude", "a") do |f|
+                f << "\ndoc/tags\n"
+            end
+        end
+    }
 end
-
 
 def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
@@ -50,7 +62,7 @@ def download_bundle dir, url, tag, doc
     FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      FileUtils.cd(dir) { `git fetch` }
+      FileUtils.cd(dir) { `git pull` }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -96,6 +108,13 @@ def update_bundles doc
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
+
+    FileUtils.cd(gitroot) {
+        puts "initializing submodules"
+        `git submodule init`
+        puts "updating submodules"
+        `git submodule update`
+    }
 end
 
 
