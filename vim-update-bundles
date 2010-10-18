@@ -28,7 +28,8 @@ end
 
 
 def dotvim *path
-  # use ~/.dotfiles/vim if ~/.dotfiles exists, else use ~/.vim
+  # return vim's runtimepath folder
+  # ~/.dotfiles/vim if ~/.dotfiles exists, else ~/.vim
   dotfiles('vim', *path) || File.join(ENV['HOME'], '.vim', *path)
 end
 
