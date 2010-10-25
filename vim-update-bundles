@@ -83,8 +83,15 @@ end
 def remove_bundle dir
   trash_dir = dotvim("Trashed-Bundles")
   ensure_dir trash_dir
-  puts "Erasing #{dir}, find it in #{trash_dir}"
-  FileUtils.mv dir, trash_dir
+  1.upto(100) do |i|
+    destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
+    unless test ?d, destination
+      puts "Erasing #{dir}, find it in #{destination}"
+      FileUtils.mv dir, destination
+      return
+    end
+  end
+  raise "unable to remove #{dir}, please delete #{trash_dir}"
 end
 
 
