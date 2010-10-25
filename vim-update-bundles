@@ -15,27 +15,29 @@
 require 'fileutils'
 require 'open-uri'
 
-def gitroot
-    # return root of git repository
-    `readlink -fn ./$(git rev-parse --show-cdup)`
+# the files that get installed when creating a brand new vim environment
+$starter_url  = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
+$pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+
+
+def dotfiles *path
+  # returns path inside ~/.dotfiles or nil if ~/.dotfiles doesn't exist
+  dir = File.join ENV['HOME'], '.dotfiles'
+  return File.join(dir, *path) if test ?d, dir
 end
+
 
 def dotvim *path
-    # return vim's runtimepath folder
-    # make sure this is set to your vim folder
-    # normally ".vim"
-  File.join ENV['HOME'], '.dotfiles/vim', *path
+  # return vim's runtimepath folder
+  # ~/.dotfiles/vim if ~/.dotfiles exists, else ~/.vim
+  dotfiles('vim', *path) || File.join(ENV['HOME'], '.vim', *path)
 end
 
-def bundlepath *path
-    # path to vim's bundle folder relative to git's root
-    # make sure this is set correctly
-    File.join 'vim/bundle', *path
-end
 
 def ensure_dir dir
   Dir.mkdir dir unless test ?d, dir
 end
+
 
 def print_bundle dir, doc
   version = date = ''
@@ -47,18 +49,12 @@ def print_bundle dir, doc
   doc.printf "  - %-30s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
 end
 
+
 def clone_bundle dir, url, tagstr
-    puts "adding submodule #{dir} from #{url}#{tagstr}"
-    FileUtils.cd(gitroot) {
-        `git submodule add #{url} #{bundlepath(dir)}`
-        unless system("grep -q \"doc/tags\" \"#{bundlepath(dir)}/.git/info/exclude\"")
-            puts"  exclude #{dir}'s helptags from git..."
-            open("#{bundlepath(dir)}/.git/info/exclude", "a") do |f|
-                f << "\ndoc/tags\n"
-            end
-        end
-    }
+  puts "cloning #{dir} from #{url}#{tagstr}"
+  `git clone -q #{url} #{dir}`
 end
+
 
 def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
@@ -67,7 +63,7 @@ def download_bundle dir, url, tag, doc
     FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      FileUtils.cd(dir) { `git pull` }
+      FileUtils.cd(dir) { `git fetch` }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -92,8 +88,15 @@ end
 def remove_bundle dir
   trash_dir = dotvim("Trashed-Bundles")
   ensure_dir trash_dir
-  puts "Erasing #{dir}, find it in #{trash_dir}"
-  FileUtils.mv dir, trash_dir
+  1.upto(100) do |i|
+    destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
+    unless test ?d, destination
+      puts "Erasing #{dir}, find it in #{destination}"
+      FileUtils.mv dir, destination
+      return
+    end
+  end
+  raise "unable to remove #{dir}, please delete #{trash_dir}"
 end
 
 
@@ -113,13 +116,6 @@ def update_bundles doc
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
-
-    FileUtils.cd(gitroot) {
-        puts "initializing submodules"
-        `git submodule init`
-        puts "updating submodules"
-        `git submodule update`
-    }
 end
 
 
@@ -149,15 +145,17 @@ end
 
 def create_new_vim_environment
   puts 'Creating a new Vim environment.'
+  vimrc = dotfiles('vimrc') || dotvim('vimrc')
 
   puts "Downloading default vimrc..."
   ensure_dir dotvim
-  download_file "http://github.com/steeef/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
-  `ln -s '#{dotvim 'vimrc'}' '#{ENV['HOME']}/.vimrc'`
+  download_file $starter_url, vimrc
+  `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'`
+  `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
-  download_file "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim", dotvim('autoload', 'pathogen.vim')
+  download_file $pathogen_url, dotvim('autoload', 'pathogen.vim')
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end
