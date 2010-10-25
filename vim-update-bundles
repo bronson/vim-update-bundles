@@ -37,6 +37,13 @@ def dotvim *path
   dotfiles('vim', *path) || File.join(ENV['HOME'], '.vim', *path)
 end
 
+def bundlepath *path
+  # path to vim's bundle folder
+  # make sore to set this correctly
+
+  File.join 'vim/bundle', *path
+end
+
 
 def ensure_dir dir
   Dir.mkdir dir unless test ?d, dir
@@ -58,10 +65,10 @@ def clone_bundle dir, url, tagstr, is_submodule
   if is_submodule
     puts "adding submodule #{dir} from #{url}#{tagstr}"
     FileUtils.cd(dotfiles) {
-        `git submodule add #{url} #{dotvim("bundle")}/#{dir}`
-        unless system("grep -q \"doc/tags\" \"#{dotvim("bundle")}/#{dir}/.git/info/exclude\"")
+        `git submodule add #{url} #{bundlepath(dir)}`
+        unless system("grep -q \"doc/tags\" \"#{bundlepath(dir)}/.git/info/exclude\"")
             puts"  exclude #{dir}'s helptags from git..."
-            open("#{dotvim("bundle")}/#{dir}/.git/info/exclude", "a") do |f|
+            open("#{bundlepath(dir)}/.git/info/exclude", "a") do |f|
                 f << "\ndoc/tags\n"
             end
         end
