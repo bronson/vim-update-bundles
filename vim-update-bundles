@@ -15,6 +15,10 @@
 require 'fileutils'
 require 'open-uri'
 
+# the files that get installed when creating a brand new vim environment
+$starter_url  = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
+$pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+
 
 def dotfiles *path
   # returns path inside ~/.dotfiles or nil if ~/.dotfiles doesn't exist
@@ -144,13 +148,13 @@ def create_new_vim_environment
 
   puts "Downloading default vimrc..."
   ensure_dir dotvim
-  download_file "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", vimrc
+  download_file $starter_url, vimrc
   `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'`
   `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
-  download_file "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim", dotvim('autoload', 'pathogen.vim')
+  download_file $pathogen_url, dotvim('autoload', 'pathogen.vim')
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end
