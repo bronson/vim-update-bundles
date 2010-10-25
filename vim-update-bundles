@@ -16,8 +16,16 @@ require 'fileutils'
 require 'open-uri'
 
 
+def dotfiles *path
+  # returns path inside ~/.dotfiles or nil if ~/.dotfiles doesn't exist
+  dir = File.join ENV['HOME'], '.dotfiles'
+  return File.join(dir, *path) if test ?d, dir
+end
+
+
 def dotvim *path
-  File.join ENV['HOME'], '.dotfiles/vim', *path
+  # use ~/.dotfiles/vim if ~/.dotfiles exists, else use ~/.vim
+  dotfiles('vim', *path) || File.join(ENV['HOME'], '.vim', *path)
 end
 
 
@@ -124,15 +132,14 @@ end
 
 
 def create_new_vim_environment
-  vimrc = ENV['HOME'] + '/.dotfiles/vimrc'
-
   puts 'Creating a new Vim environment.'
+  vimrc = dotfiles('vimrc') || dotvim('vimrc')
 
   puts "Downloading default vimrc..."
   ensure_dir dotvim
-  download_file "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", (vimrc)
+  download_file "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", vimrc
   `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'`
-  `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'`
+  `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
