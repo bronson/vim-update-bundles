@@ -141,7 +141,7 @@ def update_bundles doc
           submodule_change = true
       end
     end
-    if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/ || line =~ /^\s*"\s*SUBMODULE:\s*(.*)$/
+    if line =~ /^\s*"\s*(?:BUNDLE|SUBMODULE):\s*(.*)$/
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
       download_bundle dir, url, tag, doc, is_submodule
