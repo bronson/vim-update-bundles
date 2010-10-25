@@ -137,9 +137,7 @@ def update_bundles doc
     is_submodule = false
     if line =~ /^\s*"\s*SUBMODULE:\s*(.*)$/
       is_submodule = true
-      unless submodule_change
-          submodule_change = true
-      end
+      submodule_change ||= true
     end
     if line =~ /^\s*"\s*(?:BUNDLE|SUBMODULE):\s*(.*)$/
       url, tag = $1.split
