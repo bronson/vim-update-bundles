@@ -121,6 +121,7 @@ def remove_bundle dir
     destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
     unless test ?d, destination
       puts "Erasing #{dir}, find it in #{destination}"
+      puts "If it was a submodule, delete its lines from .gitmodules and .git/config"
       FileUtils.mv dir, destination
       return
     end
