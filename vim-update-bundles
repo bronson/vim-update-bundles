@@ -18,23 +18,26 @@
 require 'fileutils'
 require 'open-uri'
 
-# the files that get installed when creating a brand new vim environment
-$starter_url  = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
-$pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
-
 
 def dotfiles *path
-  # returns path inside ~/.dotfiles or nil if ~/.dotfiles doesn't exist
+  # autodetects a ~/.dotfiles directory.
   dir = File.join ENV['HOME'], '.dotfiles'
   return File.join(dir, *path) if test ?d, dir
 end
 
 
 def dotvim *path
-  # return vim's runtimepath folder
-  # ~/.dotfiles/vim if ~/.dotfiles exists, else ~/.vim
-  dotfiles('vim', *path) || File.join(ENV['HOME'], '.vim', *path)
+  File.join $dotvim, *path
 end
+
+
+# the files that get installed when creating a brand new vim environment
+$starter_url  ||= "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
+$pathogen_url ||= "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+
+# dotvim is the directory that contains 
+$dotvim ||= dotfiles('vim') || File.join(ENV['HOME'], '.vim')
+$vimrc ||= dotfiles('vimrc') || dotvim('vimrc')
 
 
 def ensure_dir dir
@@ -55,7 +58,12 @@ end
 
 def clone_bundle dir, url, tagstr
   puts "cloning #{dir} from #{url}#{tagstr}"
-  `git clone -q #{url} #{dir}`
+  unless ENV['TESTING']
+    `git clone -q #{url} #{dir}`
+  else
+    # don't hit the network and make this repo its own remote so there are never any changes
+    `mkdir #{dir} && cd #{dir} && git init && git remote add origin #{dir}`
+  end
 end
 
 
@@ -148,12 +156,10 @@ end
 
 def create_new_vim_environment
   puts 'Creating a new Vim environment.'
-  vimrc = dotfiles('vimrc') || dotvim('vimrc')
-
   puts "Downloading default vimrc..."
   ensure_dir dotvim
-  download_file $starter_url, vimrc
-  `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'`
+  download_file $starter_url, $vimrc
+  `ln -s '#{$vimrc}' '#{ENV['HOME']}/.vimrc'`
   `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
@@ -170,7 +176,7 @@ else
   ensure_dir dotvim('doc')
   update_bundles_and_docs
   puts "updating helptags..."
-  `vim -e -c "call pathogen#helptags()" -c q`
+  `vim -e -c "call pathogen#helptags()" -c q` unless ENV['TESTING']
   puts "done!  Start Vim and type ':help bundles' to see what you have installed."
 end
 
