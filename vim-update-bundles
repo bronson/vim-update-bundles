@@ -2,7 +2,7 @@
 
 # Reads the bundles you want installed out of your $HOME/.vimrc file,
 # then synchronizes .vim/bundles to match, downloading new repositories
-# as needed.  It also deletes bundles that are no longer used.
+# as needed.  It also removes bundles that are no longer used.
 #
 # To specify a bundle in your .vimrc, just add a line like this:
 #   " BUNDLE: git://git.wincent.com/command-t.git
@@ -14,10 +14,10 @@
 #
 # If your .vim folder is stored in a git repository, you can add bundles
 # as submodules by using SUBMODULE instead of BUNDLE in your .virmrc:
-#   " SUBMODULE: git://git.wincent.com/command-d.git
+#   " SUBMODULE: git://git.wincent.com/command-t.git
 #
 # todo: kill the update if COMMAND fails
-# todo: add dependency handling
+# todo: add dependency handling?
 
 require 'fileutils'
 require 'open-uri'
@@ -91,12 +91,7 @@ def download_bundle dir, url, tag, doc, is_submodule
     FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      if is_submodule
-          git_action = "pull"
-      else
-          git_action = "fetch"
-      end
-      FileUtils.cd(dir) { `git #{git_action}` }
+      FileUtils.cd(dir) { `git #{is_submodule ? 'pull' : 'fetch'}` }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -137,12 +132,12 @@ end
 def update_bundles doc
   existing_bundles = Dir['*']
   dir = nil
-  submodule_change = false
+  submodule_changed = false
   read_vimrc do |line|
     is_submodule = false
     if line =~ /^\s*"\s*SUBMODULE:\s*(.*)$/
       is_submodule = true
-      submodule_change ||= true
+      submodule_changed ||= true
     end
     if line =~ /^\s*"\s*(?:BUNDLE|SUBMODULE):\s*(.*)$/
       url, tag = $1.split
@@ -157,11 +152,11 @@ def update_bundles doc
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
 
-  if submodule_change
+  if submodule_changed
       FileUtils.cd(dotfiles) {
           puts "  initializing submodules"
           `git submodule init`
-          puts "  update submodules"
+          puts "  updating submodules"
           `git submodule update`
       }
   end
