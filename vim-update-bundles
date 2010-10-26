@@ -12,11 +12,16 @@
 #   " BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
 #   " BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
 #
+# If your .vim folder is stored in a git repository, you can add bundles
+# as submodules by using SUBMODULE instead of BUNDLE in your .virmrc:
+#   " SUBMODULE: git://git.wincent.com/command-d.git
+#
 # todo: kill the update if COMMAND fails
 # todo: add dependency handling
 
 require 'fileutils'
 require 'open-uri'
+
 
 # the files that get installed when creating a brand new vim environment
 $starter_url  = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
@@ -36,6 +41,13 @@ def dotvim *path
   dotfiles('vim', *path) || File.join(ENV['HOME'], '.vim', *path)
 end
 
+def bundlepath *path
+  # path to vim's bundle folder
+  # make sore to set this correctly
+
+  File.join 'vim/bundle', *path
+end
+
 
 def ensure_dir dir
   Dir.mkdir dir unless test ?d, dir
@@ -53,27 +65,45 @@ def print_bundle dir, doc
 end
 
 
-def clone_bundle dir, url, tagstr
-  puts "cloning #{dir} from #{url}#{tagstr}"
-  `git clone -q #{url} #{dir}`
+def clone_bundle dir, url, tagstr, is_submodule
+  if is_submodule
+    puts "adding submodule #{dir} from #{url}#{tagstr}"
+    FileUtils.cd(dotfiles) {
+        `git submodule add #{url} #{bundlepath(dir)}`
+        unless system("grep -q \"doc/tags\" \"#{bundlepath(dir)}/.git/info/exclude\"")
+            puts"  exclude #{dir}'s helptags from git..."
+            open("#{bundlepath(dir)}/.git/info/exclude", "a") do |f|
+                f << "\ndoc/tags\n"
+            end
+        end
+    }
+  else
+    puts "cloning #{dir} from #{url}#{tagstr}"
+    `git clone -q #{url} #{dir}`
+  end
 end
 
 
-def download_bundle dir, url, tag, doc
+def download_bundle dir, url, tag, doc, is_submodule
   tagstr = " at #{tag}" if tag
   if test ?d, dir
     remote = ''   # shame FileUtils.cd doesn't return the retval of the block
     FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      FileUtils.cd(dir) { `git fetch` }
+      if is_submodule
+          git_action = "pull"
+      else
+          git_action = "fetch"
+      end
+      FileUtils.cd(dir) { `git #{git_action}` }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
-      clone_bundle dir, url, tagstr
+      clone_bundle dir, url, tagstr, is_submodule
     end
   else
-    clone_bundle dir, url, tagstr
+    clone_bundle dir, url, tagstr, is_submodule
   end
 
   FileUtils.cd(dir) { `git checkout -q #{tag || 'master'}` }
@@ -95,6 +125,7 @@ def remove_bundle dir
     destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
     unless test ?d, destination
       puts "Erasing #{dir}, find it in #{destination}"
+      puts "If it was a submodule, delete its lines from .gitmodules and .git/config"
       FileUtils.mv dir, destination
       return
     end
@@ -106,11 +137,17 @@ end
 def update_bundles doc
   existing_bundles = Dir['*']
   dir = nil
+  submodule_change = false
   read_vimrc do |line|
-    if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
+    is_submodule = false
+    if line =~ /^\s*"\s*SUBMODULE:\s*(.*)$/
+      is_submodule = true
+      submodule_change ||= true
+    end
+    if line =~ /^\s*"\s*(?:BUNDLE|SUBMODULE):\s*(.*)$/
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '').gsub(/\.vim$/, '')
-      download_bundle dir, url, tag, doc
+      download_bundle dir, url, tag, doc, is_submodule
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*BUNDLE-COMMAND:\s*(.*)$/
       raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
@@ -119,6 +156,15 @@ def update_bundles doc
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
+
+  if submodule_change
+      FileUtils.cd(dotfiles) {
+          puts "  initializing submodules"
+          `git submodule init`
+          puts "  update submodules"
+          `git submodule update`
+      }
+  end
 end
 
 
