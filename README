@@ -26,6 +26,9 @@ and ~/.vimrc file and start fresh.
 Now you have a working barebones environment.  Open ~/.vimrc, enable a few
 plugins, then run vim-update-bundles again to apply your changes.
 
+vim-update-bundles will install into a ~/.dotfiles directory if it exists.
+It works seamlessly with http://github.com/ryanb/dotfiles and friends.
+
 
 USAGE
 

@@ -18,9 +18,22 @@
 require 'fileutils'
 require 'open-uri'
 
+# the files that get installed when creating a brand new vim environment
+$starter_url  = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
+$pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+
+
+def dotfiles *path
+  # returns path inside ~/.dotfiles or nil if ~/.dotfiles doesn't exist
+  dir = File.join ENV['HOME'], '.dotfiles'
+  return File.join(dir, *path) if test ?d, dir
+end
+
 
 def dotvim *path
-  File.join ENV['HOME'], '.vim', *path
+  # return vim's runtimepath folder
+  # ~/.dotfiles/vim if ~/.dotfiles exists, else ~/.vim
+  dotfiles('vim', *path) || File.join(ENV['HOME'], '.vim', *path)
 end
 
 
@@ -78,8 +91,15 @@ end
 def remove_bundle dir
   trash_dir = dotvim("Trashed-Bundles")
   ensure_dir trash_dir
-  puts "Erasing #{dir}, find it in #{trash_dir}"
-  FileUtils.mv dir, trash_dir
+  1.upto(100) do |i|
+    destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
+    unless test ?d, destination
+      puts "Erasing #{dir}, find it in #{destination}"
+      FileUtils.mv dir, destination
+      return
+    end
+  end
+  raise "unable to remove #{dir}, please delete #{trash_dir}"
 end
 
 
@@ -128,15 +148,17 @@ end
 
 def create_new_vim_environment
   puts 'Creating a new Vim environment.'
+  vimrc = dotfiles('vimrc') || dotvim('vimrc')
 
   puts "Downloading default vimrc..."
   ensure_dir dotvim
-  download_file "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter", dotvim('vimrc')
-  `ln -s '#{dotvim 'vimrc'}' '#{ENV['HOME']}/.vimrc'`
+  download_file $starter_url, vimrc
+  `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'`
+  `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
-  download_file "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim", dotvim('autoload', 'pathogen.vim')
+  download_file $pathogen_url, dotvim('autoload', 'pathogen.vim')
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end
