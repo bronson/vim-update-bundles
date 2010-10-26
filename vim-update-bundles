@@ -11,6 +11,9 @@
 # Or tag or sha1: (this results in a detached head, see 'git help checkout')
 #   " BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
 #   " BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
+#
+# todo: kill the update if COMMAND fails
+# todo: add dependency handling
 
 require 'fileutils'
 require 'open-uri'
