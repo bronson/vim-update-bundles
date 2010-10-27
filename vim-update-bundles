@@ -12,11 +12,15 @@
 #   " BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
 #   " BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
 #
+# todo: should run once after creating a vim environment
+# todo: stop using `` to run commands -- it's got interpolation issues
 # todo: kill the update if COMMAND fails
-# todo: add dependency handling
+# todo: should we just create ~/.vimrc as a file instead of a symlink to ~/.vim/vimrc?
+# todo: should we ask questions to create a config file?  "install bundles as submodules? [n] "
 
 require 'fileutils'
 require 'open-uri'
+require 'yaml'
 
 
 def dotfiles *path
@@ -29,15 +33,6 @@ end
 def dotvim *path
   File.join $dotvim, *path
 end
-
-
-# the files that get installed when creating a brand new vim environment
-$starter_url  ||= "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
-$pathogen_url ||= "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
-
-# dotvim is the directory that contains 
-$dotvim ||= dotfiles('vim') || File.join(ENV['HOME'], '.vim')
-$vimrc ||= dotfiles('vimrc') || dotvim('vimrc')
 
 
 def ensure_dir dir
@@ -154,24 +149,39 @@ def update_bundles_and_docs
 end
 
 
-def create_new_vim_environment
+def create_new_vim_environment vimrc, starter_url, pathogen_url
   puts 'Creating a new Vim environment.'
-  puts "Downloading default vimrc..."
+  puts "Downloading starter vimrc..."
   ensure_dir dotvim
-  download_file $starter_url, $vimrc
-  `ln -s '#{$vimrc}' '#{ENV['HOME']}/.vimrc'`
+  download_file starter_url, vimrc
+  `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'`
   `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
-  download_file $pathogen_url, dotvim('autoload', 'pathogen.vim')
+  download_file pathogen_url, dotvim('autoload', 'pathogen.vim')
 
   puts 'Done!  Now edit your ~/.vimrc file.'
 end
 
 
+# the files that get installed when creating a brand new vim environment
+starter_url  = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
+pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+# dotvim is the directory that contains vim bundles, doc, autoload, etc dirs.
+dotvim = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
+vimrc  = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
+
+# User config file is written in yaml to make it easy to parse
+conf_file = File.join ENV['HOME'], '.vim-update-bundles.yaml'
+config = test(?f, conf_file) ? open(conf_file) { |f| YAML.load f } : {}
+# or pass vars on the command line: ./vim-update-bundles vimrc=/tmp/vimrc
+ARGV.each { |arg| k,v = arg.split('=',2); config[k] = v }
+config.each { |k,v| eval "#{k}='#{v.gsub('//', '////').split("'").join("\\'")}'" }
+
+$dotvim = dotvim
 if ensure_dir dotvim
-  create_new_vim_environment
+  create_new_vim_environment vimrc, starter_url, pathogen_url
 else
   ensure_dir dotvim('doc')
   update_bundles_and_docs
