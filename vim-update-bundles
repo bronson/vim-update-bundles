@@ -172,7 +172,7 @@ pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathoge
 dotvim = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
 vimrc  = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
 
-# User config file is written in yaml to make it easy to parse
+# User config file is written in yaml since requiring a ruby file had issues
 conf_file = File.join ENV['HOME'], '.vim-update-bundles.yaml'
 config = test(?f, conf_file) ? open(conf_file) { |f| YAML.load f } : {}
 # or pass vars on the command line: ./vim-update-bundles vimrc=/tmp/vimrc

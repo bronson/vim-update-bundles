@@ -11,7 +11,7 @@ MiniTest::Unit.autorun
 class TestUpdater < MiniTest::Unit::TestCase
   def run_test
     Dir.mktmpdir('vimtest-') do |tmpdir|
-      create_files tmpdir
+      create_mock_files tmpdir
       Dir.mkdir "#{tmpdir}/home"
       ENV['HOME']="#{tmpdir}/home"
       ENV['TESTING']='1'
@@ -19,14 +19,14 @@ class TestUpdater < MiniTest::Unit::TestCase
     end
   end
 
-  def create_files tmpdir
+  def write_file path, contents
+    File.open(path, 'w') { |f| f.write contents }
+  end
+
+  def create_mock_files tmpdir
     # create local mocks for the files we'd download
-    File.open("#{tmpdir}/pathogen", 'w') { |f|
-      f.write "\" PATHOGEN SCRIPT"
-    }
-    File.open("#{tmpdir}/starter-vimrc", 'w') { |f|
-      f.write "\" STARTER VIMRC"
-    }
+    write_file "#{tmpdir}/pathogen",      "\" PATHOGEN SCRIPT"
+    write_file "#{tmpdir}/starter-vimrc", "\" STARTER VIMRC"
     @stdargs = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
   end
 
@@ -38,10 +38,16 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
-  def test_create_environment
+  def test_standard_run
     run_test do |tmpdir|
       `./vim-update-bundles #{@stdargs}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
+
+      `./vim-update-bundles`
+      assert test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
+      assert test ?d, "#{tmpdir}/.vim/bundle"
+      # count is 2 though dir is empty because of the . and .. entries
+      assert_equal 2, Dir.open("#{tmpdir}/.vim/bundle") { |d| d.count }
     end
   end
 
