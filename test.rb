@@ -1,4 +1,5 @@
 require 'minitest/unit'
+require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
@@ -10,12 +11,24 @@ MiniTest::Unit.autorun
 class TestUpdater < MiniTest::Unit::TestCase
   def run_test
     Dir.mktmpdir('vimtest-') do |tmpdir|
-      ENV['HOME']=tmpdir
+      create_files tmpdir
+      Dir.mkdir "#{tmpdir}/home"
+      ENV['HOME']="#{tmpdir}/home"
       ENV['TESTING']='1'
-      yield tmpdir
+      yield "#{tmpdir}/home"
     end
   end
 
+  def create_files tmpdir
+    # create local mocks for the files we'd download
+    File.open("#{tmpdir}/pathogen", 'w') { |f|
+      f.write "\" PATHOGEN SCRIPT"
+    }
+    File.open("#{tmpdir}/starter-vimrc", 'w') { |f|
+      f.write "\" STARTER VIMRC"
+    }
+    @stdargs = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
+  end
 
   def check_tree base, dotvim, vimrc
     assert test ?l, "#{base}/.vimrc"
@@ -27,7 +40,7 @@ class TestUpdater < MiniTest::Unit::TestCase
 
   def test_create_environment
     run_test do |tmpdir|
-      `./vim-update-bundles`
+      `./vim-update-bundles #{@stdargs}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
     end
   end
@@ -36,7 +49,7 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_create_dotfile_environment
     run_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"
-      `./vim-update-bundles`
+      `./vim-update-bundles #{@stdargs}`
       check_tree tmpdir, '.dotfiles/vim', '.dotfiles/vimrc'
     end
   end
@@ -45,7 +58,7 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_create_custom_vimrc_environment
     run_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/mydots"
-      `./vim-update-bundles vimrc="#{tmpdir}/mydots/vim rc"`
+      `./vim-update-bundles #{@stdargs} vimrc='#{tmpdir}/mydots/vim rc'`
       check_tree tmpdir, '.vim', 'mydots/vim rc'
     end
   end
@@ -58,7 +71,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       File.open("#{tmpdir}/.vim-update-bundles.yaml", 'w') { |f|
         f.write "vimrc : '#{tmpdir}/parent/child/vv zz'"
       }
-      `./vim-update-bundles`
+      `./vim-update-bundles #{@stdargs}`
       check_tree tmpdir, '.vim', 'parent/child/vv zz'
     end
   end
