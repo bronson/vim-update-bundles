@@ -9,7 +9,8 @@ MiniTest::Unit.autorun
 # and output.
 
 class TestUpdater < MiniTest::Unit::TestCase
-  def run_test
+  def prepare_test
+    # create a directory tree to run the test in
     Dir.mktmpdir('vimtest-') do |tmpdir|
       create_mock_files tmpdir
       Dir.mkdir "#{tmpdir}/home"
@@ -19,15 +20,33 @@ class TestUpdater < MiniTest::Unit::TestCase
     end
   end
 
-  def write_file path, contents
-    File.open(path, 'w') { |f| f.write contents }
+  def write_file base, path, contents
+    File.open(File.join(base, path), 'w') { |f| f.write contents }
   end
 
   def create_mock_files tmpdir
     # create local mocks for the files we'd download
-    write_file "#{tmpdir}/pathogen",      "\" PATHOGEN SCRIPT"
-    write_file "#{tmpdir}/starter-vimrc", "\" STARTER VIMRC"
-    @stdargs = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
+    write_file tmpdir, "pathogen",      "\" PATHOGEN SCRIPT"
+    write_file tmpdir, "starter-vimrc", "\" STARTER VIMRC"
+    @starter_urls = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
+  end
+
+  def create_mock_repo name
+    Dir.mkdir name
+    Dir.chdir name do
+      `git init`
+      write_file name, "first", "first"
+      `git add first`
+      `git commit -q -m first`
+    end
+  end
+
+  def update_mock_repo name, update
+    Dir.chdir name do
+      write_file name, update, update
+      `git add '#{update}'`
+      `git commit -q -m '#{update}'`
+    end
   end
 
   def check_tree base, dotvim, vimrc
@@ -39,45 +58,55 @@ class TestUpdater < MiniTest::Unit::TestCase
 
 
   def test_standard_run
-    run_test do |tmpdir|
-      `./vim-update-bundles #{@stdargs}`
+    # creates a starter environment then updates a few times
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
 
       `./vim-update-bundles`
       assert test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
       assert test ?d, "#{tmpdir}/.vim/bundle"
-      # count is 2 though dir is empty because of the . and .. entries
-      assert_equal 2, Dir.open("#{tmpdir}/.vim/bundle") { |d| d.count }
+      assert_equal ['.', '..'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
+
+      create_mock_repo "#{tmpdir}/repo"
+      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo"
+      `./vim-update-bundles`
+      assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
+      assert test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+
+      update_mock_repo "#{tmpdir}/repo", "second"
+      `./vim-update-bundles`
+      assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
     end
   end
 
 
   def test_create_dotfile_environment
-    run_test do |tmpdir|
+    prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"
-      `./vim-update-bundles #{@stdargs}`
+      `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, '.dotfiles/vim', '.dotfiles/vimrc'
     end
   end
 
 
   def test_create_custom_vimrc_environment
-    run_test do |tmpdir|
+    prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/mydots"
-      `./vim-update-bundles #{@stdargs} vimrc='#{tmpdir}/mydots/vim rc'`
+      `./vim-update-bundles #{@starter_urls} vimrc='#{tmpdir}/mydots/vim rc'`
       check_tree tmpdir, '.vim', 'mydots/vim rc'
     end
   end
 
 
   def test_create_custom_conffile_environment
-    run_test do |tmpdir|
+    prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/parent"
       Dir.mkdir "#{tmpdir}/parent/child"
       File.open("#{tmpdir}/.vim-update-bundles.yaml", 'w') { |f|
         f.write "vimrc : '#{tmpdir}/parent/child/vv zz'"
       }
-      `./vim-update-bundles #{@stdargs}`
+      `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, '.vim', 'parent/child/vv zz'
     end
   end

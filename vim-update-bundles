@@ -53,12 +53,7 @@ end
 
 def clone_bundle dir, url, tagstr
   puts "cloning #{dir} from #{url}#{tagstr}"
-  unless ENV['TESTING']
-    `git clone -q #{url} #{dir}`
-  else
-    # don't hit the network and make this repo its own remote so there are never any changes
-    `mkdir #{dir} && cd #{dir} && git init && git remote add origin #{dir}`
-  end
+  `git clone -q #{url} #{dir}`
 end
 
 
@@ -79,7 +74,13 @@ def download_bundle dir, url, tag, doc
     clone_bundle dir, url, tagstr
   end
 
-  FileUtils.cd(dir) { `git checkout -q #{tag || 'master'}` }
+  FileUtils.cd(dir) do
+    if tag
+      `git checkout -q #{tag}`
+    else
+      `git pull origin master`
+    end
+  end
   print_bundle(dir, doc)
 end
 
