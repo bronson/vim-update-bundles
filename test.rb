@@ -8,17 +8,20 @@ MiniTest::Unit.autorun
 # and output.
 
 class TestUpdater < MiniTest::Unit::TestCase
+  def check_tree base, dotvim, vimrc
+    assert test ?l, "#{base}/.vimrc"
+    assert_equal File.readlink("#{base}/.vimrc"), "#{base}/#{vimrc}"
+    assert test ?f, "#{base}/#{vimrc}"
+    assert test ?f, "#{base}/#{dotvim}/autoload/pathogen.vim"
+  end
+
   def test_create_environment
     Dir.mktmpdir('vimtest-') do |tmpdir|
       ENV['HOME']=tmpdir
       ENV['TESTING']='1'
 
       `./vim-update-bundles`
-
-      assert test ?l, "#{tmpdir}/.vimrc"
-      assert_equal File.readlink("#{tmpdir}/.vimrc"), "#{tmpdir}/.vim/vimrc"
-      assert test ?f, "#{tmpdir}/.vim/vimrc"
-      assert test ?f, "#{tmpdir}/.vim/autoload/pathogen.vim"
+      check_tree tmpdir, ".vim", ".vim/vimrc"
     end
   end
 
@@ -29,11 +32,7 @@ class TestUpdater < MiniTest::Unit::TestCase
 
       Dir.mkdir "#{tmpdir}/.dotfiles"
       `./vim-update-bundles`
-
-      assert test ?l, "#{tmpdir}/.vimrc"
-      assert_equal File.readlink("#{tmpdir}/.vimrc"), "#{tmpdir}/.dotfiles/vimrc"
-      assert test ?f, "#{tmpdir}/.dotfiles/vimrc"
-      assert test ?f, "#{tmpdir}/.dotfiles/vim/autoload/pathogen.vim"
+      check_tree tmpdir, '.dotfiles/vim', '.dotfiles/vimrc'
     end
   end
 
@@ -44,11 +43,7 @@ class TestUpdater < MiniTest::Unit::TestCase
 
       Dir.mkdir "#{tmpdir}/mydots"
       `./vim-update-bundles vimrc="#{tmpdir}/mydots/vim rc"`
-
-      assert test ?l, "#{tmpdir}/.vimrc"
-      assert_equal File.readlink("#{tmpdir}/.vimrc"), "#{tmpdir}/mydots/vim rc"
-      assert test ?f, "#{tmpdir}/mydots/vim rc"
-      assert test ?f, "#{tmpdir}/.vim/autoload/pathogen.vim"
+      check_tree tmpdir, '.vim', 'mydots/vim rc'
     end
   end
 
@@ -64,11 +59,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       }
 
       `./vim-update-bundles`
-
-      assert test ?l, "#{tmpdir}/.vimrc"
-      assert_equal File.readlink("#{tmpdir}/.vimrc"), "#{tmpdir}/parent/child/vv zz"
-      assert test ?f, "#{tmpdir}/parent/child/vv zz"
-      assert test ?f, "#{tmpdir}/.vim/autoload/pathogen.vim"
+      check_tree tmpdir, '.vim', 'parent/child/vv zz'
     end
   end
 
