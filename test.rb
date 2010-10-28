@@ -63,9 +63,6 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
-
-      # make sure docs are populated when we do an empty update
-      `./vim-update-bundles`
       assert test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
       assert test ?d, "#{tmpdir}/.vim/bundle"
       assert_equal ['.', '..'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }

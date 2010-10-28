@@ -12,11 +12,9 @@
 #   " bundle: git://github.com/bronson/vim-closebuffer.git 0.2
 #   " bundle: git://github.com/tpope/vim-rails.git 42bb0699
 #
-# todo: should run once after creating a vim environment
 # todo: stop using `` to run commands -- it's got interpolation issues
 # todo: kill the update if COMMAND fails
-# todo: should we just create ~/.vimrc as a file instead of a symlink to ~/.vim/vimrc?
-# todo: should we ask questions to create a config file?  "install bundles as submodules? [n] "
+# todo: windows compatibility?
 
 require 'fileutils'
 require 'open-uri'
@@ -135,6 +133,7 @@ end
 
 
 def update_bundles_and_docs
+  ensure_dir dotvim('doc')
   File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
     doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
     doc.puts "These are the bundles installed on your system, along with their\n" +
@@ -160,8 +159,6 @@ def create_new_vim_environment vimrc, starter_url, pathogen_url
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
   download_file pathogen_url, dotvim('autoload', 'pathogen.vim')
-
-  puts 'Done!  Now edit your ~/.vimrc file.'
 end
 
 
@@ -183,9 +180,11 @@ ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
 $dotvim = dotvim
 $quiet = verbose ? '' : '-q'
 if ensure_dir dotvim
+  # create a brand new vim environment
   create_new_vim_environment vimrc, starter_url, pathogen_url
+  update_bundles_and_docs
+  puts 'Done!  Now enable some plugins in your ~/.vimrc file.'
 else
-  ensure_dir dotvim('doc')
   update_bundles_and_docs
   puts "updating helptags..."
   `vim -e -c "call pathogen#helptags()" -c q` unless ENV['TESTING']
