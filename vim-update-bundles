@@ -7,10 +7,10 @@
 # To specify a bundle in your .vimrc, just add a line like this:
 #   " BUNDLE: git://git.wincent.com/command-t.git
 # If you want a branch other than 'master', add the branch name on the end:
-#   " BUNDLE: git://github.com/vim-ruby/vim-ruby.git noisy
+#   " Bundle: git://github.com/vim-ruby/vim-ruby.git noisy
 # Or tag or sha1: (this results in a detached head, see 'git help checkout')
-#   " BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
-#   " BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
+#   " bundle: git://github.com/bronson/vim-closebuffer.git 0.2
+#   " bundle: git://github.com/tpope/vim-rails.git 42bb0699
 #
 # todo: should run once after creating a vim environment
 # todo: stop using `` to run commands -- it's got interpolation issues
@@ -110,12 +110,12 @@ def update_bundles doc
   existing_bundles = Dir['*']
   dir = nil
   read_vimrc do |line|
-    if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
+    if line =~ /^\s*"\s*bundle:\s*(.*)$/i
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
       download_bundle dir, url, tag, doc
       existing_bundles.delete dir
-    elsif line =~ /^\s*"\s*BUNDLE-COMMAND:\s*(.*)$/
+    elsif line =~ /^\s*"\s*bundle-command:\s*(.*)$/i
       raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
       puts "  running: #{$1}"
       FileUtils.cd(dir) { system($1) }

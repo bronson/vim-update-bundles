@@ -1,3 +1,5 @@
+- BUNDLE and BUNDLE-COMMAND are now case-insensitive.
+
 0.2  27 Oct 2010
 - Added a pure ruby configuration file, ~/vim-update-bundles.rb
 - Don't clean ".vim" from repo names. a.vim is "a.vim" and not just "a".
