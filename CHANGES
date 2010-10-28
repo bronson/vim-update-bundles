@@ -1,9 +1,9 @@
-- Don't clean ".vim" from repo names.  a.vim is no longer truncated to "a".
 - submodule support?
 - added a configuration file?
 
 
 - Added verbose flag.  ./vim-update-bundles verbose=1 to hear everything.
+- Don't clean ".vim" from repo names.  a.vim is no longer called "a".
 - bugfix: repos now automatically fast-forward to the latest commit.
 - added command line args: ./vim-update-bundles vimrc="$HOME/dots/vimrc"
   but they're not very useful in real life, only for testing.
