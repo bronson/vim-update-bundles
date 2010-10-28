@@ -38,7 +38,7 @@ end
 
 def print_bundle dir, doc
   version = date = ''
-  FileUtils.cd(dir) do
+  Dir.chdir(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
     version = "n/a" if version == ''
     date = `git log -1 --pretty=format:%ai`.chomp
@@ -56,11 +56,10 @@ end
 def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
-    remote = ''   # shame FileUtils.cd doesn't return the retval of the block
-    FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
+    remote = Dir.chdir(dir)  { `git config --get remote.origin.url`.chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      FileUtils.cd(dir) { `git fetch #{$quiet}` }
+      Dir.chdir(dir) { `git fetch #{$quiet}` }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -70,7 +69,7 @@ def download_bundle dir, url, tag, doc
     clone_bundle dir, url, tagstr
   end
 
-  FileUtils.cd(dir) do
+  Dir.chdir(dir) do
     if tag
       `git checkout #{$quiet} #{tag}`
     else
@@ -145,7 +144,7 @@ def update_bundles_and_docs
 
     bundle_dir = dotvim('bundle')
     ensure_dir bundle_dir
-    FileUtils.cd(bundle_dir) { update_bundles(doc) }
+    Dir.chdir(bundle_dir) { update_bundles(doc) }
     doc.puts "\n"
   end
 end
