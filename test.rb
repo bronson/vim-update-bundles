@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'minitest/unit'
 require 'tempfile'
 require 'tmpdir'
