@@ -53,7 +53,7 @@ end
 
 def clone_bundle dir, url, tagstr
   puts "cloning #{dir} from #{url}#{tagstr}"
-  `git clone -q #{url} #{dir}`
+  `git clone #{$quiet} #{url} #{dir}`
 end
 
 
@@ -64,7 +64,7 @@ def download_bundle dir, url, tag, doc
     FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      FileUtils.cd(dir) { `git fetch` }
+      FileUtils.cd(dir) { `git fetch #{$quiet}` }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -76,9 +76,9 @@ def download_bundle dir, url, tag, doc
 
   FileUtils.cd(dir) do
     if tag
-      `git checkout -q #{tag}`
+      `git checkout #{$quiet} #{tag}`
     else
-      `git pull origin master`
+      `git pull #{$quiet} origin master`
     end
   end
   print_bundle(dir, doc)
@@ -172,6 +172,7 @@ pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathoge
 # dotvim is the directory that contains vim bundles, doc, autoload, etc dirs.
 dotvim = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
 vimrc  = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
+verbose = nil  # make git quiet by default, verbose=true to hear everything
 
 # User config file is written in yaml since requiring a ruby file had issues
 conf_file = File.join ENV['HOME'], '.vim-update-bundles.yaml'
@@ -181,6 +182,7 @@ ARGV.each { |arg| k,v = arg.split('=',2); config[k] = v }
 config.each { |k,v| eval "#{k}='#{v.gsub('//', '////').split("'").join("\\'")}'" }
 
 $dotvim = dotvim
+$quiet = verbose ? '' : '-q'
 if ensure_dir dotvim
   create_new_vim_environment vimrc, starter_url, pathogen_url
 else
