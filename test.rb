@@ -121,11 +121,10 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert test ?f, "#{tmpdir}/.vim/.gitmodules"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
 
-      # TODO: doesn't the script needs to update submodules somehow?
       # pull some upstream changes
-      # update_mock_repo "#{tmpdir}/repo", "second"
-      # `./vim-update-bundles`
-      # assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      update_mock_repo "#{tmpdir}/repo", "second"
+      `./vim-update-bundles`
+      assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
 
       # remove the repo
       write_file tmpdir, ".vim/vimrc", ""

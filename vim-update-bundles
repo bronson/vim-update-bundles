@@ -66,18 +66,24 @@ def ignore_doc_tags
 end
 
 
+def in_git_root inpath=nil
+  # submodules often require the cwd to be the git root.  if you pass a path
+  # relative to the cwd, your block receives it relative to the root.
+  path = File.join Dir.pwd, inpath if inpath
+  FileUtils.cd("./" + `git rev-parse --show-cdup`.chomp) do
+    path.sub! /^#{Dir.pwd}\/?/, '' if path
+    yield path
+  end
+end
+
+
 def clone_bundle dir, url, tagstr
   unless $submodule
     puts "cloning #{dir} from #{url}#{tagstr}"
     `git clone #{$quiet} #{url} #{dir}`
   else
     puts "adding submodule #{dir} from #{url}#{tagstr}"
-    # git requires being in git root and supplying a relative path
-    modulepath = File.join Dir.pwd, dir
-    FileUtils.cd("./" + `git rev-parse --show-cdup`.chomp) {
-      modulepath.sub! /^#{Dir.pwd}\/?/, ''
-      `git submodule add #{url} #{modulepath}`
-    }
+    in_git_root(dir) { |mod| `git submodule add #{url} #{mod}` }
   end
 end
 
@@ -107,6 +113,7 @@ def download_bundle dir, url, tag, doc
     end
     ignore_doc_tags
   end
+  in_git_root(dir) { |mod| `git add #{mod}` } if $submodule
   print_bundle(dir, doc)
 end
 
