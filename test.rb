@@ -79,17 +79,20 @@ class TestUpdater < MiniTest::Unit::TestCase
       write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      assert test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      assert test ?f, "#{repo}/first"
+      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "second"
       `./vim-update-bundles`
       assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
 
       # remove the repo
       write_file tmpdir, ".vim/vimrc", ""
       `./vim-update-bundles`
-      assert !test(?d, "#{tmpdir}/.vim/bundle/repo")
+      assert !test(?d, repo)
     end
   end
 
@@ -106,8 +109,10 @@ class TestUpdater < MiniTest::Unit::TestCase
       write_file tmpdir, ".vim/vimrc", "\" SUBMODULE: #{tmpdir}/repo"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      assert test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      assert test ?f, "#{repo}/first"
       assert test ?f, "#{tmpdir}/.vim/.gitmodules"
+      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
 
       #    todo: submodules don't appear to be updated?
       # pull some upstream changes
@@ -118,7 +123,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       # remove the repo
       write_file tmpdir, ".vim/vimrc", ""
       `./vim-update-bundles`
-      assert !test(?d, "#{tmpdir}/.vim/bundle/repo")
+      assert !test(?d, repo)
       # the submodule is still there and must be removed by hand
     end
   end

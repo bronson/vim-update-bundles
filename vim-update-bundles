@@ -57,6 +57,16 @@ def print_bundle dir, doc
 end
 
 
+def ignore_doc_tags
+  exclude = File.read ".git/info/exclude"
+  if exclude !~ /doc\/tags/
+    File.open(".git/info/exclude", "w") { |f|
+      f.write exclude.chomp + "\ndoc/tags\n"
+    }
+  end
+end
+
+
 def clone_bundle dir, url, tagstr, is_submodule
   if is_submodule
     puts "adding submodule #{dir} from #{url}#{tagstr}"
@@ -96,6 +106,7 @@ def download_bundle dir, url, tag, doc, is_submodule
     else
       `git pull #{$quiet} origin master`
     end
+    ignore_doc_tags
   end
   print_bundle(dir, doc)
 end

@@ -1,3 +1,6 @@
+- added submodule support thanks to steeef.
+- every repo now automatically ignores the doc/tags file.
+
 0.2  27 Oct 2010
 - Added a pure ruby configuration file, ~/vim-update-bundles.rb
 - Don't clean ".vim" from repo names. a.vim is "a.vim" and not just "a".
