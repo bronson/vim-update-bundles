@@ -23,6 +23,8 @@ set nocompatible
 " # BUNDLE: git://github.com/scrooloose/nerdtree.git
 " # BUNDLE: git://github.com/bronson/vim-bufexplorer.git
 " # BUNDLE: git://github.com/bronson/Command-T.git
+" #   If rvm is installed, make sure we compile command-t with the system ruby
+" #   BUNDLE-COMMAND: if which rvm >/dev/null 2>&1; then rvm system exec rake make; else rake make; fi
 " # BUNDLE: git://github.com/bronson/vim-closebuffer.git
 " # BUNDLE: git://github.com/bronson/vim-indexedsearch.git
 " # BUNDLE: git://github.com/bronson/vim-scrollcolors.git
