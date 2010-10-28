@@ -1,12 +1,10 @@
-- submodule support?
-- added a configuration file?
-
-
-- Don't clean ".vim" from repo names.  a.vim is "a.vim" and not just "a".
-- Added verbose flag.  Run ./vim-update-bundles verbose=1 to hear everything.
-- bugfix: repos now automatically fast-forward to the latest commit.
+0.2  27 Oct 2010
+- Added a pure ruby configuration file, ~/vim-update-bundles.rb
+- Don't clean ".vim" from repo names. a.vim is "a.vim" and not just "a".
+- Added verbose flag. Run ./vim-update-bundles --verbose=1 to hear everything.
+- bugfix: repos weren't automatically fast-forwarding to the latest commit.
 - added command line args: ./vim-update-bundles vimrc="$HOME/dots/vimrc"
   but they're not very useful in real life, only for testing.
-- added some tests!  "rake test" in the git repo to run them.
+- added some tests! "rake test" in the git repo to run them.
 - created a changes file.
 
