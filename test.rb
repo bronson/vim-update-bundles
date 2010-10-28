@@ -65,20 +65,28 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
 
+      # make sure docs are populated when we do an empty update
       `./vim-update-bundles`
       assert test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
       assert test ?d, "#{tmpdir}/.vim/bundle"
       assert_equal ['.', '..'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
 
+      # add a repo
       create_mock_repo "#{tmpdir}/repo"
       write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert test ?f, "#{tmpdir}/.vim/bundle/repo/first"
 
+      # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "second"
       `./vim-update-bundles`
       assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+
+      # remove the repo
+      write_file tmpdir, ".vim/vimrc", ""
+      `./vim-update-bundles`
+      assert !test(?d, "#{tmpdir}/.vim/bundle/repo")
     end
   end
 
