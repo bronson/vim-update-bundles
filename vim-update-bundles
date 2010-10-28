@@ -16,6 +16,9 @@
 # as submodules by using SUBMODULE instead of BUNDLE in your .virmrc:
 #   " SUBMODULE: git://git.wincent.com/command-t.git
 #
+# todo: submodules: tagstr doesn't work.  how do I check a submodule out at a particular tag?
+# todo: submodules: they don't seem to update when the upstream repo changes.
+#
 # todo: match BUNDLE case-insensitively
 # todo: kill the update if COMMAND fails
 # todo: should run once after creating a vim environment
@@ -57,7 +60,12 @@ end
 def clone_bundle dir, url, tagstr, is_submodule
   if is_submodule
     puts "adding submodule #{dir} from #{url}#{tagstr}"
-    FileUtils.cd(dotvim) { `git submodule add #{url} bundle/#{dir}` }
+    # git requires being in git root and supplying a relative path
+    modulepath = File.join Dir.pwd, dir
+    FileUtils.cd("./" + `git rev-parse --show-cdup`.chomp) {
+      modulepath.sub! /^#{Dir.pwd}\/?/, ''
+      `git submodule add #{url} #{modulepath}`
+    }
   else
     puts "cloning #{dir} from #{url}#{tagstr}"
     `git clone #{$quiet} #{url} #{dir}`

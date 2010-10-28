@@ -4,6 +4,9 @@ require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
+# todo: test that tagstr works (branch, tag, and sha1)
+#   also switching from a branch/tag/sha to master and back.
+#   also with submodules
 # todo: test BUNDLE-COMMAND
 
 # This is actually functional testing the updater since we call
@@ -98,6 +101,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       check_tree tmpdir, ".vim", ".vim/vimrc"
       Dir.chdir("#{tmpdir}/.vim") { `git init` }
 
+      # add submodule
       create_mock_repo "#{tmpdir}/repo"
       write_file tmpdir, ".vim/vimrc", "\" SUBMODULE: #{tmpdir}/repo"
       `./vim-update-bundles`
@@ -105,10 +109,17 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert test ?f, "#{tmpdir}/.vim/.gitmodules"
 
-      #    todo: how do submodules get updated?
+      #    todo: submodules don't appear to be updated?
+      # pull some upstream changes
       # update_mock_repo "#{tmpdir}/repo", "second"
       # `./vim-update-bundles`
       # assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+
+      # remove the repo
+      write_file tmpdir, ".vim/vimrc", ""
+      `./vim-update-bundles`
+      assert !test(?d, "#{tmpdir}/.vim/bundle/repo")
+      # the submodule is still there and must be removed by hand
     end
   end
 
