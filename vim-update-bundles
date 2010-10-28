@@ -102,6 +102,16 @@ def remove_bundle dir
 end
 
 
+def run_bundle_command dir, cmd
+  puts "  running: #{cmd}"
+  status = Dir.chdir(dir) { system(cmd); $? }
+  unless status.success?
+    puts "  BUNDLE-COMMAND command failed!"
+    exit 47
+  end
+end
+
+
 def update_bundles doc
   existing_bundles = Dir['*']
   dir = nil
@@ -113,12 +123,7 @@ def update_bundles doc
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
       raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
-      puts "  running: #{$1}"
-      status = Dir.chdir(dir) { system($1); $? }
-      unless status.success?
-        puts "  BUNDLE-COMMAND command failed!"
-        exit 47
-      end
+      run_bundle_command dir, $1
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
