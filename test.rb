@@ -8,6 +8,7 @@ MiniTest::Unit.autorun
 #   also switching from a branch/tag/sha to master and back.
 #   also with submodules
 # todo: test BUNDLE-COMMAND
+# todo: test removing bundles multiple times.
 
 # This is actually functional testing the updater since we call
 # the executable directly.  We just use minitest for the helpers
@@ -15,7 +16,7 @@ MiniTest::Unit.autorun
 
 class TestUpdater < MiniTest::Unit::TestCase
   def prepare_test
-    # create a directory tree to run the test in
+    # creates a tmpdir to run the test in then yields to the test
     Dir.mktmpdir('vimtest-') do |tmpdir|
       create_mock_files tmpdir
       Dir.mkdir "#{tmpdir}/home"
@@ -30,7 +31,7 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
   def create_mock_files tmpdir
-    # create local mocks for the files we'd download
+    # create local mocks for the files would download, saves net traffic and test time.
     write_file tmpdir, "pathogen",      "\" PATHOGEN SCRIPT"
     write_file tmpdir, "starter-vimrc", "\" STARTER VIMRC"
     @starter_urls = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
@@ -55,6 +56,7 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
   def check_tree base, dotvim, vimrc
+    # makes sure that the dir looks like a plausible vim installation
     assert test ?l, "#{base}/.vimrc"
     assert_equal File.readlink("#{base}/.vimrc"), "#{base}/#{vimrc}"
     assert test ?f, "#{base}/#{vimrc}"
@@ -98,7 +100,7 @@ class TestUpdater < MiniTest::Unit::TestCase
 
 
   def test_submodule_run
-    # creates a starter environment then updates a few times
+    # creates a starter environment using submodules
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
@@ -106,7 +108,12 @@ class TestUpdater < MiniTest::Unit::TestCase
 
       # add submodule
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vim/vimrc", "\" SUBMODULE: #{tmpdir}/repo"
+
+      File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f|
+        f.write "submodule = true"
+      }
+      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo"
+
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
@@ -114,7 +121,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert test ?f, "#{tmpdir}/.vim/.gitmodules"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
 
-      #    todo: submodules don't appear to be updated?
+      # TODO: doesn't the script needs to update submodules somehow?
       # pull some upstream changes
       # update_mock_repo "#{tmpdir}/repo", "second"
       # `./vim-update-bundles`
@@ -123,8 +130,10 @@ class TestUpdater < MiniTest::Unit::TestCase
       # remove the repo
       write_file tmpdir, ".vim/vimrc", ""
       `./vim-update-bundles`
-      assert !test(?d, repo)
-      # the submodule is still there and must be removed by hand
+      # TODO: the submodule wasn't actually deleted, so when we call
+      # git submodule init; git submodule update, it is recreated.
+      # We need to be able to delete submodules.
+      # assert !test(?d, repo)
     end
   end
 

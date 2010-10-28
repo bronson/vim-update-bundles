@@ -13,10 +13,9 @@
 #   " BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
 #
 # If your .vim folder is stored in a git repository, you can add bundles
-# as submodules by using SUBMODULE instead of BUNDLE in your .virmrc:
-#   " SUBMODULE: git://git.wincent.com/command-t.git
+# as submodules by putting "submodule=true" in ~/.vim-update-bundles.conf
 #
-# todo: submodules: tagstr doesn't work.  how do I check a submodule out at a particular tag?
+# todo: submodules: tagstr doesn't work.  how does one check a submodule out at a particular tag?
 # todo: submodules: they don't seem to update when the upstream repo changes.
 #
 # todo: match BUNDLE case-insensitively
@@ -67,8 +66,11 @@ def ignore_doc_tags
 end
 
 
-def clone_bundle dir, url, tagstr, is_submodule
-  if is_submodule
+def clone_bundle dir, url, tagstr
+  unless $submodule
+    puts "cloning #{dir} from #{url}#{tagstr}"
+    `git clone #{$quiet} #{url} #{dir}`
+  else
     puts "adding submodule #{dir} from #{url}#{tagstr}"
     # git requires being in git root and supplying a relative path
     modulepath = File.join Dir.pwd, dir
@@ -76,14 +78,11 @@ def clone_bundle dir, url, tagstr, is_submodule
       modulepath.sub! /^#{Dir.pwd}\/?/, ''
       `git submodule add #{url} #{modulepath}`
     }
-  else
-    puts "cloning #{dir} from #{url}#{tagstr}"
-    `git clone #{$quiet} #{url} #{dir}`
   end
 end
 
 
-def download_bundle dir, url, tag, doc, is_submodule
+def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
     remote = ''   # shame FileUtils.cd doesn't return the retval of the block
@@ -94,10 +93,10 @@ def download_bundle dir, url, tag, doc, is_submodule
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
-      clone_bundle dir, url, tagstr, is_submodule
+      clone_bundle dir, url, tagstr
     end
   else
-    clone_bundle dir, url, tagstr, is_submodule
+    clone_bundle dir, url, tagstr
   end
 
   FileUtils.cd(dir) do
@@ -126,7 +125,7 @@ def remove_bundle dir
     destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
     unless test ?d, destination
       puts "Erasing #{dir}, find it in #{destination}"
-      puts "If it was a submodule, delete its lines from .gitmodules and .git/config"
+      puts "  Also delete its lines from .gitmodules and .git/config" if $submodule
       FileUtils.mv dir, destination
       return
     end
@@ -138,17 +137,11 @@ end
 def update_bundles doc
   existing_bundles = Dir['*']
   dir = nil
-  submodule_changed = false
   read_vimrc do |line|
-    is_submodule = false
-    if line =~ /^\s*"\s*SUBMODULE:\s*(.*)$/
-      is_submodule = true
-      submodule_changed ||= true
-    end
-    if line =~ /^\s*"\s*(?:BUNDLE|SUBMODULE):\s*(.*)$/
+    if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
-      download_bundle dir, url, tag, doc, is_submodule
+      download_bundle dir, url, tag, doc
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*BUNDLE-COMMAND:\s*(.*)$/
       raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
@@ -158,7 +151,7 @@ def update_bundles doc
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
 
-  if submodule_changed
+  if $submodule
     FileUtils.cd(dotvim) {
       puts "  initializing submodules"
       `git submodule init`
@@ -215,7 +208,8 @@ pathogen_url = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathoge
 # dotvim is the directory that contains vim bundles, doc, autoload, etc dirs.
 dotvim = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
 vimrc  = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
-verbose = nil  # make git quiet by default, verbose=true to hear everything
+verbose = nil     # make git quiet by default, verbose=true to hear everything
+submodule = false # clone dirs normally unless submodule = 1
 
 # config file is written in ruby
 conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
@@ -224,7 +218,7 @@ eval(File.read(conf_file), binding, conf_file) if test(?f, conf_file)
 ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
   eval "#{k}='#{v.gsub('//', '////').split("'").join("\\'")}'" }
 
-$dotvim = dotvim
+$dotvim, $submodule = dotvim, submodule
 $quiet = verbose ? '' : '-q'
 if ensure_dir dotvim
   create_new_vim_environment vimrc, starter_url, pathogen_url
