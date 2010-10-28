@@ -87,6 +87,39 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
+  def test_working_bundle_command
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls}`
+      check_tree tmpdir, ".vim", ".vim/vimrc"
+      create_mock_repo "#{tmpdir}/repo"
+      write_file tmpdir, ".vim/vimrc", <<-EOL
+        " Bundle: #{tmpdir}/repo
+        " Bundle command: echo hiya > #{tmpdir}/output
+      EOL
+      `./vim-update-bundles`
+
+      assert test(?f, "#{tmpdir}/output")
+      assert_equal "hiya\n", File.read("#{tmpdir}/output")
+    end
+  end
+
+
+  def test_failing_bundle_command
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls}`
+      check_tree tmpdir, ".vim", ".vim/vimrc"
+      create_mock_repo "#{tmpdir}/repo"
+      write_file tmpdir, ".vim/vimrc", <<-EOL
+        " Bundle: #{tmpdir}/repo
+        " Bundle-Command: oh-no-this-command-does-not-exist
+      EOL
+
+      `./vim-update-bundles`
+      assert $?.exitstatus == 47, "the bundle-command should have produced 47, not #{$?.exitstatus}"
+    end
+  end
+
+
   def test_create_dotfile_environment
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"

@@ -13,7 +13,6 @@
 #   " bundle: git://github.com/tpope/vim-rails.git 42bb0699
 #
 # todo: stop using `` to run commands -- it's got interpolation issues
-# todo: kill the update if COMMAND fails
 # todo: windows compatibility?
 
 require 'fileutils'
@@ -113,10 +112,14 @@ def update_bundles doc
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
       download_bundle dir, url, tag, doc
       existing_bundles.delete dir
-    elsif line =~ /^\s*"\s*bundle-command:\s*(.*)$/i
+    elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
       raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
       puts "  running: #{$1}"
-      FileUtils.cd(dir) { system($1) }
+      status = Dir.chdir(dir) { system($1); $? }
+      unless status.success?
+        puts "  BUNDLE-COMMAND command failed!"
+        exit 47
+      end
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
