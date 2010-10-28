@@ -129,10 +129,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       # remove the repo
       write_file tmpdir, ".vim/vimrc", ""
       `./vim-update-bundles`
-      # TODO: the submodule wasn't actually deleted, so when we call
-      # git submodule init; git submodule update, it is recreated.
-      # We need to be able to delete submodules.
-      # assert !test(?d, repo)
+      assert !test(?d, repo)
     end
   end
 
