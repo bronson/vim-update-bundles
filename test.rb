@@ -102,6 +102,17 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
+  def test_dont_blow_away_existing_vimrc
+    # don't want to destroy a previously existing .vimrc
+    prepare_test do |tmpdir|
+      str = "don't tread on me"
+      write_file tmpdir, '.vimrc', str
+      `./vim-update-bundles #{@starter_urls} --dotvimrc='#{tmpdir}/.vimrc'`
+      assert_equal str, File.read("#{tmpdir}/.vimrc")
+    end
+  end
+
+
   def test_submodule_run
     # creates a starter environment using submodules
     prepare_test do |tmpdir|

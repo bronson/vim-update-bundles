@@ -221,9 +221,9 @@ def create_new_vim_environment vimrc, starter_url, pathogen_url
   puts 'Creating a new Vim environment.'
   puts "Downloading starter vimrc..."
   ensure_dir dotvim
-  download_file starter_url, vimrc
-  run :ln, '-s', vimrc, "#{ENV['HOME']}/.vimrc" unless test ?f, "#{ENV['HOME']}/.vimrc"
-  run :ln, '-s', dotvim, "#{ENV['HOME']}/.vim" unless test ?d, "#{ENV['HOME']}/.vim"
+  download_file starter_url, vimrc unless test ?e, vimrc
+  run :ln, '-s', vimrc, "#{ENV['HOME']}/.vimrc" unless test ?e, "#{ENV['HOME']}/.vimrc"
+  run :ln, '-s', dotvim, "#{ENV['HOME']}/.vim" unless test ?e, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
