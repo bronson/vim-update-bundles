@@ -316,7 +316,7 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_create_custom_vimrc_environment
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/mydots"
-      `./vim-update-bundles #{@starter_urls} vimrc='#{tmpdir}/mydots/vim rc'`
+      `./vim-update-bundles #{@starter_urls} dotvimrc='#{tmpdir}/mydots/vim rc'`
       check_tree tmpdir, '.vim', 'mydots/vim rc'
     end
   end
@@ -327,7 +327,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       Dir.mkdir "#{tmpdir}/parent"
       Dir.mkdir "#{tmpdir}/parent/child"
       File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f|
-        f.write "vimrc = '#{tmpdir}/parent/child/vv zz'"
+        f.write "dotvimrc = '#{tmpdir}/parent/child/vv zz'"
       }
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, '.vim', 'parent/child/vv zz'

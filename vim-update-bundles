@@ -236,7 +236,7 @@ starter_url   = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-s
 pathogen_url  = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
 # dotvim is the directory that contains vim bundles, doc, autoload, etc dirs.
 dotvim        = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
-vimrc         = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
+dotvimrc      = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
 verbose       = nil     # make git quiet by default, verbose=true to hear everything
 submodule     = false   # clone dirs normally unless submodule = 1
 
@@ -249,8 +249,8 @@ ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
   eval "#{k}='#{(v||'').gsub('//', '////').split("'").join("\\'")}'" }
 
 $dotvim, $submodule, $verbose = dotvim, submodule, verbose
-if ensure_dir(dotvim) || !test(?f, vimrc)
-  create_new_vim_environment vimrc, starter_url, pathogen_url
+if ensure_dir(dotvim) || !test(?f, dotvimrc)
+  create_new_vim_environment dotvimrc, starter_url, pathogen_url
   update_bundles_and_docs
   puts 'Done!  Now enable some plugins in your ~/.vimrc file.'
 else
