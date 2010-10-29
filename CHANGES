@@ -1,4 +1,6 @@
+0.3  29 Oct 2010
 - added submodule support thanks to steeef.
+- support putting .vim and .vimrc in custom locations using config options.
 - every repo now automatically ignores doc/tags.
 - BUNDLE and BUNDLE-COMMAND are now case-insensitive.
 - If a BUNDLE-COMMAND fails, vim-update-bundles now exits immediately.

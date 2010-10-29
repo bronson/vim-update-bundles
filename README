@@ -3,93 +3,95 @@
                       vim-update-bundles
 
 
-Use Pathogen and Git to easily set up and manage your Vim plugins.
+Use Pathogen and Git to manage your Vim plugins.
 
 
 DESCRIPTION
 
-This script reads BUNDLE: directives from your .vimrc, then updates the
-.vim/bundle directory to match.  For example, to load NERDTree, add this
-line to your .vimrc:
+This script reads the plugins to install from your .vimrc, then installs them.
+For example, add this line to your .vimrc and run vim-update-bundles:
 
-    " BUNDLE: git://github.com/scrooloose/nerdtree.git
+    " Bundle: git://github.com/scrooloose/nerdtree.git
 
-
-INSTALL
-
-NOTE: If you currently use vim, it's best to rename your ~/.vim directory
-and ~/.vimrc file and start fresh.
-
-  $ wget http://github.com/bronson/vim-update-bundles/raw/master/vim-update-bundles
-  $ ruby vim-update-bundles
-
-Now you have a working barebones environment.  Open ~/.vimrc, enable a few
-plugins, then run vim-update-bundles again to apply your changes.
-
-vim-update-bundles will install into a ~/.dotfiles directory if it exists.
-It works seamlessly with http://github.com/ryanb/dotfiles and friends.
+You will find NERDtree installed and ready to run, complete with helptags.
 
 
 USAGE
 
-From within Vim, run ':help bundles' to list all the bundles you have
-installed, along with hotlinks to their help pages.
+  $ wget http://github.com/bronson/vim-update-bundles/raw/master/vim-update-bundles
+  $ ruby vim-update-bundles
 
-Run vim-update-bundles at any time to ensure your plugins, syntax files,
-and color schemes are all up to date.  You can find more plugins to
-install on http://github.com/vim-scripts
+This will create a new environment if you're not already using vim.  You can also
+clone the git repo and run vim-update-bundles from there if that's easier.
+
+Now open your ~/.vimrc, enable a few plugins, and run vim-update-bundles again to
+apply the changes.
+
+  $ ruby vim-update-bundles
+
+  :help bundles       <- run inside vim to see the plugins you have installed.
+
+vim-update-bundles will use ~/.dotfiles if it exists so it works seamlessly
+with http://github.com/ryanb/dotfiles and friends.  It also supports git
+submodules (see CONFIGURATION below).
 
 
 VIMRC
 
-Any line of the format '" BUNDLE: URL [REV]' will be interpreted as a
-bundle to download.  URL is a git repository url, and REV is an optional
-git refspec (branch name, tag name, or sha1) that allows you to lock a
-plugin to a particular revision:
+Any line of the format '" BUNDLE: URL [REV]' (not case sensitive) will be
+interpreted as a bundle to download.  URL is to a git repository, and REV is an
+optional refspec (git branch, tag, or sha1) that allows you to follow a branch
+or lock it to a specific version:
 
     " BUNDLE: git://github.com/scrooloose/nerdtree.git 4.0.0
 
-This ensures your NerdTree remains at version 4.0.0.  If NerdTree releases
-a new version, just update the version number in your vimrc and re-run
-vim-update-bundles.
+Your NerdTree would at version 4.0.0.  To update to 4.0.1, just change your
+vimrc and re-run vim-update-bundles.
 
-You can put any number of BUNDLE-COMMAND: directives after BUNDLE.
-This will execute the given shell commands from the bundle's directory.
-For instance, to automatically build Command-T every time
-git-update-bundles is run:
+You can put any number of BUNDLE-COMMAND: directives after BUNDLE.  This
+executes the given shell commands within the bundle's directory.  For instance,
+to automatically build Command-T every time git-update-bundles is run:
 
     " BUNDLE: git://github.com/bronson/Command-T.git
     " BUNDLE-COMMAND: rake make
 
 
-BUNDLES.TXT
+CONFIGURATION
 
-From within Vim, type ':help bundles' to show a list of the bundes you
-have installed.  vim-update-bundles produces this file every time it runs.
+Run vim-update-bundles --verbose to see exactly what's happening.
+
+To install your bundles as submodules rather than plain git repos, put
+"submodule = 1" in ~/.vim-update-bundles.conf.  Of course, you must create the
+parent repo to contain the submodules before running vim-update-bundles.
+
+If you put your ~/.vim directory or ~/.vimrc file in a custom location, you can
+configure that ~/.vim-update-bundles.conf:
+
+  dotvim = "#{ENV['HOME']}/DOTFILES/vim"
+  dotvimrc = "#{ENV['HOME']}/DOTFILES/vim/vimrc"
+
+You can also change where pathogen.vim and the .vimrc template are downloaded
+from (only used when setting up a new vim environment).
+
+  starter_url  = '/tmp/local-vimrc-template'
+  pathogen_url = 'http://example.con/my-pathogen.vim'
 
 
 Q&A
 
 Q: How do I install a plugin?
-A: Add a line like this to your ~/.vimrc
-     " BUNDLE: git://github.com/bronson/vim-closebuffer.git
-   (use your own url of course) then run git-update-bundles.
+A: Add a line like this to your ~/.vimrc and then run git-update-bundles.
+     " Bundle: git://github.com/bronson/vim-closebuffer.git
 
 Q: How do I remove a plugin?
-A: Delete the BUNDLE: line and run git-update-bundles.
+A: Delete the line entirely or comment it out by inserting text before it.
+     " # Bundle: git://github.com/bronson/vim-closebuffer.git
+
+Q: How do I change a plugin?
+A: Change its URL in your .vimrc. vim-update-bundles will do the right thing.
 
 
 ALTERNATIVES
 
-vim-addon-manager: http://www.vim.org/scripts/script.php?script_id=2905
-  http://github.com/MarcWeber/vim-addon-manager
-  Written in vimscript, doesn't need pathogen(?)
-Vimana: http://github.com/c9s/Vimana
-  Written in Perl, dumps everything into .vimrc (no pathogen)
-
-
-HISTORY
-
-This script was inspired by Tammer Saleh's blog post in March 2010:
-  http://tammersaleh.com/posts/the-modern-vim-config-with-pathogen
+See http://vim-scripts.org/tools.html
 
