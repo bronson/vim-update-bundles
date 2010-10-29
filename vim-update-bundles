@@ -7,23 +7,16 @@
 # To specify a bundle in your .vimrc, just add a line like this:
 #   " BUNDLE: git://git.wincent.com/command-t.git
 # If you want a branch other than 'master', add the branch name on the end:
-#   " BUNDLE: git://github.com/vim-ruby/vim-ruby.git noisy
+#   " Bundle: git://github.com/vim-ruby/vim-ruby.git noisy
 # Or tag or sha1: (this results in a detached head, see 'git help checkout')
-#   " BUNDLE: git://github.com/bronson/vim-closebuffer.git 0.2
-#   " BUNDLE: git://github.com/tpope/vim-rails.git 42bb0699
+#   " bundle: git://github.com/bronson/vim-closebuffer.git 0.2
+#   " bundle: git://github.com/tpope/vim-rails.git 42bb0699
 #
 # If your .vim folder is stored in a git repository, you can add bundles
-# as submodules by putting "submodule=true" in ~/.vim-update-bundles.conf
+# as submodules by putting "submodule=true" in ~/.vim-update-bundles.conf.
 #
-# todo: submodules: tagstr doesn't work.  how does one check a submodule out at a particular tag?
-# todo: submodules: they don't seem to update when the upstream repo changes.
-#
-# todo: match BUNDLE case-insensitively
-# todo: kill the update if COMMAND fails
-# todo: should run once after creating a vim environment
 # todo: stop using `` to run commands -- it's got interpolation issues
-# todo: should we just create ~/.vimrc as a file instead of a symlink to ~/.vim/vimrc?
-# todo: should we ask questions to create a config file?  "install bundles as submodules? [n] "
+# todo: windows compatibility?
 
 require 'fileutils'
 require 'open-uri'
@@ -47,7 +40,7 @@ end
 
 def print_bundle dir, doc
   version = date = ''
-  FileUtils.cd(dir) do
+  Dir.chdir(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
     version = "n/a" if version == ''
     date = `git log -1 --pretty=format:%ai`.chomp
@@ -91,11 +84,10 @@ end
 def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
-    remote = ''   # shame FileUtils.cd doesn't return the retval of the block
-    FileUtils.cd(dir)  { remote = `git config --get remote.origin.url`.chomp }
+    remote = Dir.chdir(dir)  { `git config --get remote.origin.url`.chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      FileUtils.cd(dir) { `git fetch #{$quiet}` }
+      Dir.chdir(dir) { `git fetch #{$quiet}` }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -106,7 +98,7 @@ def download_bundle dir, url, tag, doc
     clone_bundle dir, url, tagstr
   end
 
-  FileUtils.cd(dir) do
+  Dir.chdir(dir) do
     # if branch is checked out then it must be pulled, not checked out again
     if tag && !test(?f, ".git/refs/heads/#{tag}")
       `git checkout #{$quiet} #{tag}`
@@ -151,19 +143,28 @@ def remove_bundle dir
 end
 
 
+def run_bundle_command dir, cmd
+  puts "  running: #{cmd}"
+  status = Dir.chdir(dir) { system(cmd); $? }
+  unless status.success?
+    puts "  BUNDLE-COMMAND command failed!"
+    exit 47
+  end
+end
+
+
 def update_bundles doc
   existing_bundles = Dir['*']
   dir = nil
   read_vimrc do |line|
-    if line =~ /^\s*"\s*BUNDLE:\s*(.*)$/
+    if line =~ /^\s*"\s*bundle:\s*(.*)$/i
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
       download_bundle dir, url, tag, doc
       existing_bundles.delete dir
-    elsif line =~ /^\s*"\s*BUNDLE-COMMAND:\s*(.*)$/
+    elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
       raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
-      puts "  running: #{$1}"
-      FileUtils.cd(dir) { system($1) }
+      run_bundle_command dir, $1
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
@@ -188,6 +189,7 @@ end
 
 
 def update_bundles_and_docs
+  ensure_dir dotvim('doc')
   File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
     doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
     doc.puts "These are the bundles installed on your system, along with their\n" +
@@ -196,7 +198,7 @@ def update_bundles_and_docs
 
     bundle_dir = dotvim('bundle')
     ensure_dir bundle_dir
-    FileUtils.cd(bundle_dir) { update_bundles(doc) }
+    Dir.chdir(bundle_dir) { update_bundles(doc) }
     doc.puts "\n"
   end
 end
@@ -213,8 +215,6 @@ def create_new_vim_environment vimrc, starter_url, pathogen_url
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
   download_file pathogen_url, dotvim('autoload', 'pathogen.vim')
-
-  puts 'Done!  Now edit your ~/.vimrc file.'
 end
 
 
@@ -238,9 +238,11 @@ ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
 $dotvim, $submodule = dotvim, submodule
 $quiet = verbose ? '' : '-q'
 if ensure_dir dotvim
+  # create a brand new vim environment
   create_new_vim_environment vimrc, starter_url, pathogen_url
+  update_bundles_and_docs
+  puts 'Done!  Now enable some plugins in your ~/.vimrc file.'
 else
-  ensure_dir dotvim('doc')
   update_bundles_and_docs
   puts "updating helptags..."
   `vim -e -c "call pathogen#helptags()" -c q` unless ENV['TESTING']

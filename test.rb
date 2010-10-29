@@ -75,9 +75,6 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
-
-      # make sure docs are populated when we do an empty update
-      `./vim-update-bundles`
       assert test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
       assert test ?d, "#{tmpdir}/.vim/bundle"
       assert_equal ['.', '..'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
@@ -272,6 +269,39 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert !test(?f, "#{repo}/third")
 
       # TODO: switch to master and back, and to another branch and back
+    end
+  end
+
+
+  def test_working_bundle_command
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls}`
+      check_tree tmpdir, ".vim", ".vim/vimrc"
+      create_mock_repo "#{tmpdir}/repo"
+      write_file tmpdir, ".vim/vimrc", <<-EOL
+        " Bundle: #{tmpdir}/repo
+        " Bundle command: echo hiya > #{tmpdir}/output
+      EOL
+      `./vim-update-bundles`
+
+      assert test(?f, "#{tmpdir}/output")
+      assert_equal "hiya\n", File.read("#{tmpdir}/output")
+    end
+  end
+
+
+  def test_failing_bundle_command
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls}`
+      check_tree tmpdir, ".vim", ".vim/vimrc"
+      create_mock_repo "#{tmpdir}/repo"
+      write_file tmpdir, ".vim/vimrc", <<-EOL
+        " Bundle: #{tmpdir}/repo
+        " Bundle-Command: oh-no-this-command-does-not-exist
+      EOL
+
+      `./vim-update-bundles`
+      assert $?.exitstatus == 47, "the bundle-command should have produced 47, not #{$?.exitstatus}"
     end
   end
 
