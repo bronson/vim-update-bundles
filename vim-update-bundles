@@ -209,7 +209,7 @@ def create_new_vim_environment vimrc, starter_url, pathogen_url
   puts "Downloading starter vimrc..."
   ensure_dir dotvim
   download_file starter_url, vimrc
-  `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'`
+  `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'` unless test ?f, "#{ENV['HOME']}/.vimrc"
   `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
@@ -237,7 +237,7 @@ ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
 
 $dotvim, $submodule = dotvim, submodule
 $quiet = verbose ? '' : '-q'
-if ensure_dir dotvim
+if ensure_dir(dotvim) || !test(?f, vimrc)
   # create a brand new vim environment
   create_new_vim_environment vimrc, starter_url, pathogen_url
   update_bundles_and_docs
