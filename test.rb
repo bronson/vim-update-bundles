@@ -4,11 +4,12 @@ require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
-# todo: test that tagstr works (branch, tag, and sha1)
+# todo: test that tagstr sha1 works
 #   also switching from a branch/tag/sha to master and back.
 #   also with submodules
 # todo: test BUNDLE-COMMAND
 # todo: test removing bundles multiple times.
+# todo: what happens when checking out a branch or tag and it doesn't exist?
 
 # This is actually functional testing the updater since we call
 # the executable directly.  We just use minitest for the helpers
@@ -164,11 +165,13 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert test(?f, "#{repo}/second")
       assert !test(?f, "#{repo}/third")
       assert !test(?f, "#{repo}/fourth")
+
+      # TODO: switch to master and back, and to another tag and back
     end
   end
 
 
-  def test_submodule_checkout
+  def test_submodule_tagstr_checkout
     # ensures that you can lock a checkout to a particular tag
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls} --submodule=true`
@@ -195,6 +198,80 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert test(?f, "#{repo}/second")
       assert !test(?f, "#{repo}/third")
       assert !test(?f, "#{repo}/fourth")
+    end
+  end
+
+
+  def test_branch_checkout
+    # ensures it will still follow new commits on a branch
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls}`
+      check_tree tmpdir, ".vim", ".vim/vimrc"
+
+      # make a repo with another branch
+      create_mock_repo "#{tmpdir}/repo"
+      Dir.chdir("#{tmpdir}/repo") { `git checkout -q -b abranch` }
+      update_mock_repo "#{tmpdir}/repo", 'b-second'
+      Dir.chdir("#{tmpdir}/repo") { `git checkout -q master` }
+      update_mock_repo "#{tmpdir}/repo", 'second'
+
+      # clone that repo on the given branch
+      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
+      `./vim-update-bundles`
+      assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
+      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      assert test ?f, "#{repo}/first"
+      assert test ?f, "#{repo}/b-second"
+      assert !test(?f, "#{repo}/second")
+
+      # pull some upstream changes
+      update_mock_repo "#{tmpdir}/repo", "third"
+      Dir.chdir("#{tmpdir}/repo") { `git checkout -q abranch` }
+      update_mock_repo "#{tmpdir}/repo", "b-third"
+      `./vim-update-bundles`
+      assert test(?f, "#{repo}/b-second")
+      assert test(?f, "#{repo}/b-third")
+      assert !test(?f, "#{repo}/third")
+
+      # TODO: switch to master and back, and to another branch and back
+    end
+  end
+
+
+  def test_submodule_branch_checkout
+    # ensures that you can lock a checkout to a particular tag
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls} --submodule=true`
+      check_tree tmpdir, ".vim", ".vim/vimrc"
+      Dir.chdir(tmpdir) { `git init` }
+
+      # make a repo with another branch
+      create_mock_repo "#{tmpdir}/repo"
+      Dir.chdir("#{tmpdir}/repo") { `git checkout -q -b abranch` }
+      update_mock_repo "#{tmpdir}/repo", 'b-second'
+      Dir.chdir("#{tmpdir}/repo") { `git checkout -q master` }
+      update_mock_repo "#{tmpdir}/repo", 'second'
+
+      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
+      `./vim-update-bundles --submodule=1`
+      assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
+      assert test ?f, "#{tmpdir}/.gitmodules"
+      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      `git ls-files --cached .vim/bundle/repo`
+      assert test ?f, "#{repo}/first"
+      assert test ?f, "#{repo}/b-second"
+      assert !test(?f, "#{repo}/second")
+
+      # pull some upstream changes
+      update_mock_repo "#{tmpdir}/repo", "third"
+      Dir.chdir("#{tmpdir}/repo") { `git checkout -q abranch` }
+      update_mock_repo "#{tmpdir}/repo", "b-third"
+      `./vim-update-bundles --submodule=1`
+      assert test(?f, "#{repo}/b-second")
+      assert test(?f, "#{repo}/b-third")
+      assert !test(?f, "#{repo}/third")
+
+      # TODO: switch to master and back, and to another branch and back
     end
   end
 

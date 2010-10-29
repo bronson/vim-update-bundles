@@ -107,10 +107,11 @@ def download_bundle dir, url, tag, doc
   end
 
   FileUtils.cd(dir) do
-    if tag
+    # if branch is checked out then it must be pulled, not checked out again
+    if tag && !test(?f, ".git/refs/heads/#{tag}")
       `git checkout #{$quiet} #{tag}`
     else
-      `git pull #{$quiet} origin master`
+      `git pull #{$quiet} origin #{tag || 'master'}`
     end
     ignore_doc_tags
   end
