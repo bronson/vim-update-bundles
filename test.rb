@@ -11,9 +11,9 @@ MiniTest::Unit.autorun
 # todo: test removing bundles multiple times.
 # todo: what happens when checking out a branch or tag and it doesn't exist?
 
-# This is actually functional testing the updater since we call
-# the executable directly.  We just use minitest for the helpers
-# and output.
+# We actually shell out to the executable.  This isn't really unit
+# testing but I'd rather have end-to-end testing in this case anyway.
+
 
 class TestUpdater < MiniTest::Unit::TestCase
   def prepare_test
@@ -105,16 +105,14 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_submodule_run
     # creates a starter environment using submodules
     prepare_test do |tmpdir|
-      `./vim-update-bundles #{@starter_urls}`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      Dir.mkdir "#{tmpdir}/.vim"
       Dir.chdir("#{tmpdir}/.vim") { `git init` }
+      `./vim-update-bundles #{@starter_urls}`
+      # check_tree tmpdir, ".vim", ".vim/vimrc"
 
       # add submodule
       create_mock_repo "#{tmpdir}/repo"
-
-      File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f|
-        f.write "submodule = true"
-      }
+      File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f| f.write "submodule = true" }
       write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo"
 
       `./vim-update-bundles`
@@ -171,9 +169,9 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_submodule_tagstr_checkout
     # ensures that you can lock a checkout to a particular tag
     prepare_test do |tmpdir|
+      Dir.chdir(tmpdir) { `git init` }
       `./vim-update-bundles #{@starter_urls} --submodule=true`
       check_tree tmpdir, ".vim", ".vim/vimrc"
-      Dir.chdir(tmpdir) { `git init` }
 
       create_mock_repo "#{tmpdir}/repo"
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
@@ -238,9 +236,9 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_submodule_branch_checkout
     # ensures that you can lock a checkout to a particular tag
     prepare_test do |tmpdir|
+      Dir.chdir(tmpdir) { `git init` }
       `./vim-update-bundles #{@starter_urls} --submodule=true`
       check_tree tmpdir, ".vim", ".vim/vimrc"
-      Dir.chdir(tmpdir) { `git init` }
 
       # make a repo with another branch
       create_mock_repo "#{tmpdir}/repo"
