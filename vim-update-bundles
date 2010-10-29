@@ -46,10 +46,17 @@ end
 
 def run *cmd
   # runs cmd, returns its stdout, bails on error
-  puts "-> #{[cmd].join(" ")}"
+  puts "-> #{[cmd].join(" ")}" if $verbose
   result = IO.popen(cmd.map { |c| c.to_s }, "r") { |p| p.read }
   raise "command <<#{[cmd].join(" ")}>> exited with error #{$?.exitstatus}" unless $?.success?
   result
+end
+
+def git *cmd
+  if !$verbose && %w{checkout clone fetch pull}.include?(cmd.first.to_s)
+    cmd.insert 1, '-q'
+  end
+  run :git, *cmd
 end
 
 
@@ -58,7 +65,7 @@ def print_bundle dir, doc
   Dir.chdir(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
     version = "n/a" if version == ''
-    date = run(:git, :log, '-1', '--pretty=format:%ai').chomp
+    date = git(:log, '-1', '--pretty=format:%ai').chomp
   end
   doc.printf "  - %-30s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
 end
@@ -78,7 +85,7 @@ def in_git_root inpath=nil
   # submodules often require the cwd to be the git root.  if you pass a path
   # relative to the cwd, your block receives it relative to the root.
   path = File.join Dir.pwd, inpath if inpath
-  Dir.chdir("./" + run(:git, 'rev-parse', '--show-cdup').chomp) do
+  Dir.chdir("./" + git('rev-parse', '--show-cdup').chomp) do
     path.sub! /^#{Dir.pwd}\/?/, '' if path
     yield path
   end rescue nil   # git deletes the bundle dir if it's empty
@@ -88,10 +95,10 @@ end
 def clone_bundle dir, url, tagstr
   unless $submodule
     puts "cloning #{dir} from #{url}#{tagstr}"
-    run :git, :clone, url, dir
+    git :clone, url, dir
   else
     puts "adding submodule #{dir} from #{url}#{tagstr}"
-    in_git_root(dir) { |mod| run :git, :submodule, :add, url, mod }
+    in_git_root(dir) { |mod| git :submodule, :add, url, mod }
   end
 end
 
@@ -99,10 +106,10 @@ end
 def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
-    remote = Dir.chdir(dir)  { run(:git, :config, '--get', 'remote.origin.url').chomp }
+    remote = Dir.chdir(dir)  { git(:config, '--get', 'remote.origin.url').chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      Dir.chdir(dir) { run :git, :fetch }
+      Dir.chdir(dir) { git :fetch }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -116,13 +123,13 @@ def download_bundle dir, url, tag, doc
   Dir.chdir(dir) do
     # if branch is checked out then it must be pulled, not checked out again
     if tag && !test(?f, ".git/refs/heads/#{tag}")
-      run :git, :checkout, tag
+      git :checkout, tag
     else
-      run :git, :pull, :origin, tag || :master
+      git :pull, :origin, tag || :master
     end
     ignore_doc_tags
   end
-  in_git_root(dir) { |mod| run :git, :add, mod } if $submodule
+  in_git_root(dir) { |mod| git :add, mod } if $submodule
   print_bundle(dir, doc)
 end
 
@@ -138,7 +145,7 @@ def remove_bundle_to dir, destination
   puts "Erasing #{dir}, find it in #{destination}"
   FileUtils.mv dir, destination
   if $submodule
-    in_git_root(dir) { |mod| run :git, :rm, mod }
+    in_git_root(dir) { |mod| git :rm, mod }
     puts "  Also delete its lines from .gitmodules and .git/config"
   end
 end
@@ -187,8 +194,8 @@ def update_bundles doc
   if $submodule
     in_git_root do
       puts "  updating submodules"
-      run :git, :submodule, :init
-      run :git, :submodule, :update
+      git :submodule, :init
+      git :submodule, :update
     end
   end
 end
@@ -239,12 +246,10 @@ conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
 eval(File.read(conf_file), binding, conf_file) if test(?f, conf_file)
 # interpret vars on command line (only useful for testing)
 ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
-  eval "#{k}='#{v.gsub('//', '////').split("'").join("\\'")}'" }
+  eval "#{k}='#{(v||'').gsub('//', '////').split("'").join("\\'")}'" }
 
-$dotvim, $submodule = dotvim, submodule
-$quiet = verbose ? '' : '-q'
+$dotvim, $submodule, $verbose = dotvim, submodule, verbose
 if ensure_dir(dotvim) || !test(?f, vimrc)
-  # create a brand new vim environment
   create_new_vim_environment vimrc, starter_url, pathogen_url
   update_bundles_and_docs
   puts 'Done!  Now enable some plugins in your ~/.vimrc file.'
