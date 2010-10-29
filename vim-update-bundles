@@ -106,7 +106,7 @@ def download_bundle dir, url, tag, doc
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
-      ensure_dir bundle_dir  # git may have removed the dir
+      ensure_dir dotvim('bundle')  # if it was the last bundle, git removed the dir
       clone_bundle dir, url, tagstr
     end
   else
