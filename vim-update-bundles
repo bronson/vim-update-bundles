@@ -15,7 +15,6 @@
 # If your .vim folder is stored in a git repository, you can add bundles
 # as submodules by putting "submodule=true" in ~/.vim-update-bundles.conf.
 #
-# todo: stop using `` to run commands -- it's got interpolation issues
 # todo: windows compatibility?
 
 require 'fileutils'
@@ -37,13 +36,29 @@ def ensure_dir dir
   Dir.mkdir dir unless test ?d, dir
 end
 
+def download_file url, file
+  open(url) do |r|
+    File.open(file, 'w') do |w|
+      w.write(r.read)
+    end
+  end
+end
+
+def run *cmd
+  # runs cmd, returns its stdout, bails on error
+  puts "-> #{[cmd].join(" ")}"
+  result = IO.popen(cmd.map { |c| c.to_s }, "r") { |p| p.read }
+  raise "command <<#{[cmd].join(" ")}>> exited with error #{$?.exitstatus}" unless $?.success?
+  result
+end
+
 
 def print_bundle dir, doc
   version = date = ''
   Dir.chdir(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
     version = "n/a" if version == ''
-    date = `git log -1 --pretty=format:%ai`.chomp
+    date = run(:git, :log, '-1', '--pretty=format:%ai').chomp
   end
   doc.printf "  - %-30s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
 end
@@ -63,7 +78,7 @@ def in_git_root inpath=nil
   # submodules often require the cwd to be the git root.  if you pass a path
   # relative to the cwd, your block receives it relative to the root.
   path = File.join Dir.pwd, inpath if inpath
-  Dir.chdir("./" + `git rev-parse --show-cdup`.chomp) do
+  Dir.chdir("./" + run(:git, 'rev-parse', '--show-cdup').chomp) do
     path.sub! /^#{Dir.pwd}\/?/, '' if path
     yield path
   end rescue nil   # git deletes the bundle dir if it's empty
@@ -73,10 +88,10 @@ end
 def clone_bundle dir, url, tagstr
   unless $submodule
     puts "cloning #{dir} from #{url}#{tagstr}"
-    `git clone #{$quiet} #{url} #{dir}`
+    run :git, :clone, url, dir
   else
     puts "adding submodule #{dir} from #{url}#{tagstr}"
-    in_git_root(dir) { |mod| `git submodule add #{url} #{mod}` }
+    in_git_root(dir) { |mod| run :git, :submodule, :add, url, mod }
   end
 end
 
@@ -84,10 +99,10 @@ end
 def download_bundle dir, url, tag, doc
   tagstr = " at #{tag}" if tag
   if test ?d, dir
-    remote = Dir.chdir(dir)  { `git config --get remote.origin.url`.chomp }
+    remote = Dir.chdir(dir)  { run(:git, :config, '--get', 'remote.origin.url').chomp }
     if remote == url
       puts "updating #{dir} from #{url}#{tagstr}"
-      Dir.chdir(dir) { `git fetch #{$quiet}` }
+      Dir.chdir(dir) { run :git, :fetch }
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle dir
@@ -101,13 +116,13 @@ def download_bundle dir, url, tag, doc
   Dir.chdir(dir) do
     # if branch is checked out then it must be pulled, not checked out again
     if tag && !test(?f, ".git/refs/heads/#{tag}")
-      `git checkout #{$quiet} #{tag}`
+      run :git, :checkout, tag
     else
-      `git pull #{$quiet} origin #{tag || 'master'}`
+      run :git, :pull, :origin, tag || :master
     end
     ignore_doc_tags
   end
-  in_git_root(dir) { |mod| `git add #{mod}` } if $submodule
+  in_git_root(dir) { |mod| run :git, :add, mod } if $submodule
   print_bundle(dir, doc)
 end
 
@@ -123,7 +138,7 @@ def remove_bundle_to dir, destination
   puts "Erasing #{dir}, find it in #{destination}"
   FileUtils.mv dir, destination
   if $submodule
-    in_git_root(dir) { |mod| `git rm #{mod}` }
+    in_git_root(dir) { |mod| run :git, :rm, mod }
     puts "  Also delete its lines from .gitmodules and .git/config"
   end
 end
@@ -172,17 +187,8 @@ def update_bundles doc
   if $submodule
     in_git_root do
       puts "  updating submodules"
-      `git submodule init`
-      `git submodule update`
-    end
-  end
-end
-
-
-def download_file url, file
-  open(url) do |r|
-    File.open(file, 'w') do |w|
-      w.write(r.read)
+      run :git, :submodule, :init
+      run :git, :submodule, :update
     end
   end
 end
@@ -209,8 +215,8 @@ def create_new_vim_environment vimrc, starter_url, pathogen_url
   puts "Downloading starter vimrc..."
   ensure_dir dotvim
   download_file starter_url, vimrc
-  `ln -s '#{vimrc}' '#{ENV['HOME']}/.vimrc'` unless test ?f, "#{ENV['HOME']}/.vimrc"
-  `ln -s '#{dotvim}' '#{ENV['HOME']}/.vim'` unless test ?d, "#{ENV['HOME']}/.vim"
+  run :ln, '-s', vimrc, "#{ENV['HOME']}/.vimrc" unless test ?f, "#{ENV['HOME']}/.vimrc"
+  run :ln, '-s', dotvim, "#{ENV['HOME']}/.vim" unless test ?d, "#{ENV['HOME']}/.vim"
 
   puts "Downloading Pathogen..."
   ensure_dir dotvim('autoload')
@@ -245,7 +251,7 @@ if ensure_dir(dotvim) || !test(?f, vimrc)
 else
   update_bundles_and_docs
   puts "updating helptags..."
-  `vim -e -c "call pathogen#helptags()" -c q` unless ENV['TESTING']
+  run :vim, '-e', '-c', 'call pathogen#helptags()', '-c', 'q' unless ENV['TESTING']
   puts "done!  Start Vim and type ':help bundles' to see what you have installed."
 end
 
