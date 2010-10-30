@@ -86,13 +86,13 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
       assert test ?f, "#{repo}/first"
-      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
+      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "second"
       `./vim-update-bundles`
       assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
-      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
+      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # remove the repo
       write_file tmpdir, ".vim/vimrc", ""
@@ -131,7 +131,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
       assert test ?f, "#{repo}/first"
       assert test ?f, "#{tmpdir}/.vim/.gitmodules"
-      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").count
+      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "second"

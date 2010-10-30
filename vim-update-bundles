@@ -46,8 +46,17 @@ end
 
 def run *cmd
   # runs cmd, returns its stdout, bails on error
+  # arg, IO.popen only accepts a string on 1.8 so rewrite it here.
   puts "-> #{[cmd].join(" ")}" if $verbose
-  result = IO.popen(cmd.map { |c| c.to_s }, "r") { |p| p.read }
+  outr, outw = IO::pipe
+  pid = fork {
+    outr.close; STDOUT.reopen outw; outw.close
+    exec *cmd.flatten.map { |c| c.to_s }
+  }
+  outw.close
+  result = outr.read
+  outr.close
+  Process.waitpid pid
   raise "command <<#{[cmd].join(" ")}>> exited with error #{$?.exitstatus}" unless $?.success?
   result
 end
