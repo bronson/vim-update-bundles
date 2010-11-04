@@ -241,8 +241,8 @@ end
 
 
 # the files that get installed when creating a brand new vim environment
-starter_url   = "http://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
-pathogen_url  = "http://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+starter_url   = "https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
+pathogen_url  = "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
 # dotvim is the directory that contains vim bundles, doc, autoload, etc dirs.
 dotvim        = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
 dotvimrc      = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
