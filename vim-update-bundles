@@ -47,6 +47,8 @@ end
 def run *cmd
   # runs cmd, returns its stdout, bails on error
   # arg, IO.popen only accepts a string on 1.8 so rewrite it here.
+  options = { :acceptable_exit_codes => [0] }
+  options.merge!(cmd.pop) if cmd.last.kind_of?(Hash)
   puts "-> #{[cmd].join(" ")}" if $verbose
   outr, outw = IO::pipe
   pid = fork {
@@ -57,7 +59,9 @@ def run *cmd
   result = outr.read
   outr.close
   Process.waitpid pid
-  raise "command <<#{[cmd].join(" ")}>> exited with error #{$?.exitstatus}" unless $?.success?
+  unless options[:acceptable_exit_codes].include?($?.exitstatus)
+    raise "command <<#{[cmd].join(" ")}>> exited with code #{$?.exitstatus}"
+  end
   result
 end
 
@@ -265,7 +269,8 @@ if ensure_dir(dotvim) || !test(?f, dotvimrc)
 else
   update_bundles_and_docs
   puts "updating helptags..."
-  run :vim, '-e', '-c', 'call pathogen#helptags()', '-c', 'q' unless ENV['TESTING']
+  # looks like stock vim on a Mac always exits with 1, even when doing nothing
+  run :vim, '-e', '-c', 'call pathogen#helptags()', '-c', 'q', :acceptable_exit_codes => [0, 1] unless ENV['TESTING']
   puts "done!  Start Vim and type ':help bundles' to see what you have installed."
 end
 
