@@ -154,8 +154,19 @@ def remove_bundle_to dir, destination
   puts "Erasing #{dir}, find it in #{destination}"
   FileUtils.mv dir, destination
   if $submodule
-    in_git_root(dir) { |mod| git :rm, mod }
-    puts "  Also delete its lines from .gitmodules and .git/config"
+    in_git_root(dir) do |mod|
+      git :rm, mod
+      ['.gitmodules', '.git/config'].each do |filename|
+        begin
+          text = File.read filename
+          File.open(filename, 'w+') do |file|
+            file.puts text.gsub(/\[submodule "#{mod}"\][^\[]+/m,'')
+          end
+        rescue
+          puts "  Could not delete submodule entries from .gitmodules and .git/config"
+        end
+      end
+    end
   end
 end
 

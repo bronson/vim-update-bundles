@@ -2,6 +2,7 @@
 - No longer use Ruby as config file format, it's just key=value now
   ("static=1" still works but it's $HOME instead of "#{ENV['HOME']}")
 - Add the Static: directive thanks to Andreas Marienborg
+- Remove submodule entries from .gitmodules and .git/config (also Sorin)
 
 0.3.1   30 Oct 2010
 - restore Ruby 1.8 compatibility (popen doesn't accept an array)
