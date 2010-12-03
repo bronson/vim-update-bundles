@@ -22,9 +22,7 @@ require 'open-uri'
 
 
 def dotfiles *path
-  # autodetects a ~/.dotfiles directory.
-  dir = File.join ENV['HOME'], '.dotfiles'
-  return File.join(dir, *path) if test ?d, dir
+  return File.join($dotfiles_path, *path) if test ?d, $dotfiles_path
 end
 
 def dotvim *path
@@ -243,20 +241,24 @@ def create_new_vim_environment vimrc, starter_url, pathogen_url
   download_file pathogen_url, dotvim('autoload', 'pathogen.vim')
 end
 
+# config file is written in ruby
+configuration = {}
+conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
+eval(File.read(conf_file), binding, conf_file) if test(?f, conf_file)
+
+# the path to the dotfiles
+$dotfiles_path = configuration[:dotfiles_path] || File.join(ENV['HOME'], '.dotfiles')
 
 # the files that get installed when creating a brand new vim environment
-starter_url   = "https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
-pathogen_url  = "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+starter_url   = configuration[:starter_url] || "https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
+pathogen_url  = configuration[:pathogen_url] || "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
+
 # dotvim is the directory that contains vim bundles, doc, autoload, etc dirs.
 dotvim        = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
 dotvimrc      = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
-verbose       = nil     # make git quiet by default, verbose=true to hear everything
-submodule     = false   # clone dirs normally unless submodule = 1
+verbose       = configuration[:verbose] || nil     # make git quiet by default, verbose=true to hear everything
+submodule     = configuration[:submodule] || false   # clone dirs normally unless submodule = 1
 
-
-# config file is written in ruby
-conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
-eval(File.read(conf_file), binding, conf_file) if test(?f, conf_file)
 # interpret vars on command line (only useful for testing)
 ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
   eval "#{k}='#{(v||'').gsub('//', '////').split("'").join("\\'")}'" }

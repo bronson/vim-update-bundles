@@ -8,7 +8,7 @@ Use Pathogen and Git to manage your Vim plugins.
 
 DESCRIPTION
 
-This script reads the plugins to install from your .vimrc, then installs them.
+This script reads the plugins to install from your .vimrc then installs them.
 For example, add this line to your .vimrc and run vim-update-bundles:
 
     " Bundle: git://github.com/scrooloose/nerdtree.git
@@ -60,22 +60,38 @@ CONFIGURATION
 
 Run vim-update-bundles --verbose to see exactly what's happening.
 
-To install your bundles as submodules rather than plain git repos, put
-"submodule = 1" in ~/.vim-update-bundles.conf.  Of course, you must create the
-parent repo to contain the submodules before running vim-update-bundles.
+The configuration is a ruby dictionary placed in ~/.vim-update-bundles.conf.
+
+You can use submodules rather than plain git repos for the bundles.
+Of course, you must create the parent repo to contain the submodules
+before running vim-update-bundles.
+
+configuration = {
+  :submodule => true
+}
 
 If you put your ~/.vim directory or ~/.vimrc file in a custom location, you can
 configure that ~/.vim-update-bundles.conf:
 
-  dotvim = "#{ENV['HOME']}/DOTFILES/vim"
-  dotvimrc = "#{ENV['HOME']}/DOTFILES/vim/vimrc"
+configuration = {
+  :dotfiles_path => "#{ENV['HOME']}/DOTFILES",
+  :dotvim        => "#{ENV['HOME']}/DOTFILES/vim",
+  :dotvimrc      => "#{ENV['HOME']}/DOTFILES/vim/vimrc"
+}
 
-You can also change where pathogen.vim and the .vimrc template are downloaded
-from (only used when setting up a new vim environment).
+You can also change from where pathogen.vim and the .vimrc template are downloaded
+(only used when setting up a new vim environment).
 
-  starter_url  = '/tmp/local-vimrc-template'
-  pathogen_url = 'http://example.con/my-pathogen.vim'
+configuration = {
+  :starter_url  => '/tmp/local-vimrc-template',
+  :pathogen_url => 'http://example.con/my-pathogen.vim'
+}
 
+If you want to always run in verbose mode, you can configure it.
+
+configuration = {
+  :verbose => true
+}
 
 Q&A
 
