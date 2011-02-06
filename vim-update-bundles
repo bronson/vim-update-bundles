@@ -146,7 +146,7 @@ end
 
 
 def read_vimrc
-  File.open("#{ENV['HOME']}/.vimrc") do |file|
+  File.open($dotvimrc) do |file|
     file.each_line { |line| yield line }
   end
 end
@@ -274,7 +274,7 @@ submodule     = configuration[:submodule] || false   # clone dirs normally unles
 ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
   eval "#{k}='#{(v||'').gsub('//', '////').split("'").join("\\'")}'" }
 
-$dotvim, $submodule, $verbose = dotvim, submodule, verbose
+$dotvim, $dotvimrc, $verbose, $submodule = dotvim, dotvimrc, verbose, submodule
 if ensure_dir(dotvim) || !test(?f, dotvimrc)
   create_new_vim_environment dotvimrc, starter_url, pathogen_url
   update_bundles_and_docs
