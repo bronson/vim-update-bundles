@@ -209,6 +209,10 @@ def update_bundles doc
     elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
       raise "BUNDLE-COMMAND must come after BUNDLE" if dir.nil?
       run_bundle_command dir, $1
+    elsif line =~ /^\s*"\s*STATIC:\s*(.*)$/
+      dir = $1
+      puts "  leavig #{dir} alone"
+      existing_bundles.delete dir
     end
   end
   existing_bundles.each { |dir| remove_bundle(dir) }
