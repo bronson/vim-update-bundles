@@ -19,20 +19,16 @@ require 'fileutils'
 require 'open-uri'
 
 
-def dotfiles *path
-  # autodetects a ~/.dotfiles directory.
-  dir = File.join ENV['HOME'], '.dotfiles'
-  return File.join(dir, *path) if test ?d, dir
-end
-
 def dotvim *path
   # Path to files inside your .vim directory, i.e. dotvim('autoload', 'pathogen')
   File.join $dotvim, *path
 end
 
+
 def ensure_dir dir
   Dir.mkdir dir unless test ?d, dir
 end
+
 
 def download_file url, file
   open(url) do |r|
@@ -42,8 +38,9 @@ def download_file url, file
   end
 end
 
+
 def run *cmd
-  # runs cmd, returns its stdout, bails on error
+  # runs cmd, returns its stdout, bails on error. Just a more powerful system().
   # arg, IO.popen only accepts a string on 1.8 so rewrite it here.
   options = { :acceptable_exit_codes => [0] }
   options.merge!(cmd.pop) if cmd.last.kind_of?(Hash)
@@ -62,6 +59,7 @@ def run *cmd
   end
   result
 end
+
 
 def git *cmd
   if !$verbose && %w{checkout clone fetch pull}.include?(cmd.first.to_s)
@@ -260,26 +258,51 @@ def process_options options, args, message
 end
 
 
+# Returns the first path that exists or the last one if nothing exists.
+def choose_file *paths
+  paths.find { |p| test ?f, p } || paths[-1]
+end
+
+
+def set_default_options opts
+  dotfiles = File.join(ENV['HOME'], '.dotfiles')
+  opts[:dotfiles_path] ||= dotfiles if test(?d, dotfiles)
+
+  if opts[:dotfiles_path]
+    raise "#{opts[:dotfiles_path]} doesn't exist!" unless test(?d, opts[:dotfiles_path])
+    opts[:vimdir_path] ||= File.join(opts[:dotfiles_path], 'vim')
+    opts[:vimrc_path] ||= choose_file(File.join([opts[:dotfiles_path], 'vim', 'vimrc']),
+                                      File.join([opts[:dotfiles_path], 'vimrc']))
+  else
+    opts[:vimdir_path] ||= File.join(ENV['HOME'], '.vim')
+    opts[:vimrc_path] ||= choose_file(File.join([ENV['HOME'], '.vim', 'vimrc']),
+                                      File.join([ENV['HOME'], '.vimrc']))
+  end
+end
+
+
 configuration = {
-  :starter_url   => "https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter",
-  :pathogen_url  => "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim",
-  :dotvim        => dotfiles('vim') || File.join(ENV['HOME'], '.vim'),
-  :dotvimrc      => nil,     # might depend on dotvim so default is set after processing all opts
   :verbose       => nil,     # git commands are quiet by default, set verbose=true to hear everything
   :submodule     => false,   # if submodule is set then use git submodules instead of cloning
+
+  :dotfiles_path => nil,     # full path to the dotfiles directory
+  :vimdir_path   => nil,     # full path to ~/.vim   (creates symlink if not in $HOME)
+  :vimrc_path    => nil,     # full path to ~/.vimrc (creates symlink if not in $HOME)
+
+  # only used when spinning up a new Vim environment, mostly for testing:
+  :starter_url   => "https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter",
+  :pathogen_url  => "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim",
 }
 
 conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
 process_options configuration, File.open(conf_file).readlines, "in #{conf_file} line" if test(?f, conf_file)
 process_options configuration, ARGV, "in command line argument"
-
-$dotvim = configuration[:dotvim]
-configuration[:dotvimrc] ||= dotfiles('vimrc') || File.join(dotvim, 'vimrc')
-$submodule, $verbose = configuration[:submodule], configuration[:verbose]
+set_default_options configuration
 configuration.keys.sort.each { |k| puts "# option #{k} = #{configuration[k].inspect}" } if $verbose
 
-if ensure_dir(dotvim) || !test(?f, configuration[:dotvimrc])
-  create_new_vim_environment configuration[:dotvimrc], configuration[:starter_url], configuration[:pathogen_url]
+$dotvim, $submodule, $verbose = configuration[:vimdir_path], configuration[:submodule], configuration[:verbose]
+if ensure_dir(dotvim) || !test(?f, configuration[:vimrc_path])
+  create_new_vim_environment configuration[:vimrc_path], configuration[:starter_url], configuration[:pathogen_url]
   update_bundles_and_docs
   puts 'Done!  Now enable some plugins in your ~/.vimrc file.'
 else

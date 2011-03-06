@@ -4,6 +4,8 @@ require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
+# uncomment check_tree?
+# todo: test that .vim/vimrc over .vimrc preference works.
 # todo: test that tagstr sha1 works
 #   also switching from a branch/tag/sha to master and back.
 #   also with submodules
@@ -62,19 +64,39 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
   def assert_test cmd, *files
-    files.each { |f| assert test(cmd, f), "#{f} is not a '#{cmd}'" }
+    files.each do |f|
+      assert test(?e, f), "#{f} does not exist!"
+      assert test(cmd, f), "#{f} is not a '#{cmd}'"
+    end
   end
 
   def assert_not_test cmd, *files
-    files.each { |f| assert !test(cmd, f), "#{f} is a '#{cmd}'" }
+    files.each do |f|
+      assert !test(cmd, f), "#{f} is a '#{cmd}'"
+    end
   end
 
-  def check_tree base, dotvim, vimrc
-    # makes sure that the dir looks like a plausible vim installation
-    assert_test ?l, "#{base}/.vimrc"
-    assert_equal File.readlink("#{base}/.vimrc"), "#{base}/#{vimrc}"
+  def check_tree base, vimdir='.vim', vimrc='.vimrc'
+    # makes sure .vim, .vimrc, and the symlinks are all set up correctly
+
+    if vimdir == '.vim'
+      # no symlinks needed
+      assert_test ?d, "#{base}/.vim"
+    else
+      assert_test ?l, "#{base}/.vim"
+      assert_equal File.readlink("#{base}/.vim"), "#{base}/#{vimdir}"
+    end
+
+    if vimrc == '.vimrc'
+      assert_test ?f, "#{base}/.vimrc"
+    else
+      assert_test ?l, "#{base}/.vimrc"
+      assert_equal File.readlink("#{base}/.vimrc"), "#{base}/#{vimrc}"
+    end
+
+    assert_test ?f, "#{base}/#{vimdir}/autoload/pathogen.vim"
+    assert_test ?d, "#{base}/#{vimdir}"
     assert_test ?f, "#{base}/#{vimrc}"
-    assert_test ?f, "#{base}/#{dotvim}/autoload/pathogen.vim"
   end
 
 
@@ -82,14 +104,14 @@ class TestUpdater < MiniTest::Unit::TestCase
     # creates a starter environment then updates a few times
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir
       assert_test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
       assert_test ?d, "#{tmpdir}/.vim/bundle"
       assert_equal ['.', '..'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
 
       # add a repo
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo"
+      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
@@ -103,7 +125,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # remove the repo
-      write_file tmpdir, ".vim/vimrc", ""
+      write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
       assert !test(?d, repo)
     end
@@ -115,7 +137,7 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       str = "don't tread on me"
       write_file tmpdir, '.vimrc', str
-      `./vim-update-bundles #{@starter_urls} --dotvimrc='#{tmpdir}/.vimrc'`
+      `./vim-update-bundles #{@starter_urls} --vimrc_path='#{tmpdir}/.vimrc'`
       assert_equal str, File.read("#{tmpdir}/.vimrc")
     end
   end
@@ -132,7 +154,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       # add submodule
       create_mock_repo "#{tmpdir}/repo"
       File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f| f.write "submodule = true" }
-      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo"
+      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo"
 
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
@@ -147,7 +169,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
 
       # remove the repo
-      write_file tmpdir, ".vim/vimrc", ""
+      write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
       assert !test(?d, repo)
     end
@@ -158,14 +180,14 @@ class TestUpdater < MiniTest::Unit::TestCase
     # ensures that you can lock a checkout to a particular tag
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir
 
       # make a repo with a tagged commit, and commits after that
       create_mock_repo "#{tmpdir}/repo"
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
 
-      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
+      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
@@ -190,13 +212,13 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       Dir.chdir(tmpdir) { `git init` }
       `./vim-update-bundles #{@starter_urls} --submodule=true`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir
 
       create_mock_repo "#{tmpdir}/repo"
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
 
-      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
+      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
       `./vim-update-bundles --submodule=1`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
@@ -220,7 +242,7 @@ class TestUpdater < MiniTest::Unit::TestCase
     # ensures it will still follow new commits on a branch
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir
 
       # make a repo with another branch
       create_mock_repo "#{tmpdir}/repo"
@@ -230,7 +252,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       update_mock_repo "#{tmpdir}/repo", 'second'
 
       # clone that repo on the given branch
-      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
+      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
@@ -257,7 +279,7 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       Dir.chdir(tmpdir) { `git init` }
       `./vim-update-bundles #{@starter_urls} --submodule=true`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir
 
       # make a repo with another branch
       create_mock_repo "#{tmpdir}/repo"
@@ -266,7 +288,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q master` }
       update_mock_repo "#{tmpdir}/repo", 'second'
 
-      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
+      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
       `./vim-update-bundles --submodule=1`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
@@ -293,14 +315,14 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_working_bundle_command
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vim/vimrc", <<-EOL
+      write_file tmpdir, ".vimrc", <<-EOL
         " Bundle: #{tmpdir}/repo
         " Bundle command: echo hiya > #{tmpdir}/output
       EOL
-      `./vim-update-bundles`
 
+      `./vim-update-bundles`
       assert_test ?f, "#{tmpdir}/output"
       assert_equal "hiya\n", File.read("#{tmpdir}/output")
     end
@@ -310,9 +332,10 @@ class TestUpdater < MiniTest::Unit::TestCase
   def test_failing_bundle_command
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir
+
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vim/vimrc", <<-EOL
+      write_file tmpdir, ".vimrc", <<-EOL
         " Bundle: #{tmpdir}/repo
         " Bundle-Command: oh-no-this-command-does-not-exist
       EOL
@@ -328,9 +351,8 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles #{@starter_urls}`
       Dir.mkdir "#{tmpdir}/.vim/bundle/foreign"
       Dir.mkdir "#{tmpdir}/.vim/bundle/static"
-      write_file tmpdir, ".vim/vimrc", <<-EOL
-        " Static: static
-      EOL
+      write_file tmpdir, ".vimrc", '" Static: static'
+
       `./vim-update-bundles`
       assert_test ?d, "#{tmpdir}/.vim/bundle/static"
       assert_not_test ?d, "#{tmpdir}/.vim/bundle/foreign"
@@ -348,10 +370,24 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
+  #def test_create_dotfile_environment_with_vimrc_in_vim
+    #prepare_test do |tmpdir|
+      #Dir.mkdir "#{tmpdir}/.dotfiles"
+      #Dir.mkdir "#{tmpdir}/.dotfiles/vim"
+      #write_file tmpdir, ".dotfiles/vim/vimrc", '" ignored'
+
+      #`./vim-update-bundles #{@starter_urls}`
+      #assert_not_test ?f, "#{tmpdir}/.vimrc"
+      #assert_not_test ?f, "#{tmpdir}/.dotfiles/.vimrc"
+      #check_tree tmpdir, '.dotfiles/vim', '.dotfiles/vim/vimrc'
+    #end
+  #end
+
+
   def test_create_custom_vimrc_environment
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/mydots"
-      `./vim-update-bundles #{@starter_urls} dotvimrc='#{tmpdir}/mydots/vim rc'`
+      `./vim-update-bundles #{@starter_urls} vimrc_path='#{tmpdir}/mydots/vim rc'`
       check_tree tmpdir, '.vim', 'mydots/vim rc'
     end
   end
@@ -363,7 +399,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       Dir.mkdir "#{tmpdir}/parent/child"
       ENV['PARENT'] = 'parent'
       File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f|
-        f.write "dotvimrc = #{tmpdir}/$PARENT/child/vv zz"
+        f.write "vimrc_path = #{tmpdir}/$PARENT/child/vv zz"
       }
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, '.vim', 'parent/child/vv zz'
