@@ -61,12 +61,20 @@ class TestUpdater < MiniTest::Unit::TestCase
     Dir.chdir(dir) { `git tag -a #{tag} -m 'tag #{tag}'` }
   end
 
+  def assert_test cmd, *files
+    files.each { |f| assert test(cmd, f), "#{f} is not a '#{cmd}'" }
+  end
+
+  def assert_not_test cmd, *files
+    files.each { |f| assert !test(cmd, f), "#{f} is a '#{cmd}'" }
+  end
+
   def check_tree base, dotvim, vimrc
     # makes sure that the dir looks like a plausible vim installation
-    assert test ?l, "#{base}/.vimrc"
+    assert_test ?l, "#{base}/.vimrc"
     assert_equal File.readlink("#{base}/.vimrc"), "#{base}/#{vimrc}"
-    assert test ?f, "#{base}/#{vimrc}"
-    assert test ?f, "#{base}/#{dotvim}/autoload/pathogen.vim"
+    assert_test ?f, "#{base}/#{vimrc}"
+    assert_test ?f, "#{base}/#{dotvim}/autoload/pathogen.vim"
   end
 
 
@@ -75,8 +83,8 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
-      assert test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
-      assert test ?d, "#{tmpdir}/.vim/bundle"
+      assert_test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
+      assert_test ?d, "#{tmpdir}/.vim/bundle"
       assert_equal ['.', '..'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
 
       # add a repo
@@ -85,13 +93,13 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
-      assert test ?f, "#{repo}/first"
+      assert_test ?f, "#{repo}/first"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "second"
       `./vim-update-bundles`
-      assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # remove the repo
@@ -129,14 +137,14 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
-      assert test ?f, "#{repo}/first"
-      assert test ?f, "#{tmpdir}/.vim/.gitmodules"
+      assert_test ?f, "#{repo}/first"
+      assert_test ?f, "#{tmpdir}/.vim/.gitmodules"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "second"
       `./vim-update-bundles`
-      assert test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
 
       # remove the repo
       write_file tmpdir, ".vim/vimrc", ""
@@ -161,16 +169,16 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
-      assert test ?f, "#{repo}/first"
-      assert test ?f, "#{repo}/second"
+      assert_test ?f, "#{repo}/first"
+      assert_test ?f, "#{repo}/second"
       assert !test(?f, "#{repo}/third")
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "fourth"
       `./vim-update-bundles`
-      assert test(?f, "#{repo}/second")
-      assert !test(?f, "#{repo}/third")
-      assert !test(?f, "#{repo}/fourth")
+      assert_test ?f, "#{repo}/second"
+      assert_not_test ?f, "#{repo}/third"
+      assert_not_test ?f, "#{repo}/fourth"
 
       # TODO: switch to master and back, and to another tag and back
     end
@@ -191,19 +199,19 @@ class TestUpdater < MiniTest::Unit::TestCase
       write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
       `./vim-update-bundles --submodule=1`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      assert test ?f, "#{tmpdir}/.gitmodules"
+      assert_test ?f, "#{tmpdir}/.gitmodules"
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
       `git ls-files --cached .vim/bundle/repo`
-      assert test ?f, "#{repo}/first"
-      assert test ?f, "#{repo}/second"
-      assert !test(?f, "#{repo}/third")
+      assert_test ?f, "#{repo}/first"
+      assert_test ?f, "#{repo}/second"
+      assert_not_test ?f, "#{repo}/third"
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "third"
       `./vim-update-bundles --submodule=1`
-      assert test(?f, "#{repo}/second")
-      assert !test(?f, "#{repo}/third")
-      assert !test(?f, "#{repo}/fourth")
+      assert_test ?f, "#{repo}/second"
+      assert_not_test ?f, "#{repo}/third"
+      assert_not_test ?f, "#{repo}/fourth"
     end
   end
 
@@ -226,18 +234,18 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
-      assert test ?f, "#{repo}/first"
-      assert test ?f, "#{repo}/b-second"
-      assert !test(?f, "#{repo}/second")
+      assert_test ?f, "#{repo}/first"
+      assert_test ?f, "#{repo}/b-second"
+      assert_not_test ?f, "#{repo}/second"
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "third"
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q abranch` }
       update_mock_repo "#{tmpdir}/repo", "b-third"
       `./vim-update-bundles`
-      assert test(?f, "#{repo}/b-second")
-      assert test(?f, "#{repo}/b-third")
-      assert !test(?f, "#{repo}/third")
+      assert_test ?f, "#{repo}/b-second"
+      assert_test ?f, "#{repo}/b-third"
+      assert_not_test ?f, "#{repo}/third"
 
       # TODO: switch to master and back, and to another branch and back
     end
@@ -261,21 +269,21 @@ class TestUpdater < MiniTest::Unit::TestCase
       write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
       `./vim-update-bundles --submodule=1`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      assert test ?f, "#{tmpdir}/.gitmodules"
+      assert_test ?f, "#{tmpdir}/.gitmodules"
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
       `git ls-files --cached .vim/bundle/repo`
-      assert test ?f, "#{repo}/first"
-      assert test ?f, "#{repo}/b-second"
-      assert !test(?f, "#{repo}/second")
+      assert_test ?f, "#{repo}/first"
+      assert_test ?f, "#{repo}/b-second"
+      assert_not_test ?f, "#{repo}/second"
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "third"
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q abranch` }
       update_mock_repo "#{tmpdir}/repo", "b-third"
       `./vim-update-bundles --submodule=1`
-      assert test(?f, "#{repo}/b-second")
-      assert test(?f, "#{repo}/b-third")
-      assert !test(?f, "#{repo}/third")
+      assert_test ?f, "#{repo}/b-second"
+      assert_test ?f, "#{repo}/b-third"
+      assert_not_test ?f, "#{repo}/third"
 
       # TODO: switch to master and back, and to another branch and back
     end
@@ -293,7 +301,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       EOL
       `./vim-update-bundles`
 
-      assert test(?f, "#{tmpdir}/output")
+      assert_test ?f, "#{tmpdir}/output"
       assert_equal "hiya\n", File.read("#{tmpdir}/output")
     end
   end
@@ -324,9 +332,9 @@ class TestUpdater < MiniTest::Unit::TestCase
         " Static: static
       EOL
       `./vim-update-bundles`
-      assert test(?d, "#{tmpdir}/.vim/bundle/static")
-      assert !test(?d, "#{tmpdir}/.vim/bundle/foreign")
-      assert test(?d, "#{tmpdir}/.vim/Trashed-Bundles/foreign-01")
+      assert_test ?d, "#{tmpdir}/.vim/bundle/static"
+      assert_not_test ?d, "#{tmpdir}/.vim/bundle/foreign"
+      assert_test ?d, "#{tmpdir}/.vim/Trashed-Bundles/foreign-01"
     end
   end
 
