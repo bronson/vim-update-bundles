@@ -1,3 +1,5 @@
+- No longer use Ruby files as config files, it's just key=value now
+- Epxand $X in all options (i.e. $HOME is expanded to user's home dir)
 - Add the Static: directive thanks to Andreas Marienborg
 
 0.3.1   30 Oct 2010

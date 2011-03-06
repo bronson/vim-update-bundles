@@ -353,8 +353,9 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/parent"
       Dir.mkdir "#{tmpdir}/parent/child"
+      ENV['PARENT'] = 'parent'
       File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f|
-        f.write "dotvimrc = '#{tmpdir}/parent/child/vv zz'"
+        f.write "dotvimrc = #{tmpdir}/$PARENT/child/vv zz"
       }
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, '.vim', 'parent/child/vv zz'

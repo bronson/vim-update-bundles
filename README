@@ -71,14 +71,14 @@ parent repo to contain the submodules before running vim-update-bundles.
 If you put your ~/.vim directory or ~/.vimrc file in a custom location, you can
 configure that ~/.vim-update-bundles.conf:
 
-  dotvim = "#{ENV['HOME']}/DOTFILES/vim"
-  dotvimrc = "#{ENV['HOME']}/DOTFILES/vim/vimrc"
+  dotvim = $HOME/mydotfiles/vim
+  dotvimrc = $HOME/mydotfiles/vim/vimrc
 
 You can also change where pathogen.vim and the .vimrc template are downloaded
-from (only used when setting up a new vim environment).
+from (these are only used when setting up a new vim environment).
 
-  starter_url  = '/tmp/local-vimrc-template'
-  pathogen_url = 'http://example.con/my-pathogen.vim'
+  starter_url  = /tmp/local-vimrc-template
+  pathogen_url = http://example.con/my-pathogen.vim
 
 
 Q&A

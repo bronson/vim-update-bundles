@@ -14,8 +14,6 @@
 #
 # If your .vim folder is stored in a git repository, you can add bundles
 # as submodules by putting "submodule=true" in ~/.vim-update-bundles.conf.
-#
-# todo: windows compatibility?
 
 require 'fileutils'
 require 'open-uri'
@@ -248,26 +246,37 @@ def create_new_vim_environment vimrc, starter_url, pathogen_url
 end
 
 
-# the files that get installed when creating a brand new vim environment
-starter_url   = "https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter"
-pathogen_url  = "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim"
-# dotvim is the directory that contains vim bundles, doc, autoload, etc dirs.
-dotvim        = dotfiles('vim')   || File.join(ENV['HOME'], '.vim')
-dotvimrc      = dotfiles('vimrc') || File.join(dotvim, 'vimrc')
-verbose       = nil     # make git quiet by default, verbose=true to hear everything
-submodule     = false   # clone dirs normally unless submodule = 1
+def process_options options, args, message
+  args.each_with_index do |arg,i|
+    arg = arg.gsub /^\s*-?-?|\s*$/, ''   # leading dashes in front of options are optional
+    return if arg == '' || arg =~ /^#/
+    k,v = arg.split /\s*=\s*/, 2
+    raise "Unknown option #{k.inspect} in #{message} #{i}" unless options.has_key? k.to_sym
+    options[k.to_sym] = v ? v.gsub(/\$([A-Za-z0-9_]+)/) { ENV[$1] }.split("'").join("\\'") : true
+  end
+end
 
 
-# config file is written in ruby
+configuration = {
+  :starter_url   => "https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter",
+  :pathogen_url  => "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim",
+  :dotvim        => dotfiles('vim') || File.join(ENV['HOME'], '.vim'),
+  :dotvimrc      => nil,     # might depend on dotvim so default is set after processing all opts
+  :verbose       => nil,     # git commands are quiet by default, set verbose=true to hear everything
+  :submodule     => false,   # if submodule is set then use git submodules instead of cloning
+}
+
 conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
-eval(File.read(conf_file), binding, conf_file) if test(?f, conf_file)
-# interpret vars on command line (only useful for testing)
-ARGV.each() { |arg| k,v = arg.split('=',2); k.sub! /^--/, '';
-  eval "#{k}='#{(v||'').gsub('//', '////').split("'").join("\\'")}'" }
+process_options configuration, File.open(conf_file).readlines, "#{conf_file} line" if test(?f, conf_file)
+process_options configuration, ARGV, "command line argument"
 
-$dotvim, $submodule, $verbose = dotvim, submodule, verbose
-if ensure_dir(dotvim) || !test(?f, dotvimrc)
-  create_new_vim_environment dotvimrc, starter_url, pathogen_url
+$dotvim = configuration[:dotvim]
+configuration[:dotvimrc] ||= dotfiles('vimrc') || File.join(dotvim, 'vimrc')
+$submodule, $verbose = configuration[:submodule], configuration[:verbose]
+configuration.keys.sort.each { |k| puts "# option #{k} = #{configuration[k].inspect}" } if $verbose
+
+if ensure_dir(dotvim) || !test(?f, configuration[:dotvimrc])
+  create_new_vim_environment configuration[:dotvimrc], configuration[:starter_url], configuration[:pathogen_url]
   update_bundles_and_docs
   puts 'Done!  Now enable some plugins in your ~/.vimrc file.'
 else
