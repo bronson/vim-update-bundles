@@ -38,22 +38,26 @@ submodules (see CONFIGURATION below).
 
 VIMRC
 
-Any line of the format '" BUNDLE: URL [REV]' (not case sensitive) will be
+Any line of the format '" Bundle: URL [REV]' (not case sensitive) will be
 interpreted as a bundle to download.  URL is to a git repository, and REV is an
 optional refspec (git branch, tag, or sha1) that allows you to follow a branch
 or lock it to a specific version:
 
-    " BUNDLE: git://github.com/scrooloose/nerdtree.git 4.0.0
+    " Bundle: git://github.com/scrooloose/nerdtree.git 4.0.0
 
-Your NerdTree would at version 4.0.0.  To update to 4.0.1, just change your
-vimrc and re-run vim-update-bundles.
+To update to 4.0.1, change your vimrc and re-run vim-update-bundles.
 
-You can put any number of BUNDLE-COMMAND: directives after BUNDLE.  This
-executes the given shell commands within the bundle's directory.  For instance,
-to automatically build Command-T every time git-update-bundles is run:
+You can put any number of Bundle-Command: directives after Bundle.
+Bundle-command executes the given shell commands within the bundle's directory.
+For instance, to call "rake make" every time Command-T is updated:
 
-    " BUNDLE: git://github.com/bronson/Command-T.git
-    " BUNDLE-COMMAND: rake make
+    " Bundle: git://github.com/bronson/Command-T.git
+    " Bundle-Command: rake make
+
+Finally, if you have directories in ~/.vim/bundle that you'd like to be ignored,
+just mark them as static.
+
+     " Static: myplugin
 
 
 CONFIGURATION

@@ -315,6 +315,22 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
+  def test_static_bundle
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls}`
+      Dir.mkdir "#{tmpdir}/.vim/bundle/foreign"
+      Dir.mkdir "#{tmpdir}/.vim/bundle/static"
+      write_file tmpdir, ".vim/vimrc", <<-EOL
+        " Static: static
+      EOL
+      `./vim-update-bundles`
+      assert test(?d, "#{tmpdir}/.vim/bundle/static")
+      assert !test(?d, "#{tmpdir}/.vim/bundle/foreign")
+      assert test(?d, "#{tmpdir}/.vim/Trashed-Bundles/foreign-01")
+    end
+  end
+
+
   def test_create_dotfile_environment
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"
