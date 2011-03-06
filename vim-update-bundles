@@ -251,7 +251,10 @@ def process_options options, args, message
     arg = arg.gsub /^\s*-?-?|\s*$/, ''   # leading dashes in front of options are optional
     return if arg == '' || arg =~ /^#/
     k,v = arg.split /\s*=\s*/, 2
-    raise "Unknown option #{k.inspect} in #{message} #{i}" unless options.has_key? k.to_sym
+    raise "Unknown option #{k.inspect} #{message} #{i}" unless options.has_key? k.to_sym
+    # config file has changed, carry the warning for a few point releases...
+    raise "Interpolation is now $#{$1} instead of ENV[#{$1}] #{message} #{i}" if v =~ /ENV\[['"]?([^\]]*)['"]?\]/
+    STDERR.puts "WARNING: quotes in a config item are probably a mistake #{message} #{i}" if v=~ /["']/
     options[k.to_sym] = v ? v.gsub(/\$([A-Za-z0-9_]+)/) { ENV[$1] }.split("'").join("\\'") : true
   end
 end
@@ -267,8 +270,8 @@ configuration = {
 }
 
 conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
-process_options configuration, File.open(conf_file).readlines, "#{conf_file} line" if test(?f, conf_file)
-process_options configuration, ARGV, "command line argument"
+process_options configuration, File.open(conf_file).readlines, "in #{conf_file} line" if test(?f, conf_file)
+process_options configuration, ARGV, "in command line argument"
 
 $dotvim = configuration[:dotvim]
 configuration[:dotvimrc] ||= dotfiles('vimrc') || File.join(dotvim, 'vimrc')
