@@ -116,7 +116,7 @@ It always updates the ~/.vim and ~/.vimrc symlinks so Vim can find the correct f
 You can change the initial pathogen.vim and .vimrc used when setting up a new environemnt.
 these can be either a path in the filesystem or a URL.  This is mostly used for testing.
 
-* starter\_url = https://github.com/bronson/vim-update-bundles/raw/master/vimrc-starter
+* starter\_url = https://github.com/bronson/dotfiles/raw/master/.vimrc
 * pathogen\_url = https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim
 
 
