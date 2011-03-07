@@ -32,7 +32,7 @@ Hit Control-] on the bundle's name to jump to its documentation.
 If you're not already using Vim, vim-update-bundles will set you up with some useful defaults.
 Now edit your ~/.vimrc and run vim-update-bundles whenever you want the changes to take effect.
 
-vim-update-bundles will use ~/.dotfiles if it exists so it works seamlessly with http://github.com/ryanb/dotfiles and friends.
+vim-update-bundles will use ~/.dotfiles if it exists so it works seamlessly with <http://github.com/ryanb/dotfiles> and friends.
 It also supports git submodules (see the configuration section below).
 
 
@@ -122,15 +122,15 @@ these can be either a path in the filesystem or a URL.  This is mostly used for 
 
 ## Authors
 
-* Scott Bronson http://github.com/bronson
-* steeef http://github.com/steeef
-* Andreas Marienborg http://github.com/omega
-* Sorin Ionescu http://github.com/sorin-ionescu
+* Scott Bronson <http://github.com/bronson>
+* steeef <http://github.com/steeef>
+* Andreas Marienborg <http://github.com/omega>
+* Sorin Ionescu <http://github.com/sorin-ionescu>
 
 
 ## Alternatives
 
-Vundle by gmarik is starting to look pretty awesome. http://github.com/gmarik/vundle
+Vundle by gmarik is starting to look pretty awesome. <http://github.com/gmarik/vundle>
 
-Also see http://vim-scripts.org/tools.html
+Also see <http://vim-scripts.org/tools.html>
 

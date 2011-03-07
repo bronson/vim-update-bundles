@@ -76,7 +76,7 @@ def print_bundle dir, doc
     version = "n/a" if version == ''
     date = git(:log, '-1', '--pretty=format:%ai').chomp
   end
-  doc.printf "  - %-30s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
+  doc.printf "  %-32s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
 end
 
 
@@ -228,10 +228,10 @@ end
 def update_bundles_and_docs
   ensure_dir dotvim('doc')
   File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
-    doc.printf "%-32s %s %32s\n\n", "*bundles.txt*", "Bundles", "Version 0.1"
-    doc.puts "These are the bundles installed on your system, along with their\n" +
-      "versions and release dates.  Downloaded on #{Time.now}.\n\n" +
-      "A version number of 'n/a' means upstream hasn't tagged any releases.\n"
+    doc.printf "%-34s %s\n\n\n", "*bundles* *bundles.txt*", "Installed Bundles"
+    doc.puts "Last updated by vim-update-bundles on #{Time.now}.\n\n"
+    doc.printf "  %-32s %-22s %s\n", "PLUGIN", "VERSION", "RELEASE DATE"
+    doc.puts "-" * 72
 
     bundle_dir = dotvim('bundle')
     ensure_dir bundle_dir
