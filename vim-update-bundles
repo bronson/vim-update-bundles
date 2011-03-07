@@ -332,7 +332,7 @@ configuration = {
   :vimrc_path    => nil,     # full path to ~/.vimrc (creates symlink if not in $HOME)
 
   # used when spinning up a new Vim environment
-  :starter_url   => "https://github.com/bronson/dotfiles/raw/master/.vimrc"
+  :starter_url   => "https://github.com/bronson/dotfiles/raw/master/.vimrc",
   :pathogen_url  => "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim",
 }
 
