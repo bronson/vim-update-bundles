@@ -1,3 +1,4 @@
+0.4.0   06 Mar 2011
 - Greatly simplify path configuration thanks to Sorin Ionescu
 - No longer use Ruby as config file format, it's just key=value now
   ("static=1" still works but it's $HOME instead of "#{ENV['HOME']}")
