@@ -150,7 +150,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       Dir.mkdir "#{tmpdir}/.vim"
       Dir.chdir("#{tmpdir}/.vim") { `git init` }
       `./vim-update-bundles #{@starter_urls}`
-      # check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir, ".vim", ".vimrc"
 
       # add submodule
       create_mock_repo "#{tmpdir}/repo"
@@ -173,6 +173,11 @@ class TestUpdater < MiniTest::Unit::TestCase
       write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
       assert_not_test ?d, repo
+
+      ['.gitmodules', '.git/config'].each do |filename|
+        text = File.read File.join(tmpdir, '.vim', filename)
+        refute_match /submodule.*repo/, text
+      end
     end
   end
 
