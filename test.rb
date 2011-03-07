@@ -4,9 +4,6 @@ require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
-# interpolate from config options too
-# uncomment check_tree?
-# todo: test that .vim/vimrc over .vimrc preference works.
 # todo: test that tagstr sha1 works
 #   also switching from a branch/tag/sha to master and back.
 #   also with submodules
@@ -14,8 +11,8 @@ MiniTest::Unit.autorun
 # todo: test removing bundles multiple times.
 # todo: what happens when checking out a branch or tag and it doesn't exist?
 
-# We actually shell out to the executable.  This isn't really unit
-# testing but I'd rather have end-to-end testing in this case anyway.
+# We shell out to the executable so this isn't actually unit testing.
+# Has anyone written a functional test framework for executables?
 
 
 class TestUpdater < MiniTest::Unit::TestCase
@@ -412,6 +409,25 @@ class TestUpdater < MiniTest::Unit::TestCase
       }
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, '.vim', 'parent/child/vv zz'
+    end
+  end
+
+
+  def test_interpolation_works
+    prepare_test do |tmpdir|
+      `./vim-update-bundles #{@starter_urls} --vimdir_path='$HOME/vimmy' --vimrc_path='$vimdir_path/vimmyrc'`
+      check_tree tmpdir, 'vimmy', 'vimmy/vimmyrc'
+    end
+  end
+
+
+  def test_unknown_interpolation_fails
+    prepare_test do |tmpdir|
+      `./vim-update-bundles --verbose='$unknown' 2>/dev/null`
+      assert $?.exitstatus == 1, "the bundle-command should have produced 1, not #{$?.exitstatus}"
+      # and make sure it didn't create any files
+      assert_not_test ?e, "#{tmpdir}/.vim"
+      assert_not_test ?e, "#{tmpdir}/.vimrc"
     end
   end
 

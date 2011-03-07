@@ -241,6 +241,14 @@ def update_bundles_and_docs
 end
 
 
+def interpolate options, val, message, i
+  raise "Interpolation is now $#{$1} instead of ENV[#{$1}] #{message} #{i}" if val =~ /ENV\[['"]?([^\]]*)['"]?\]/
+  STDERR.puts "WARNING: quotes in a config item are probably a mistake #{message} #{i}" if val =~ /["']/
+
+  val.gsub(/\$([A-Za-z0-9_]+)/) { options[$1.to_sym] || ENV[$1] || raise("$#{$1} is not defined #{message} #{i}") }
+end
+
+
 def process_options options, args, message
   args.each_with_index do |arg,i|
     arg = arg.gsub /^\s*-?-?|\s*$/, ''   # leading dashes in front of options are optional
@@ -248,9 +256,7 @@ def process_options options, args, message
     k,v = arg.split /\s*=\s*/, 2
     raise "Unknown option #{k.inspect} #{message} #{i}" unless options.has_key? k.to_sym
     # config file has changed, carry the warning for a few point releases...
-    raise "Interpolation is now $#{$1} instead of ENV[#{$1}] #{message} #{i}" if v =~ /ENV\[['"]?([^\]]*)['"]?\]/
-    STDERR.puts "WARNING: quotes in a config item are probably a mistake #{message} #{i}" if v=~ /["']/
-    options[k.to_sym] = v ? v.gsub(/\$([A-Za-z0-9_]+)/) { ENV[$1] }.split("'").join("\\'") : true
+    options[k.to_sym] = v ? interpolate(options,v,message,i).split("'").join("\\'") : true
   end
 end
 
