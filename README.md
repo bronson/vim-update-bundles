@@ -121,6 +121,14 @@ these can be either a path in the filesystem or a URL.  This is mostly used for 
 * pathogen\_url = https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim
 
 
+## Authors
+
+* Scott Bronson http://github.com/bronson
+* steeef http://github.com/steeef
+* Andreas Marienborg https://github.com/omega
+* Sorin Ionescu https://github.com/sorin-ionescu
+
+
 ## Alternatives
 
 Vundle by gmarik is starting to look pretty awesome. https://github.com/gmarik/vundle

@@ -1,6 +1,6 @@
-- No longer use Ruby files as config files, it's just key=value now
-  "static=1" still works but interpolation is $HOME not #{ENV['HOME']}
-- Epxand $X in all options (i.e. $HOME is expanded to user's home dir)
+- Greatly simplify path configuration thanks to Sorin Ionescu
+- No longer use Ruby as config file format, it's just key=value now
+  ("static=1" still works but it's $HOME instead of "#{ENV['HOME']}")
 - Add the Static: directive thanks to Andreas Marienborg
 
 0.3.1   30 Oct 2010

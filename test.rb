@@ -4,6 +4,7 @@ require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
+# interpolate from config options too
 # uncomment check_tree?
 # todo: test that .vim/vimrc over .vimrc preference works.
 # todo: test that tagstr sha1 works
@@ -127,7 +128,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       # remove the repo
       write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
-      assert !test(?d, repo)
+      assert_not_test ?d, repo
     end
   end
 
@@ -171,29 +172,32 @@ class TestUpdater < MiniTest::Unit::TestCase
       # remove the repo
       write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
-      assert !test(?d, repo)
+      assert_not_test ?d, repo
     end
   end
 
 
   def test_tagstr_checkout
     # ensures that you can lock a checkout to a particular tag
+    # also ensures that we use .vim/vimrc by default if it already exists
     prepare_test do |tmpdir|
+      Dir.mkdir "#{tmpdir}/.vim"
+      write_file tmpdir, ".vim/vimrc", ''
       `./vim-update-bundles #{@starter_urls}`
-      check_tree tmpdir
+      check_tree tmpdir, ".vim", ".vim/vimrc"
 
       # make a repo with a tagged commit, and commits after that
       create_mock_repo "#{tmpdir}/repo"
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
 
-      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
+      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/second"
-      assert !test(?f, "#{repo}/third")
+      assert_not_test ?f, "#{repo}/third"
 
       # pull some upstream changes
       update_mock_repo "#{tmpdir}/repo", "fourth"
@@ -370,18 +374,18 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
-  #def test_create_dotfile_environment_with_vimrc_in_vim
-    #prepare_test do |tmpdir|
-      #Dir.mkdir "#{tmpdir}/.dotfiles"
-      #Dir.mkdir "#{tmpdir}/.dotfiles/vim"
-      #write_file tmpdir, ".dotfiles/vim/vimrc", '" ignored'
+  def test_create_dotfile_environment_with_vimrc_in_vim
+    prepare_test do |tmpdir|
+      Dir.mkdir "#{tmpdir}/zedots"
+      Dir.mkdir "#{tmpdir}/zedots/vim"
+      write_file tmpdir, "zedots/vim/vimrc", '" ignored'
 
-      #`./vim-update-bundles #{@starter_urls}`
-      #assert_not_test ?f, "#{tmpdir}/.vimrc"
-      #assert_not_test ?f, "#{tmpdir}/.dotfiles/.vimrc"
-      #check_tree tmpdir, '.dotfiles/vim', '.dotfiles/vim/vimrc'
-    #end
-  #end
+      `./vim-update-bundles #{@starter_urls} --dotfiles_path='#{tmpdir}/zedots'`
+      check_tree tmpdir, 'zedots/vim', 'zedots/vim/vimrc'
+      assert_not_test ?e, "#{tmpdir}/.dotfiles/.vimrc"
+      assert_not_test ?e, "#{tmpdir}/zedots/.vimrc"
+    end
+  end
 
 
   def test_create_custom_vimrc_environment
