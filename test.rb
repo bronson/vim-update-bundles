@@ -1,8 +1,7 @@
 require 'rubygems'
-require 'minitest/unit'
+require 'minitest/autorun'
 require 'tempfile'
 require 'tmpdir'
-MiniTest::Unit.autorun
 
 # todo: test that tagstr sha1 works
 #   also switching from a branch/tag/sha to master and back.
