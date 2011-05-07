@@ -73,7 +73,7 @@ def print_bundle dir, doc
   version = date = ''
   Dir.chdir(dir) do
     version = `git describe --tags 2>/dev/null`.chomp
-    version = "n/a" if version == ''
+    version = `git rev-parse HEAD`[0..12] if version == ''
     date = git(:log, '-1', '--pretty=format:%ai').chomp
   end
   doc.printf "  %-32s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
