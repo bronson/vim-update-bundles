@@ -8,6 +8,7 @@ Use Pathogen and Git to manage your Vim plugins.
 To install a plugin, add the following line to your ~/.vimrc:
 
     " Bundle: git://github.com/scrooloose/nerdtree.git
+    " Bundle: scrooloose/nerdtree     # same thing, just shorter
 
 Now run ./vim-update-bundles.  Nerdtree is installed and ready for use.
 
