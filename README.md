@@ -50,7 +50,11 @@ optional refspec (git branch, tag, or sha1).  This allows you to follow a branch
 or lock the bundle to a specific tag or commit, i.e.:
 
     " Bundle: git://github.com/tpope/vim-endwise.git v1.0
-    " Bundle: git://github.com/tpope/vim-endwise.git 780fa5603
+
+You can also abbreviate the repository:
+
+    " Bundle: tpope/vim-endwise    -> git://github.com/vim-endwise.git
+    " Bundle: endwise.vim          -> git://github.com/vim-scripts/endwise.vim.git
 
 #### Bundle Commands:
 

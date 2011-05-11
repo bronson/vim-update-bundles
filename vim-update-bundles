@@ -202,8 +202,11 @@ def update_bundles doc
     if line =~ /^\s*"\s*bundle:\s*(.*)$/i
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
-      if url.match /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/  # user/repo style directive
+      if url.match /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/  # user/repo style
         url = "git://github.com/#{url}.git"
+      end
+      if url.match /^[A-Za-z0-9._-]+$/                 # just plain repo
+        url = "git://github.com/vim-scripts/#{url}.git"
       end
       download_bundle dir, url, tag, doc
       existing_bundles.delete dir
