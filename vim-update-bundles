@@ -194,9 +194,23 @@ def run_bundle_command dir, cmd
   end
 end
 
+def list_bundle_directories
+  bundle_paths = Dir['*']
+
+  # Ignore files in the /bundle directory, ie READMEs
+  bundle_paths.each do |path|
+    if FileTest.file? path
+      bundle_paths.delete path
+      puts "ignoring file '#{path}' in bundle directory"
+    end
+  end
+
+  return bundle_paths
+end
 
 def update_bundles doc
-  existing_bundles = Dir['*']
+  existing_bundles = list_bundle_directories
+
   dir = nil
   read_vimrc do |line|
     if line =~ /^\s*"\s*bundle:\s*(.*)$/i

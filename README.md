@@ -53,7 +53,7 @@ or lock the bundle to a specific tag or commit, i.e.:
 
 You can also abbreviate the repository:
 
-    " Bundle: tpope/vim-endwise    -> git://github.com/vim-endwise.git
+    " Bundle: tpope/vim-endwise    -> git://github.com/tpope/vim-endwise.git
     " Bundle: endwise.vim          -> git://github.com/vim-scripts/endwise.vim.git
 
 #### Bundle Commands:
