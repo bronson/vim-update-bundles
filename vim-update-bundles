@@ -39,8 +39,8 @@ end
 
 
 def run *cmd
-  # Runs cmd, returns its stdout, and bails on error — a more powerful
-  # system(), a backport of Ruby 1.9's IO.popen for 1.8.
+  # runs cmd, returns its stdout, bails on error.
+  # Basically 1.9's IO.popen so we can still support Ruby 1.8
   options = { :acceptable_exit_codes => [0] }
   options.merge!(cmd.pop) if cmd.last.kind_of?(Hash)
   puts "-> #{[cmd].join(" ")}" if $verbose
