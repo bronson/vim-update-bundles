@@ -4,6 +4,8 @@ require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
+# TESTDIR=/ramdisk/wherever To specify where all the tests will be run.
+
 # todo: test that tagstr sha1 works
 #   also switching from a branch/tag/sha to master and back.
 #   also with submodules
@@ -18,7 +20,9 @@ MiniTest::Unit.autorun
 class TestUpdater < MiniTest::Unit::TestCase
   def prepare_test
     # creates a tmpdir to run the test in then yields to the test
-    Dir.mktmpdir('vimtest-') do |tmpdir|
+    args = 'vimtest-'
+    args.push ENV['TESTDIR'] if ENV['TESTDIR']
+    Dir.mktmpdir(*args) do |tmpdir|
       create_mock_files tmpdir
       Dir.mkdir "#{tmpdir}/home"
       ENV['HOME']="#{tmpdir}/home"
