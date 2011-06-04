@@ -5,12 +5,12 @@
 # as needed.  It also removes bundles that are no longer used.
 #
 # To specify a bundle in your .vimrc, just add a line like this:
-#   " BUNDLE: git://git.wincent.com/command-t.git
+#   " BUNDLE: https://git.wincent.com/command-t.git
 # If you want a branch other than 'master', add the branch name on the end:
-#   " Bundle: git://github.com/vim-ruby/vim-ruby.git noisy
+#   " Bundle: https://github.com/vim-ruby/vim-ruby.git noisy
 # Or tag or sha1: (this results in a detached head, see 'git help checkout')
-#   " bundle: git://github.com/bronson/vim-closebuffer.git 0.2
-#   " bundle: git://github.com/tpope/vim-rails.git 42bb0699
+#   " bundle: https://github.com/bronson/vim-closebuffer.git 0.2
+#   " bundle: https://github.com/tpope/vim-rails.git 42bb0699
 #
 # If your .vim folder is stored in a git repository, you can add bundles
 # as submodules by putting "submodule=true" in ~/.vim-update-bundles.conf.
@@ -207,10 +207,10 @@ def update_bundles doc
       url, tag = $1.split
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
       if url.match /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/  # user/repo style
-        url = "git://github.com/#{url}.git"
+        url = "https://github.com/#{url}.git"
       end
       if url.match /^[A-Za-z0-9._-]+$/                 # just plain repo
-        url = "git://github.com/vim-scripts/#{url}.git"
+        url = "https://github.com/vim-scripts/#{url}.git"
       end
       download_bundle dir, url, tag, doc
       existing_bundles.delete dir

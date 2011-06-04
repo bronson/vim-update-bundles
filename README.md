@@ -7,7 +7,7 @@ Use Pathogen and Git to manage your Vim plugins.
 
 To install a plugin, add the following line to your ~/.vimrc:
 
-    " Bundle: git://github.com/scrooloose/nerdtree.git
+    " Bundle: https://github.com/scrooloose/nerdtree.git
     " Bundle: scrooloose/nerdtree     # same thing, just shorter
 
 Now run ./vim-update-bundles.  Nerdtree is installed and ready for use.
@@ -23,7 +23,7 @@ Hit Control-] on the bundle's name to jump to its documentation.
 
 ## Installation
 
-    $ git clone git://github.com/bronson/vim-update-bundles.git
+    $ git clone https://github.com/bronson/vim-update-bundles.git
 
 
 ## Usage
@@ -49,12 +49,12 @@ interpreted as a bundle to download.  _URL_ is to a git repository, and _REV_ is
 optional refspec (git branch, tag, or sha1).  This allows you to follow a branch
 or lock the bundle to a specific tag or commit, i.e.:
 
-    " Bundle: git://github.com/tpope/vim-endwise.git v1.0
+    " Bundle: https://github.com/tpope/vim-endwise.git v1.0
 
 You can also abbreviate the repository:
 
-    " Bundle: tpope/vim-endwise    -> git://github.com/tpope/vim-endwise.git
-    " Bundle: endwise.vim          -> git://github.com/vim-scripts/endwise.vim.git
+    " Bundle: tpope/vim-endwise    -> https://github.com/tpope/vim-endwise.git
+    " Bundle: endwise.vim          -> https://github.com/vim-scripts/endwise.vim.git
 
 #### Bundle Commands:
 
@@ -63,7 +63,7 @@ any number of Bundle-Command: directives after the Bundle.  Bundle-command execu
 its shell commands within the bundle's directory.  To install the Command-T
 plugin and call "rake make" every time it's updated:
 
-    " Bundle: git://git.wincent.com/command-t.git
+    " Bundle: https://git.wincent.com/command-t.git
     " Bundle-Command: rake make
 
 #### Static:
