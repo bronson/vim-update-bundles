@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Reads the bundles you want installed out of your $HOME/.vimrc file,
+# Reads the bundles you want installed out of your .vimrc file,
 # then synchronizes .vim/bundles to match, downloading new repositories
 # as needed.  It also removes bundles that are no longer used.
 #
@@ -144,7 +144,7 @@ end
 
 
 def read_vimrc
-  File.open("#{ENV['HOME']}/.vimrc") do |file|
+  File.open($dotvimrc) do |file|
     file.each_line { |line| yield line }
   end
 end
@@ -350,6 +350,7 @@ configuration = {
 read_configuration configuration
 # these globals are unfortunate but life is even more heinous without them
 $dotvim = configuration[:vimdir_path]
+$dotvimrc = configuration[:vimrc_path]
 $submodule = configuration[:submodule]
 $verbose = configuration[:verbose]
 
