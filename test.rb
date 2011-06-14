@@ -4,22 +4,26 @@ require 'tempfile'
 require 'tmpdir'
 MiniTest::Unit.autorun
 
-# TESTDIR=/ramdisk/wherever To specify where all the tests will be run.
-
-# todo: test that tagstr sha1 works
-#   also switching from a branch/tag/sha to master and back.
-#   also with submodules
-# todo: test BUNDLE-COMMAND
-# todo: test removing bundles multiple times.
-# todo: what happens when checking out a branch or tag and it doesn't exist?
-
-# We shell out to the executable so this isn't actually unit testing.
+# Specify where all the tests will be run:
+#   TESTDIR=/ramdisk/wherever
+#
+# TODO: Test that the following work:
+#         - tag, SHA1.
+#         - Switching from a branch/tag/SHA1 to master and back.
+#         - Submodules.
+#         - Bundle-Command.
+#         - Removing bundles multiple times.
+#
+# TODO: Investigate what happens when checking out a branch or tag and it
+#       doesn't exist?
+#
+# We shell to the executable; so, this isn't actually unit testing.
 # Has anyone written a functional test framework for executables?
 
 
 class TestUpdater < MiniTest::Unit::TestCase
   def prepare_test
-    # creates a tmpdir to run the test in then yields to the test
+    # Creates a tmp dir to run the test in then yields to the test.
     args = 'vimtest-'
     args.push ENV['TESTDIR'] if ENV['TESTDIR']
     Dir.mktmpdir(*args) do |tmpdir|
@@ -36,7 +40,7 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
   def create_mock_files tmpdir
-    # create local mocks for the files would download, saves net traffic and test time.
+    # Creates mock files to download (it saves on bandwidth and test time).
     write_file tmpdir, "pathogen",      "\" PATHOGEN SCRIPT"
     write_file tmpdir, "starter-vimrc", "\" STARTER VIMRC"
     @starter_urls = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
@@ -79,10 +83,10 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
   def check_tree base, vimdir='.vim', vimrc='.vimrc'
-    # makes sure .vim, .vimrc, and the symlinks are all set up correctly
+    # Makes sure .vim, .vimrc, and the symlinks are set up correctly.
 
     if vimdir == '.vim'
-      # no symlinks needed
+      # No symlinks are needed.
       assert_test ?d, "#{base}/.vim"
     else
       assert_test ?l, "#{base}/.vim"
@@ -103,7 +107,7 @@ class TestUpdater < MiniTest::Unit::TestCase
 
 
   def test_standard_run
-    # creates a starter environment then updates a few times
+    # Creates a starter environment then updates a few times.
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir
@@ -111,22 +115,22 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert_test ?d, "#{tmpdir}/.vim/bundle"
       assert_equal ['.', '..'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
 
-      # add a repo
+      # Add a repository.
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
-      # pull some upstream changes
+      # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "second"
       `./vim-update-bundles`
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
-      # remove the repo
+      # Remove the repository.
       write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
       assert_not_test ?d, repo
@@ -135,7 +139,7 @@ class TestUpdater < MiniTest::Unit::TestCase
 
 
   def test_dont_blow_away_existing_vimrc
-    # don't want to destroy a previously existing .vimrc
+    # Do not destroy an existing .vimrc.
     prepare_test do |tmpdir|
       str = "don't tread on me"
       write_file tmpdir, '.vimrc', str
@@ -146,31 +150,31 @@ class TestUpdater < MiniTest::Unit::TestCase
 
 
   def test_submodule_run
-    # creates a starter environment using submodules
+    # Creates a starter environment using submodules.
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.vim"
       Dir.chdir("#{tmpdir}/.vim") { `git init` }
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vimrc"
 
-      # add submodule
+      # Add submodule.
       create_mock_repo "#{tmpdir}/repo"
       File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f| f.write "submodule = true" }
-      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
 
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{tmpdir}/.vim/.gitmodules"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
-      # pull some upstream changes
+      # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "second"
       `./vim-update-bundles`
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
 
-      # remove the repo
+      # Remove the repository.
       write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
       assert_not_test ?d, repo
@@ -184,41 +188,41 @@ class TestUpdater < MiniTest::Unit::TestCase
 
 
   def test_tagstr_checkout
-    # ensures that you can lock a checkout to a particular tag
-    # also ensures that we use .vim/vimrc by default if it already exists
+    # Ensures locking a checkout to a tag and that .vim/vimrc is used if it
+    # already exists.
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.vim"
       write_file tmpdir, ".vim/vimrc", ''
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir, ".vim", ".vim/vimrc"
 
-      # make a repo with a tagged commit, and commits after that
+      # Make a repository with a tagged commit and commits after that.
       create_mock_repo "#{tmpdir}/repo"
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
 
-      write_file tmpdir, ".vim/vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
+      write_file tmpdir, ".vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/second"
       assert_not_test ?f, "#{repo}/third"
 
-      # pull some upstream changes
+      # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "fourth"
       `./vim-update-bundles`
       assert_test ?f, "#{repo}/second"
       assert_not_test ?f, "#{repo}/third"
       assert_not_test ?f, "#{repo}/fourth"
 
-      # TODO: switch to master and back, and to another tag and back
+      # TODO: Switch to master and back and to another tag and back.
     end
   end
 
 
   def test_submodule_tagstr_checkout
-    # ensures that you can lock a checkout to a particular tag
+    # Ensures locking a checkout to a tag.
     prepare_test do |tmpdir|
       Dir.chdir(tmpdir) { `git init` }
       `./vim-update-bundles #{@starter_urls} --submodule=true`
@@ -228,17 +232,17 @@ class TestUpdater < MiniTest::Unit::TestCase
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
 
-      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo 0.2"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       `./vim-update-bundles --submodule=1`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
-      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       `git ls-files --cached .vim/bundle/repo`
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/second"
       assert_not_test ?f, "#{repo}/third"
 
-      # pull some upstream changes
+      # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "third"
       `./vim-update-bundles --submodule=1`
       assert_test ?f, "#{repo}/second"
@@ -249,28 +253,28 @@ class TestUpdater < MiniTest::Unit::TestCase
 
 
   def test_branch_checkout
-    # ensures it will still follow new commits on a branch
+    # Ensures new commits on a branch are followed.
     prepare_test do |tmpdir|
       `./vim-update-bundles #{@starter_urls}`
       check_tree tmpdir
 
-      # make a repo with another branch
+      # Make a repository with another branch.
       create_mock_repo "#{tmpdir}/repo"
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q -b abranch` }
       update_mock_repo "#{tmpdir}/repo", 'b-second'
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q master` }
       update_mock_repo "#{tmpdir}/repo", 'second'
 
-      # clone that repo on the given branch
-      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
+      # Clone repository on the given branch.
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo abranch"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/b-second"
       assert_not_test ?f, "#{repo}/second"
 
-      # pull some upstream changes
+      # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "third"
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q abranch` }
       update_mock_repo "#{tmpdir}/repo", "b-third"
@@ -279,36 +283,36 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert_test ?f, "#{repo}/b-third"
       assert_not_test ?f, "#{repo}/third"
 
-      # TODO: switch to master and back, and to another branch and back
+      # TODO: Switch to master and back and to another tag and back.
     end
   end
 
 
   def test_submodule_branch_checkout
-    # ensures that you can lock a checkout to a particular tag
+    # Ensures locking a checkout to a tag.
     prepare_test do |tmpdir|
       Dir.chdir(tmpdir) { `git init` }
       `./vim-update-bundles #{@starter_urls} --submodule=true`
       check_tree tmpdir
 
-      # make a repo with another branch
+      # Make a repository with another branch.
       create_mock_repo "#{tmpdir}/repo"
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q -b abranch` }
       update_mock_repo "#{tmpdir}/repo", 'b-second'
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q master` }
       update_mock_repo "#{tmpdir}/repo", 'second'
 
-      write_file tmpdir, ".vimrc", "\" BUNDLE: #{tmpdir}/repo abranch"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo abranch"
       `./vim-update-bundles --submodule=1`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
-      repo = "#{tmpdir}/.vim/bundle/repo"  # the local repo, not the origin
+      repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       `git ls-files --cached .vim/bundle/repo`
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/b-second"
       assert_not_test ?f, "#{repo}/second"
 
-      # pull some upstream changes
+      # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "third"
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q abranch` }
       update_mock_repo "#{tmpdir}/repo", "b-third"
@@ -317,7 +321,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       assert_test ?f, "#{repo}/b-third"
       assert_not_test ?f, "#{repo}/third"
 
-      # TODO: switch to master and back, and to another branch and back
+      # TODO: Switch to master and back and to another tag and back.
     end
   end
 
@@ -429,7 +433,7 @@ class TestUpdater < MiniTest::Unit::TestCase
     prepare_test do |tmpdir|
       `./vim-update-bundles --verbose='$unknown' 2>/dev/null`
       assert $?.exitstatus == 1, "the bundle-command should have produced 1, not #{$?.exitstatus}"
-      # and make sure it didn't create any files
+      # Make sure it didn't create any files.
       assert_not_test ?e, "#{tmpdir}/.vim"
       assert_not_test ?e, "#{tmpdir}/.vimrc"
     end
