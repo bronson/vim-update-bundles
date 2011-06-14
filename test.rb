@@ -3,16 +3,20 @@ require 'minitest/autorun'
 require 'tempfile'
 require 'tmpdir'
 
-# TESTDIR=/ramdisk/wherever To specify where all the tests will be run.
-
-# todo: test that tagstr sha1 works
-#   also switching from a branch/tag/sha to master and back.
-#   also with submodules
-# todo: test BUNDLE-COMMAND
-# todo: test removing bundles multiple times.
-# todo: what happens when checking out a branch or tag and it doesn't exist?
-
-# We shell out to the executable so this isn't actually unit testing.
+# Specify where all the tests will be run:
+#   TESTDIR=/ramdisk/wherever
+#
+# TODO: Test that the following work:
+#         - tag, SHA1.
+#         - Switching from a branch/tag/SHA1 to master and back.
+#         - Submodules.
+#         - Bundle-Command.
+#         - Removing bundles multiple times.
+#
+# TODO: Investigate what happens when checking out a branch or tag and it
+#       doesn't exist?
+#
+# We shell to the executable; so, this isn't actually unit testing.
 # Has anyone written a functional test framework for executables?
 
 
