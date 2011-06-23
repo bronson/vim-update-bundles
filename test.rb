@@ -24,7 +24,7 @@ MiniTest::Unit.autorun
 class TestUpdater < MiniTest::Unit::TestCase
   def prepare_test
     # Creates a tmp dir to run the test in then yields to the test.
-    args = 'vimtest-'
+    args = ['vimtest-']
     args.push ENV['TESTDIR'] if ENV['TESTDIR']
     Dir.mktmpdir(*args) do |tmpdir|
       create_mock_files tmpdir
