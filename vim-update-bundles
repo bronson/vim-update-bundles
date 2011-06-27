@@ -68,13 +68,16 @@ def git *cmd
 end
 
 
-def print_bundle dir, doc
-  version = date = ''
+def describe_head dir
   Dir.chdir(dir) do
-    version = `git describe --tags 2>/dev/null`.chomp
-    version = `git rev-parse HEAD`[0..12] if version == ''
-    date = git(:log, '-1', '--pretty=format:%ai').chomp
+    `git describe --tags 2>/dev/null`.chomp || git('rev-parse', :HEAD)[0..12]
   end
+end
+
+
+def print_bundle dir, doc
+  version = describe_head dir
+  date = Dir.chdir(dir) { git(:log, '-1', '--pretty=format:%ai').chomp }
   doc.printf "  %-32s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
 end
 
@@ -201,9 +204,11 @@ def update_bundles doc
   existing_bundles.reject! { |path| FileTest.file? path }
 
   dir = nil
+  puts "# reading vimrc" if $verbose
   read_vimrc do |line|
     if line =~ /^\s*"\s*bundle:\s*(.*)$/i
       url, tag = $1.split
+      puts "# processing '#{url}' at '#{tag}'" if $verbose
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
       if url.match /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/  # User/repository.
         url = "https://github.com/#{url}.git"

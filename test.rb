@@ -15,6 +15,8 @@ require 'tmpdir'
 #
 # TODO: Investigate what happens when checking out a branch or tag and it
 #       doesn't exist?
+# TODO: that if .vimrc and .vim/vimrc both exist, the former is preferred
+# TODO: ensure that the contents of bundles.txt are correct
 #
 # We shell to the executable; so, this isn't actually unit testing.
 # Has anyone written a functional test framework for executables?
