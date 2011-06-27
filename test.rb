@@ -3,20 +3,15 @@ require 'minitest/autorun'
 require 'tempfile'
 require 'tmpdir'
 
-# Specify where all the tests will be run:
-#   TESTDIR=/ramdisk/wherever
+# You can specify the directory where the tests will be run:
+#   TESTDIR=/ramdisk/test ruby test.rb
 #
-# TODO: Test that the following work:
-#         - tag, SHA1.
-#         - Switching from a branch/tag/SHA1 to master and back.
-#         - Submodules.
-#         - Bundle-Command.
-#         - Removing bundles multiple times.
-#
-# TODO: Investigate what happens when checking out a branch or tag and it
-#       doesn't exist?
-# TODO: that if .vimrc and .vim/vimrc both exist, the former is preferred
-# TODO: ensure that the contents of bundles.txt are correct
+# TODO: test checking out a SHA1
+# TODO: test Switching from a branch/tag/SHA1 to master and back.
+# TODO: test Bundle-Command.
+# TODO: test adding and removing a bundle multiple times
+# TODO: what happens when checking out a branch or tag and it doesn't exist?
+# TODO: test when .vimrc and .vim/vimrc both exist, the former is preferred
 #
 # We shell to the executable; so, this isn't actually unit testing.
 # Has anyone written a functional test framework for executables?
