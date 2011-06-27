@@ -109,7 +109,7 @@ end
 
 
 def print_log_entry log, action, dir, notes
-  log.printf " %-3s %-32s %s\n", action, "|#{dir}|", notes
+  log.printf " %-3s %-24s %s\n", action, "|#{dir}|", notes
 end
 
 
@@ -142,7 +142,7 @@ def clone_bundle dir, url, tagstr, log
     puts "adding submodule #{dir} from #{url}#{tagstr}"
     in_git_root(dir) { |mod| git :submodule, :add, url, mod }
   end
-  print_log_entry log, 'Add', dir, describe_head(dir)
+  print_log_entry log, 'Add', dir, "#{describe_head(dir)} from #{url}#{tagstr}"
 end
 
 
@@ -193,7 +193,9 @@ def download_bundle dir, url, tag, doc, log
 
   if old_version
     new_version = describe_head dir
-    print_log_entry log, 'up', dir, "#{old_version} -> #{new_version}" if new_version != old_version
+    if new_version != old_version
+      print_log_entry log, 'up', dir, "#{old_version} -> #{new_version}#{tagstr}"
+    end
   end
 
   in_git_root(dir) { |mod| git :add, mod } if $submodule
