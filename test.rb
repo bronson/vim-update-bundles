@@ -441,6 +441,73 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
+  def ensure_marker log, marker_string
+    # ensure marker is still in file but not at the top
+    assert_match /#{marker_string}/, log
+    assert_equal "*bundle-log.txt*", log[0..15]
+    # also ensure the header only appears once
+    refute_match /\*bundle-log\.txt\*/, log[15..-1]
+  end
+
+
+  def test_bundles_txt_and_logfile_work
+    prepare_test do |tmpdir|
+
+      # test logfiles with an empty .vimrc
+      Dir.mkdir "#{tmpdir}/.vim"
+      write_file tmpdir, ".vimrc", ''
+      `./vim-update-bundles #{@starter_urls}`
+
+      assert_test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
+      assert_test ?f, "#{tmpdir}/.vim/doc/bundle-log.txt"
+
+      # Make a repository with a tagged commit and commits after that.
+      create_mock_repo "#{tmpdir}/repo"
+      update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
+      `./vim-update-bundles`
+
+      list = File.read "#{tmpdir}/.vim/doc/bundles.txt"
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+
+      assert_match /\|repo\|\s*0\.2/, list
+      refute_match /\|repo\|\s*0\.3/, list # duh
+      assert_match /Add\s*\|repo\|\s*0\.2/, log
+
+      marker_string = "A marker to ensure the logfile is not changed"
+      File.open("#{tmpdir}/.vim/doc/bundle-log.txt", "a") { |f| f.puts marker_string }
+
+      # Pull upstream changes.
+      update_mock_repo_tagged "#{tmpdir}/repo", 'third', '0.3'
+      `./vim-update-bundles`
+
+      list = File.read "#{tmpdir}/.vim/doc/bundles.txt"
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+
+      refute_match /\|repo\|\s*0\.2/, list
+      assert_match /\|repo\|\s*0\.3/, list
+      assert_match /Add\s*\|repo\|\s*0\.2/, log
+      assert_match /up\s*\|repo\|\s*0\.2 -> 0\.3/, log
+      ensure_marker log, marker_string
+
+      # won't bother changing the remote since vim-update-bundles handles it
+      # as a delete followed by an add.  might be worth testing though.
+
+      write_file tmpdir, ".vimrc", ''
+      `./vim-update-bundles`
+
+      list = File.read "#{tmpdir}/.vim/doc/bundles.txt"
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+
+      refute_match /\|repo\|\s*0\.2/, list
+      refute_match /\|repo\|\s*0\.3/, list
+      assert_match /Add\s*\|repo\|\s*0\.2/, log
+      assert_match /up\s*\|repo\|\s*0\.2 -> 0\.3/, log
+      assert_match /Del\s*\|repo\|\s*0\.3/, log
+      ensure_marker log, marker_string
+    end
+  end
+
   # def test_update_standard_environment
     # skip "needs work"
   # end

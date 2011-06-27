@@ -147,5 +147,5 @@ mostly used for testing.
 
 [Vundle](http://github.com/gmarik/vundle) by [gmarik](http://github.com/gmarik) is starting to look pretty awesome. 
 
-Additionally, see Vim Script's [tools](http://vim-scripts.org/vim/tools.html).
+Additionally, see vim-scripts.org's [tools page](http://vim-scripts.org/vim/tools.html).
 

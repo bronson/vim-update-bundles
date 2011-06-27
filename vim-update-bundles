@@ -39,8 +39,8 @@ end
 
 
 def run *cmd
-  # runs cmd, returns its stdout, bails on error.
-  # Basically 1.9's IO.popen so we can still support Ruby 1.8
+  # Runs cmd, returns its stdout, and bails on error.
+  # Mostly a backport of Ruby 1.9's IO.popen for 1.8.
   options = { :acceptable_exit_codes => [0] }
   options.merge!(cmd.pop) if cmd.last.kind_of?(Hash)
   puts "-> #{[cmd].join(" ")}" if $verbose
@@ -70,15 +70,36 @@ end
 
 def describe_head dir
   Dir.chdir(dir) do
+    # don't want to use 'git describe --all' because branch names change too often
     `git describe --tags 2>/dev/null`.chomp || git('rev-parse', :HEAD)[0..12]
   end
 end
 
 
-def print_bundle dir, doc
+def print_doc_header doc
+  doc.printf "%-34s %s\n\n\n", "*bundles* *bundles.txt*", "Installed Bundles"
+  doc.puts "Lists the currently installed bundles. Also see the |bundle-log|."
+  doc.puts "Last updated by vim-update-bundles on #{Time.now}.\n\n"
+  doc.printf "  %-32s %-22s %s\n", "PLUGIN", "VERSION", "RELEASE DATE"
+  doc.puts "-" * 72
+end
+
+
+def print_doc_entry dir, doc
   version = describe_head dir
   date = Dir.chdir(dir) { git(:log, '-1', '--pretty=format:%ai').chomp }
   doc.printf "  %-32s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
+end
+
+
+def print_log_header log
+  log.printf "%-34s %s\n\n\n", "*bundle-log.txt*", "Bundle Install Log"
+  log.puts "Logs bundle install activity. Also see the list of installed |bundles|.\n\n"
+end
+
+
+def print_log_entry log, action, dir, notes
+  log.printf " %-3s %-32s %s\n", action, "|#{dir}|", notes
 end
 
 
@@ -103,7 +124,7 @@ def in_git_root inpath=nil
 end
 
 
-def clone_bundle dir, url, tagstr
+def clone_bundle dir, url, tagstr, log
   unless $submodule
     puts "cloning #{dir} from #{url}#{tagstr}"
     git :clone, url, dir
@@ -111,24 +132,43 @@ def clone_bundle dir, url, tagstr
     puts "adding submodule #{dir} from #{url}#{tagstr}"
     in_git_root(dir) { |mod| git :submodule, :add, url, mod }
   end
+  print_log_entry log, 'Add', dir, describe_head(dir)
 end
 
 
-def download_bundle dir, url, tag, doc
+def remove_bundle dir, log
+  print_log_entry log, 'Del', dir, describe_head(dir)
+  trash_dir = dotvim("Trashed-Bundles")
+  ensure_dir trash_dir
+  1.upto(100) do |i|
+    destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
+    unless test ?d, destination
+      remove_bundle_to dir, destination
+      return
+    end
+  end
+  raise "unable to remove #{dir}, please delete #{trash_dir}"
+end
+
+
+def download_bundle dir, url, tag, doc, log
   tagstr = " at #{tag}" if tag
+  old_version = nil
+
   if test ?d, dir
     remote = Dir.chdir(dir)  { git(:config, '--get', 'remote.origin.url').chomp }
     if remote == url
+      old_version = describe_head dir
       puts "updating #{dir} from #{url}#{tagstr}"
       Dir.chdir(dir) { git :fetch }
     else
       puts "repo has changed from #{remote} to #{url}"
-      remove_bundle dir
+      remove_bundle dir, log
       ensure_dir dotvim('bundle') # If it is the last bundle, 'git rm -rf' the dir.
-      clone_bundle dir, url, tagstr
+      clone_bundle dir, url, tagstr, log
     end
   else
-    clone_bundle dir, url, tagstr
+    clone_bundle dir, url, tagstr, log
   end
 
   Dir.chdir(dir) do
@@ -140,8 +180,14 @@ def download_bundle dir, url, tag, doc
     end
     ignore_doc_tags
   end
+
+  if old_version
+    new_version = describe_head dir
+    print_log_entry log, 'up', dir, "#{old_version} -> #{new_version}" if new_version != old_version
+  end
+
   in_git_root(dir) { |mod| git :add, mod } if $submodule
-  print_bundle(dir, doc)
+  print_doc_entry dir, doc
 end
 
 
@@ -173,20 +219,6 @@ def remove_bundle_to dir, destination
 end
 
 
-def remove_bundle dir
-  trash_dir = dotvim("Trashed-Bundles")
-  ensure_dir trash_dir
-  1.upto(100) do |i|
-    destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
-    unless test ?d, destination
-      remove_bundle_to dir, destination
-      return
-    end
-  end
-  raise "unable to remove #{dir}, please delete #{trash_dir}"
-end
-
-
 def run_bundle_command dir, cmd
   puts "  running: #{cmd}"
   status = Dir.chdir(dir) { system(cmd); $? }
@@ -197,7 +229,7 @@ def run_bundle_command dir, cmd
 end
 
 
-def update_bundles doc
+def update_bundles doc, log
   existing_bundles = Dir['*']
 
   # Ignore files in the bundle directory, e.g., READMEs.
@@ -216,7 +248,7 @@ def update_bundles doc
       if url.match /^[A-Za-z0-9._-]+$/                 # Plain repository.
         url = "https://github.com/vim-scripts/#{url}.git"
       end
-      download_bundle dir, url, tag, doc
+      download_bundle dir, url, tag, doc, log
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
       raise "Bundle-Command must come after Bundle" if dir.nil?
@@ -227,7 +259,7 @@ def update_bundles doc
       existing_bundles.delete dir
     end
   end
-  existing_bundles.each { |dir| remove_bundle(dir) }
+  existing_bundles.each { |dir| remove_bundle dir, log }
 
   if $submodule
     in_git_root do
@@ -241,15 +273,19 @@ end
 
 def update_bundles_and_docs
   ensure_dir dotvim('doc')
-  File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
-    doc.printf "%-34s %s\n\n\n", "*bundles* *bundles.txt*", "Installed Bundles"
-    doc.puts "Last updated by vim-update-bundles on #{Time.now}.\n\n"
-    doc.printf "  %-32s %-22s %s\n", "PLUGIN", "VERSION", "RELEASE DATE"
-    doc.puts "-" * 72
+  bundle_dir = dotvim('bundle')
+  ensure_dir bundle_dir
 
-    bundle_dir = dotvim('bundle')
-    ensure_dir bundle_dir
-    Dir.chdir(bundle_dir) { update_bundles(doc) }
+  File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
+    print_doc_header doc
+    logfile = dotvim 'doc', 'bundle-log.txt'
+    log_already_exists = test ?f, logfile
+    File.open(logfile, 'a') do |log|
+      print_log_header log unless log_already_exists
+      log.puts "Updating on #{Time.now}"
+      Dir.chdir(bundle_dir) { update_bundles doc, log }
+      log.puts "\n"
+    end
     doc.puts "\n"
   end
 end

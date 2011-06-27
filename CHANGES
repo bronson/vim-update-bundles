@@ -1,3 +1,6 @@
+- Added doc/bundle-log.txt to keep track of bundle activity.
+- Cleanups and doc fixes by Sorin Ionescu.
+
 0.4.1   11 May 2011
 - Support vundle-style short repo names thanks to Chris Toomey
 
