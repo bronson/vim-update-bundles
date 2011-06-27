@@ -72,7 +72,7 @@ class TestUpdater < MiniTest::Unit::TestCase
     end
   end
 
-  def assert_not_test cmd, *files
+  def refute_test cmd, *files
     files.each do |f|
       assert !test(cmd, f), "#{f} is a '#{cmd}'"
     end
@@ -129,7 +129,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       # Remove the repository.
       write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
-      assert_not_test ?d, repo
+      refute_test ?d, repo
     end
   end
 
@@ -173,7 +173,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       # Remove the repository.
       write_file tmpdir, ".vimrc", ""
       `./vim-update-bundles`
-      assert_not_test ?d, repo
+      refute_test ?d, repo
 
       ['.gitmodules', '.git/config'].each do |filename|
         text = File.read File.join(tmpdir, '.vim', filename)
@@ -203,14 +203,14 @@ class TestUpdater < MiniTest::Unit::TestCase
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/second"
-      assert_not_test ?f, "#{repo}/third"
+      refute_test ?f, "#{repo}/third"
 
       # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "fourth"
       `./vim-update-bundles`
       assert_test ?f, "#{repo}/second"
-      assert_not_test ?f, "#{repo}/third"
-      assert_not_test ?f, "#{repo}/fourth"
+      refute_test ?f, "#{repo}/third"
+      refute_test ?f, "#{repo}/fourth"
 
       # TODO: Switch to master and back and to another tag and back.
     end
@@ -236,14 +236,14 @@ class TestUpdater < MiniTest::Unit::TestCase
       `git ls-files --cached .vim/bundle/repo`
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/second"
-      assert_not_test ?f, "#{repo}/third"
+      refute_test ?f, "#{repo}/third"
 
       # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "third"
       `./vim-update-bundles --submodule=1`
       assert_test ?f, "#{repo}/second"
-      assert_not_test ?f, "#{repo}/third"
-      assert_not_test ?f, "#{repo}/fourth"
+      refute_test ?f, "#{repo}/third"
+      refute_test ?f, "#{repo}/fourth"
     end
   end
 
@@ -268,7 +268,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/b-second"
-      assert_not_test ?f, "#{repo}/second"
+      refute_test ?f, "#{repo}/second"
 
       # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "third"
@@ -277,7 +277,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles`
       assert_test ?f, "#{repo}/b-second"
       assert_test ?f, "#{repo}/b-third"
-      assert_not_test ?f, "#{repo}/third"
+      refute_test ?f, "#{repo}/third"
 
       # TODO: Switch to master and back and to another tag and back.
     end
@@ -306,7 +306,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       `git ls-files --cached .vim/bundle/repo`
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{repo}/b-second"
-      assert_not_test ?f, "#{repo}/second"
+      refute_test ?f, "#{repo}/second"
 
       # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "third"
@@ -315,7 +315,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles --submodule=1`
       assert_test ?f, "#{repo}/b-second"
       assert_test ?f, "#{repo}/b-third"
-      assert_not_test ?f, "#{repo}/third"
+      refute_test ?f, "#{repo}/third"
 
       # TODO: Switch to master and back and to another tag and back.
     end
@@ -365,7 +365,7 @@ class TestUpdater < MiniTest::Unit::TestCase
 
       `./vim-update-bundles`
       assert_test ?d, "#{tmpdir}/.vim/bundle/static"
-      assert_not_test ?d, "#{tmpdir}/.vim/bundle/foreign"
+      refute_test ?d, "#{tmpdir}/.vim/bundle/foreign"
       assert_test ?d, "#{tmpdir}/.vim/Trashed-Bundles/foreign-01"
     end
   end
@@ -388,8 +388,8 @@ class TestUpdater < MiniTest::Unit::TestCase
 
       `./vim-update-bundles #{@starter_urls} --dotfiles_path='#{tmpdir}/zedots'`
       check_tree tmpdir, 'zedots/vim', 'zedots/vim/vimrc'
-      assert_not_test ?e, "#{tmpdir}/.dotfiles/.vimrc"
-      assert_not_test ?e, "#{tmpdir}/zedots/.vimrc"
+      refute_test ?e, "#{tmpdir}/.dotfiles/.vimrc"
+      refute_test ?e, "#{tmpdir}/zedots/.vimrc"
     end
   end
 
@@ -430,8 +430,8 @@ class TestUpdater < MiniTest::Unit::TestCase
       `./vim-update-bundles --verbose='$unknown' 2>/dev/null`
       assert $?.exitstatus == 1, "the bundle-command should have produced 1, not #{$?.exitstatus}"
       # Make sure it didn't create any files.
-      assert_not_test ?e, "#{tmpdir}/.vim"
-      assert_not_test ?e, "#{tmpdir}/.vimrc"
+      refute_test ?e, "#{tmpdir}/.vim"
+      refute_test ?e, "#{tmpdir}/.vimrc"
     end
   end
 
