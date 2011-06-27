@@ -76,10 +76,16 @@ def describe_head dir
 end
 
 
+def current_date
+  # Ruby's Time.now.to_s just doesn't produce very good output
+  @current_date ||= run(:date).chomp
+end
+
+
 def print_doc_header doc
   doc.printf "%-34s %s\n\n\n", "*bundles* *bundles.txt*", "Installed Bundles"
   doc.puts "Lists the currently installed bundles. Also see the |bundle-log|."
-  doc.puts "Last updated by vim-update-bundles on #{Time.now}.\n\n"
+  doc.puts "Last updated by vim-update-bundles on #{current_date}.\n\n"
   doc.printf "  %-32s %-22s %s\n", "PLUGIN", "VERSION", "RELEASE DATE"
   doc.puts "-" * 72
 end
@@ -282,7 +288,7 @@ def update_bundles_and_docs
     log_already_exists = test ?f, logfile
     File.open(logfile, 'a') do |log|
       print_log_header log unless log_already_exists
-      log.puts "Updating on #{Time.now}"
+      log.puts "Updating on #{current_date}"
       Dir.chdir(bundle_dir) { update_bundles doc, log }
       log.puts "\n"
     end
