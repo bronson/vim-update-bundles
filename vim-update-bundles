@@ -70,8 +70,12 @@ end
 
 def describe_head dir
   Dir.chdir(dir) do
-    # don't want to use 'git describe --all' because branch names change too often
-    `git describe --tags 2>/dev/null`.chomp || git('rev-parse', :HEAD)[0..12]
+    # Don't want to use 'git describe --all' because branch names change too often.
+    # Use `` instead of git() so we don't error out if the git call fails.
+    # (might happen if there's a directory in .vim/bundle that isn't git-revisioned).
+    version = `git describe --tags 2>/dev/null`.chomp
+    version = `git rev-parse HEAD 2>/dev/null`[0..12] unless version =~ /\S/
+    version
   end
 end
 
