@@ -17,6 +17,8 @@
 require 'fileutils'
 require 'open-uri'
 
+VERSION='0.41+'
+
 
 def dotvim *path
   # Path to files inside the .vim directory, e.g., dotvim/autoload.
@@ -327,11 +329,18 @@ def process_options options, args, message
   args.each_with_index do |arg,i|
     arg = arg.gsub /^\s*-?-?|\s*$/, '' # Leading dashes in front of options are optional.
     return if arg == '' || arg =~ /^#/
+
     k,v = arg.split /\s*=\s*/, 2
     k = options[k.to_sym].to_s while options[k.to_sym].is_a? Symbol # expand 1-letter options, :v -> :verbose
     k.gsub! '-', '_'             # underscorize args, 'no-updates' -> 'no_updates'
-    raise "Unknown option #{k.inspect} #{message} #{i}" unless options.has_key? k.to_sym
-    # Config file has changed; carry the warning for a few point releases.
+
+    unless options.has_key? k.to_sym
+      puts "Unknown option: #{k.inspect} #{message} #{i}"
+      puts "Usage: #{help}" if args.equal? ARGV
+      exit 1
+    end
+
+    v = options[k.to_sym].call(v) if options[k.to_sym].is_a? Proc
     options[k.to_sym] = v ? interpolate(options,v,message,i).split("'").join("\\'") : true
   end
 end
@@ -397,6 +406,20 @@ def read_configuration configuration
   configuration.delete :dotfiles_path # Ensure it is not used accidentally later.
 end
 
+def help
+<<EOL
+vim-update-bundles [options...]
+  Updates the installed Vim plugins.
+    -n --no-updates: don't update bundles, only add or delete (faster)
+    -h -? --help:    print this message
+    -v --verbose:    print exactly what's happening
+  optional configurations:
+    -s --submodule:  store bundles as git submodules
+    --vimdir-path:   path to ~/.vim directory
+    --vimrc-path:    path to ~/.vimrc directory
+    --dotfiles-path: path to your dotfiles if different than $HOME.
+EOL
+end
 
 
 configuration = {
@@ -404,8 +427,12 @@ configuration = {
   :submodule     => false,   # If true then use Git submodules instead of cloning.
   :no_updates    => false,   # If true then don't update repos, only add or delete.
 
+  :help => lambda { |v| puts help; exit },
+  :version => lambda { |v| puts "vim-update-bundles #{VERSION}"; exit },
+
   # single-character aliases for command-line options
   :v => :verbose, :s => :submodule, :n => :no_updates,
+  :h => :help, :'?' => :help, :V => :version,
 
   :dotfiles_path => nil,     # Full path to the dot files directory.
   :vimdir_path   => nil,     # Full path to ~/.vim (creates symlink if not in $HOME).
@@ -418,7 +445,6 @@ configuration = {
 
 
 read_configuration configuration
-# These globals are unfortunate, but life is even more heinous without them.
 $dotvim = configuration[:vimdir_path]
 $dotvimrc = configuration[:vimrc_path]
 $submodule = configuration[:submodule]
