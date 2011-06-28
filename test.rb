@@ -7,7 +7,6 @@ require 'test/unit'
 # You can also tell the tester to preserve the test directory after running:
 #   PRESERVE=1 ruby test.rb -n test_multiple_removes
 #
-# TODO: what happens when checking out a branch or tag and it doesn't exist?
 # TODO: test when .vimrc and .vim/vimrc both exist, the former is preferred
 #
 # We shell to the executable; so, this isn't actually unit testing.
@@ -210,7 +209,7 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_tagstr_checkout
+  def test_tag_checkout
     # Ensures locking a checkout to a tag and that .vim/vimrc is used if it
     # already exists.
     prepare_test do |tmpdir|
@@ -256,7 +255,7 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_submodule_tagstr_checkout
+  def test_submodule_tag_checkout
     # Ensures locking a checkout to a tag.
     prepare_test do |tmpdir|
       Dir.chdir(tmpdir) { `git init` }
@@ -370,6 +369,35 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{repo}/b-second"
       assert_test ?f, "#{repo}/b-third"
       refute_test ?f, "#{repo}/third"
+    end
+  end
+
+
+  def test_clone_nonexistent_branch
+    # Ensures we error out if we find a nonexistent branch or tag (same code path)
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/repo1"
+      create_mock_repo "#{tmpdir}/repo2"
+
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1 nobranch\n\" Bundle: #{tmpdir}/repo2"
+      vim_update_bundles__expect_error
+      refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
+    end
+  end
+
+
+  def test_update_to_nonexistent_branch
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/repo1"
+      create_mock_repo "#{tmpdir}/repo2"
+
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      vim_update_bundles
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
+
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1 v0.2\n\" Bundle: #{tmpdir}/repo2"
+      vim_update_bundles__expect_error
+      refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
   end
 
