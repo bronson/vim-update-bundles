@@ -161,26 +161,7 @@ def remove_bundle dir, log
 end
 
 
-def download_bundle dir, url, tag, doc, log
-  tagstr = " at #{tag}" if tag
-  old_version = nil
-
-  if test ?d, dir
-    remote = Dir.chdir(dir)  { git(:config, '--get', 'remote.origin.url').chomp }
-    if remote == url
-      old_version = describe_head dir
-      puts "updating #{dir} from #{url}#{tagstr}"
-      Dir.chdir(dir) { git :fetch }
-    else
-      puts "repo has changed from #{remote} to #{url}"
-      remove_bundle dir, log
-      ensure_dir dotvim('bundle') # If it is the last bundle, 'git rm -rf' the dir.
-      clone_bundle dir, url, tagstr, log
-    end
-  else
-    clone_bundle dir, url, tagstr, log
-  end
-
+def update_bundle dir, tag, tagstr, previous_version, log
   Dir.chdir(dir) do
     # If the branch is checked out, then it must be pulled, not checked out again.
     if tag && !test(?f, ".git/refs/heads/#{tag}")
@@ -191,15 +172,46 @@ def download_bundle dir, url, tag, doc, log
     ignore_doc_tags
   end
 
-  if old_version
+  if previous_version
     new_version = describe_head dir
-    if new_version != old_version
-      print_log_entry log, 'up', dir, "#{old_version} -> #{new_version}#{tagstr}"
+    if new_version != previous_version
+      print_log_entry log, 'up', dir, "#{previous_version} -> #{new_version}#{tagstr}"
     end
   end
 
   in_git_root(dir) { |mod| git :add, mod } if $submodule
+end
+
+
+def download_bundle dir, url, tag, doc, log
+  tagstr = " at #{tag}" if tag
+  previous_version = nil
+  only_updating = false
+
+  if test ?d, dir
+    remote = Dir.chdir(dir)  { git(:config, '--get', 'remote.origin.url').chomp }
+    if remote == url
+      only_updating = true
+      unless $no_updates
+        previous_version = describe_head dir
+        puts "updating #{dir} from #{url}#{tagstr}"
+        Dir.chdir(dir) { git :fetch }
+      end
+    else
+      puts "repo has changed from #{remote} to #{url}"
+      remove_bundle dir, log
+      ensure_dir dotvim('bundle') # If it is the last bundle, 'git rm -rf' the dir.
+      clone_bundle dir, url, tagstr, log
+    end
+  else
+    clone_bundle dir, url, tagstr, log
+  end
+
+  # previous_version is set only if we're updating, not if adding or deleting
+  update_bundle dir, tag, tagstr, previous_version, log unless only_updating && $no_updates
+
   print_doc_entry dir, doc
+  only_updating
 end
 
 
@@ -247,7 +259,7 @@ def update_bundles doc, log
   # Ignore files in the bundle directory, e.g., READMEs.
   existing_bundles.reject! { |path| FileTest.file? path }
 
-  dir = nil
+  dir = only_updating = nil
   puts "# reading vimrc" if $verbose
   read_vimrc do |line|
     if line =~ /^\s*"\s*bundle:\s*(.*)$/i
@@ -260,11 +272,11 @@ def update_bundles doc, log
       if url.match /^[A-Za-z0-9._-]+$/                 # Plain repository.
         url = "https://github.com/vim-scripts/#{url}.git"
       end
-      download_bundle dir, url, tag, doc, log
+      only_updating = download_bundle dir, url, tag, doc, log
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
       raise "Bundle-Command must come after Bundle" if dir.nil?
-      run_bundle_command dir, $1
+      run_bundle_command dir, $1 unless only_updating && $no_updates
     elsif line =~ /^\s*"\s*static:\s*(.*)$/i
       dir = $1
       puts "  leaving #{dir} alone"
@@ -316,6 +328,7 @@ def process_options options, args, message
     arg = arg.gsub /^\s*-?-?|\s*$/, '' # Leading dashes in front of options are optional.
     return if arg == '' || arg =~ /^#/
     k,v = arg.split /\s*=\s*/, 2
+    k.gsub! '-', '_'   # 'no-updates' -> 'no_updates'
     raise "Unknown option #{k.inspect} #{message} #{i}" unless options.has_key? k.to_sym
     # Config file has changed; carry the warning for a few point releases.
     options[k.to_sym] = v ? interpolate(options,v,message,i).split("'").join("\\'") : true
@@ -387,7 +400,8 @@ end
 
 configuration = {
   :verbose       => nil,     # Git commands are quiet by default; set verbose=true to see everything.
-  :submodule     => false,   # If submodule is set, then use Git submodules instead of cloning.
+  :submodule     => false,   # If true then use Git submodules instead of cloning.
+  :no_updates    => false,   # If true then don't update repos, only add or delete.
 
   :dotfiles_path => nil,     # Full path to the dot files directory.
   :vimdir_path   => nil,     # Full path to ~/.vim (creates symlink if not in $HOME).
@@ -405,6 +419,7 @@ $dotvim = configuration[:vimdir_path]
 $dotvimrc = configuration[:vimrc_path]
 $submodule = configuration[:submodule]
 $verbose = configuration[:verbose]
+$no_updates = configuration[:no_updates]
 
 ensure_vim_environment configuration
 update_bundles_and_docs

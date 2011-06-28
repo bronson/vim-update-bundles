@@ -78,11 +78,15 @@ ignore, mark them as static.
 
 ### Runtime Arguments
 
-* _-\-verbose_ prints more information about what's happening.
+* _-\-no-updates_ Adds or deletes bundles but doesn't update them.
+  This prevents vim-update-bundles from laboriously scrubbing through every
+  bundle in your .vimrc when you just want to change the plugins you have installed.
 
 * _-\-submodule_ installs bundles as submodules intead of plain Git
   repositories. You must create the parent repository to contain the
   submodules before running vim-update bundles.
+
+* _-\-verbose_ prints more information about what's happening.
 
 
 ## Configuration

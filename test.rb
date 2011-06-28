@@ -371,6 +371,39 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
+  def test_no_updates_run
+    # Makes sure we still add and delete even when --no-updates prevents updates
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/plugin1"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1"
+      `./vim-update-bundles --no-updates`
+
+      # make sure plugin1 was added
+      assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/plugin1/second"
+
+      update_mock_repo "#{tmpdir}/plugin1", "second"
+      create_mock_repo "#{tmpdir}/plugin2"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" Bundle: #{tmpdir}/plugin2"
+      `./vim-update-bundles --no-updates`
+
+      # make sure plugin1 hasn't been updated but plugin2 has been added
+      assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/plugin1/second"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/plugin2/first"
+
+      # Remove the repository.
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1"
+      `./vim-update-bundles --no-updates`
+
+      # make sure plugin1 hasn't been updated but plugin2 has been deleted
+      assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/plugin1/second"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/plugin2/first"
+    end
+  end
+
+
   def test_create_dotfile_environment
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"
@@ -445,7 +478,8 @@ class TestUpdater < MiniTest::Unit::TestCase
   end
 
 
-  def test_bundles_txt_and_logfile_work
+  def test_bundles_txt_and_logfile
+    # ensures .vim/doc/bundles.txt and bundle-log.txt are filled in
     prepare_test do |tmpdir|
 
       # test logfiles with an empty .vimrc

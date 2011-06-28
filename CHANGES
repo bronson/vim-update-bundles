@@ -1,4 +1,5 @@
-- Added doc/bundle-log.txt to keep track of bundle activity.
+- Added doc/bundle-log.txt.  :help bundle-log
+- Added --no-updates option to make adding/deleting bundles faster.
 - Cleanups and doc fixes by Sorin Ionescu.
 
 0.4.1   11 May 2011
