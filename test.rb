@@ -109,8 +109,23 @@ class TestUpdater < Test::Unit::TestCase
     assert_test ?f, "#{base}/#{vimrc}"
   end
 
-  def vim_update_bundles *args
+  def run_vim_update_bundles *args
     `./vim-update-bundles #{@starter_urls} #{args.join(' ')}`
+  end
+
+
+  # runs the command under test expecting there will not be an error
+  def vim_update_bundles *args
+    result = run_vim_update_bundles *args
+    raise "vim-update-bundles returned #{$?.exitstatus} RESULT: <<\n#{result}>>" unless $?.exitstatus == 0
+    result
+  end
+
+  # runs the command under test expecting that there WILL be an error
+  def vim_update_bundles__expect_error *args
+    result = run_vim_update_bundles *args + ['2>&1']
+    raise "vim-update-bundles returned #{$?.exitstatus} RESULT: <<\n#{result}>>" unless $?.exitstatus != 0
+    result
   end
 
 
@@ -427,7 +442,7 @@ class TestUpdater < Test::Unit::TestCase
         " Bundle-Command: oh-no-this-command-does-not-exist
       EOL
 
-      vim_update_bundles
+      vim_update_bundles__expect_error
       assert $?.exitstatus == 47, "the bundle-command should have produced 47, not #{$?.exitstatus}"
     end
   end
@@ -537,7 +552,7 @@ class TestUpdater < Test::Unit::TestCase
 
   def test_unknown_interpolation_fails
     prepare_test do |tmpdir|
-      vim_update_bundles "--verbose='$unknown' 2>/dev/null"
+      vim_update_bundles__expect_error "--verbose='$unknown'"
       assert $?.exitstatus == 1, "the bundle-command should have produced 1, not #{$?.exitstatus}"
       # Make sure it didn't create any files.
       refute_test ?e, "#{tmpdir}/.vim"
