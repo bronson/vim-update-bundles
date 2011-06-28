@@ -217,8 +217,8 @@ def download_bundle config, dir, url, tag, doc, log
 end
 
 
-def read_vimrc
-  File.open($dotvimrc) do |file|
+def read_vimrc config
+  File.open(config[:vimrc_path]) do |file|
     file.each_line { |line| yield line }
   end
 end
@@ -263,7 +263,7 @@ def update_bundles config, doc, log
 
   dir = only_updating = nil
   puts "# reading vimrc" if $verbose
-  read_vimrc do |line|
+  read_vimrc(config) do |line|
     if line =~ /^\s*"\s*bundle:\s*(.*)$/i
       url, tag = $1.split
       puts "# processing '#{url}' at '#{tag}'" if $verbose
@@ -446,7 +446,6 @@ config = {
 
 read_configuration config
 $dotvim = config[:vimdir_path]
-$dotvimrc = config[:vimrc_path]
 $submodule = config[:submodule]
 $verbose = config[:verbose]
 
