@@ -136,8 +136,8 @@ def in_git_root inpath=nil
 end
 
 
-def clone_bundle dir, url, tagstr, log
-  unless $submodule
+def clone_bundle config, dir, url, tagstr, log
+  unless config[:submodule]
     puts "cloning #{dir} from #{url}#{tagstr}"
     git :clone, url, dir
   else
@@ -148,14 +148,14 @@ def clone_bundle dir, url, tagstr, log
 end
 
 
-def remove_bundle dir, log
+def remove_bundle config, dir, log
   print_log_entry log, 'Del', dir, describe_head(dir)
   trash_dir = dotvim("Trashed-Bundles")
   ensure_dir trash_dir
   1.upto(100) do |i|
     destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
     unless test ?d, destination
-      remove_bundle_to dir, destination
+      remove_bundle_to config, dir, destination
       return
     end
   end
@@ -163,7 +163,7 @@ def remove_bundle dir, log
 end
 
 
-def update_bundle dir, tag, tagstr, previous_version, log
+def update_bundle config, dir, tag, tagstr, previous_version, log
   Dir.chdir(dir) do
     # If the branch is checked out, then it must be pulled, not checked out again.
     if tag && !test(?f, ".git/refs/heads/#{tag}")
@@ -181,7 +181,7 @@ def update_bundle dir, tag, tagstr, previous_version, log
     end
   end
 
-  in_git_root(dir) { |mod| git :add, mod } if $submodule
+  in_git_root(dir) { |mod| git :add, mod } if config[:submodule]
 end
 
 
@@ -201,16 +201,16 @@ def download_bundle config, dir, url, tag, doc, log
       end
     else
       puts "repo has changed from #{remote} to #{url}"
-      remove_bundle dir, log
+      remove_bundle config, dir, log
       ensure_dir dotvim('bundle') # If it is the last bundle, 'git rm -rf' the dir.
-      clone_bundle dir, url, tagstr, log
+      clone_bundle config, dir, url, tagstr, log
     end
   else
-    clone_bundle dir, url, tagstr, log
+    clone_bundle config, dir, url, tagstr, log
   end
 
   # previous_version is set only if we're updating, not if adding or deleting
-  update_bundle dir, tag, tagstr, previous_version, log unless only_updating && config[:no_updates]
+  update_bundle config, dir, tag, tagstr, previous_version, log unless only_updating && config[:no_updates]
 
   print_doc_entry dir, doc
   only_updating
@@ -224,10 +224,10 @@ def read_vimrc config
 end
 
 
-def remove_bundle_to dir, destination
+def remove_bundle_to config, dir, destination
   puts "Erasing #{dir}, find it in #{destination}"
   FileUtils.mv dir, destination
-  if $submodule
+  if config[:submodule]
     in_git_root(dir) do |mod|
       git :rm, mod
       ['.gitmodules', '.git/config'].each do |filename|
@@ -285,9 +285,9 @@ def update_bundles config, doc, log
       existing_bundles.delete dir
     end
   end
-  existing_bundles.each { |dir| remove_bundle dir, log }
+  existing_bundles.each { |dir| remove_bundle config, dir, log }
 
-  if $submodule
+  if config[:submodule]
     in_git_root do
       puts "  updating submodules"
       git :submodule, :init
@@ -446,7 +446,6 @@ config = {
 
 read_configuration config
 $dotvim = config[:vimdir_path]
-$submodule = config[:submodule]
 $verbose = config[:verbose]
 
 ensure_vim_environment config
