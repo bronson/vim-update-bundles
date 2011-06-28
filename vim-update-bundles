@@ -249,7 +249,7 @@ def run_bundle_command dir, cmd
   puts "  running: #{cmd}"
   status = Dir.chdir(dir) { system(cmd); $? }
   unless status.success?
-    puts "  Bundle-Command command failed!"
+    puts "  BundleCommand command failed!"
     exit 47
   end
 end
@@ -276,8 +276,9 @@ def update_bundles config, doc, log
       end
       only_updating = download_bundle config, dir, url, tag, doc, log
       existing_bundles.delete dir
-    elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
-      raise "Bundle-Command must come after Bundle" if dir.nil?
+    elsif line =~ /^\s*"\s*bundle[ -]?command:\s*(.*)$/i
+      # Want BundleCommand but BUNDLE COMMAND and Bundle-Command used to be legal too
+      raise "BundleCommand must come after Bundle" if dir.nil?
       run_bundle_command dir, $1 unless only_updating && config[:no_updates]
     elsif line =~ /^\s*"\s*static:\s*(.*)$/i
       dir = $1

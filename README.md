@@ -7,20 +7,16 @@ Use Pathogen and Git to manage your Vim plugins.
 
 ## Description
 
-To install a plugin, use either of the following lines in your ~/.vimrc:
+To install a plugin, put lines like this in your ~/.vimrc:
 
+    " Bundle: jQuery                                      # https://github.com/vim-scripts/jQuery
+    " Bundle: scrooloose/nerdtree                         # https://github.com/scrooloose/nerdtree
     " Bundle: https://github.com/scrooloose/nerdtree.git  # Full URL to the repository.
-    " Bundle: scrooloose/nerdtree                         # GitHub username/repository. 
 
-Now, run `./vim-update-bundles`. NERD tree is installed and ready for use.
+Now, run `./vim-update-bundles`.  Your plugins are installed and ready for use.
 
 Type `:help bundles` from within Vim to show the list of plugins that you have installed.
-Git version numbering is used; so, NERD tree is at commit g1dd345c, 28 commits past the 4.1.0 tag.
 Hit Control-] on the bundle's name to jump to its documentation.
-
-       - |nerdtree|                     4.1.0-28-g1dd345c      2011-03-03
-       - |nerdcommenter|                2.2.2-35-gc8d8318      2011-03-01
-       - |surround|                     v1.90-5-gd9e6bfd       2011-01-23
 
 
 ## Installation
@@ -30,15 +26,24 @@ Hit Control-] on the bundle's name to jump to its documentation.
 
 ## Usage
 
-    $ ./vim-update-bundles
+    $ ./vim-update-bundles --help
 
-If you're not already using Vim, vim-update-bundles will set up useful
-defaults. Edit your ~/.vimrc and run vim-update-bundles whenever you want
-changes to take effect.
+If you're not already using Vim, vim-update-bundles will set up a typical vim environment.
+Edit your ~/.vimrc and run vim-update-bundles whenever you want changes to take effect.
 
 vim-update-bundles will use ~/.dotfiles if it exists; so, it works seamlessly
 with <http://github.com/ryanb/dotfiles> and friends. It also supports Git
 submodules (see the configuration section below).
+
+* _-n -\-no-updates_ Adds and deletes bundles but doesn't update them.
+  This prevents vim-update-bundles from laboriously scrubbing through every
+  bundle in your .vimrc when you just want to make a quick change.
+
+* _-s -\-submodule_ installs bundles as submodules intead of plain Git
+  repositories. You must create the parent repository to contain the
+  submodules before running vim-update bundles.
+
+* _-v -\-verbose_ prints more information about what's happening.
 
 
 ## Specifying Plugins
@@ -55,48 +60,36 @@ follow a branch or lock the bundle to a specific tag or commit, i.e.:
 
     " Bundle: https://github.com/tpope/vim-endwise.git v1.0
 
-You can also abbreviate the repository:
+If the script lives on vim-scripts or GitHub, the URL can be abbreviated:
 
     " Bundle: tpope/vim-endwise    ->    https://github.com/tpope/vim-endwise.git
     " Bundle: endwise.vim          ->    https://github.com/vim-scripts/endwise.vim.git
 
-#### Bundle Commands:
+vim-update-bundles never deletes files.  When you uninstall a plugin, it moves it to the .vim/Trashed-Bundles directory.
+
+#### BundleCommand:
 
 Some bundles need to be built after they're installed. Place any number of
-`Bundle-Command:` directives after `Bundle:` to execute shell commands within
-the bundle's directory. To install the Command-T plugin and call "rake make"
-every time it's updated, put:
+`BundleCommand:` directives after `Bundle:` to execute shell commands within
+the bundle's directory. To install Command-T and ensure "rake make" is called
+every time it's updated:
 
     " Bundle: https://git.wincent.com/command-t.git
-    " Bundle-Command: rake make
+    " BundleCommand: rake make
 
 #### Static:
 
 If you have directories in ~/.vim/bundle that you'd like vim-update-bundles to
 ignore, mark them as static.
 
-     " Static: vim-endwise 
+     " Static: my-plugin
 
 
-### Runtime Arguments
+## Configuration File
 
-* _-\-no-updates_ Adds or deletes bundles but doesn't update them.
-  This prevents vim-update-bundles from laboriously scrubbing through every
-  bundle in your .vimrc when you just want to change the plugins you have installed.
-
-* _-\-submodule_ installs bundles as submodules intead of plain Git
-  repositories. You must create the parent repository to contain the
-  submodules before running vim-update bundles.
-
-* _-\-verbose_ prints more information about what's happening.
-
-
-## Configuration
-
-All configuration options can be passed on the command line or placed in
-~/.vim-update-bundles.conf. You can put "-\-verbose" in your config file or
-pass "verbose=1" on the command line -- it's all the same to
-vim-update-bundles. Blank lines and comments starting with '#' are ignored.
+All configuration options can be passed on the command line or placed in ~/.vim-update-bundles.conf.
+Putting "submodules=1" in the config file is the same as passing -s or --submodules on the command line.
+Blank lines and comments starting with '#' are ignored.
 
 String interpolation is performed on all values. First configuration settings
 are tried then environment variables. For instance, this would expand to
@@ -104,7 +97,8 @@ are tried then environment variables. For instance, this would expand to
 
     vimdir_path = $dotfiles_path/$USERNAME/vim
 
-#### Location of .vim and .vimrc
+
+## Location of .vim and .vimrc
 
 Unless you have a custom dotfiles configuration, you can probably skip this
 section.
@@ -130,15 +124,6 @@ Finally, these are the places that vim-update-bundles will look for a .vimrc:
 
 It always updates the ~/.vim and ~/.vimrc symlinks; so, Vim can find the correct
 files.
-
-#### Location of template files
-
-You can change the initial pathogen.vim and .vimrc used when setting up a new
-environemnt. These can be either a path in the filesystem or a URL. It is
-mostly used for testing.
-
-* starter\_url = https://github.com/bronson/dotfiles/raw/master/.vimrc
-* pathogen\_url = https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim
 
 
 ## Authors

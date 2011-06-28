@@ -7,7 +7,6 @@ require 'test/unit'
 #
 # TODO: test checking out a SHA1
 # TODO: test Switching from a branch/tag/SHA1 to master and back.
-# TODO: test Bundle-Command.
 # TODO: test adding and removing a bundle multiple times
 # TODO: what happens when checking out a branch or tag and it doesn't exist?
 # TODO: test when .vimrc and .vim/vimrc both exist, the former is preferred
@@ -372,6 +371,29 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
+  def test_bundle_command
+    prepare_test do |tmpdir|
+      # ensure BundleCommand is called when adding a repo
+      create_mock_repo "#{tmpdir}/plugin1"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" BundleCommand: touch '#{tmpdir}/sentinel1'"
+      `./vim-update-bundles`
+      assert_test ?f, "#{tmpdir}/sentinel1"
+
+      # ensure BundleCommand is called when updating a repo
+      update_mock_repo "#{tmpdir}/plugin1", "second"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" Bundle-Command: touch '#{tmpdir}/sentinel2'"
+      `./vim-update-bundles`
+      assert_test ?f, "#{tmpdir}/sentinel2"
+
+      # ensure BundleCommand is NOT called when updating a repo when --no-updates is on
+      update_mock_repo "#{tmpdir}/plugin1", "second"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" BundleCommand: touch '#{tmpdir}/sentinel3'"
+      `./vim-update-bundles --no-updates`
+      refute_test ?f, "#{tmpdir}/sentinel3"
+    end
+  end
+
+
   def test_no_updates_run
     # Makes sure we still add and delete even when --no-updates prevents updates
     prepare_test do |tmpdir|
@@ -379,7 +401,7 @@ class TestUpdater < Test::Unit::TestCase
       write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1"
       `./vim-update-bundles --no-updates`
 
-      # make sure plugin1 was added
+      # make sure plugin1 was added even though --no-updates was turned on
       assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
       refute_test ?f, "#{tmpdir}/.vim/bundle/plugin1/second"
 

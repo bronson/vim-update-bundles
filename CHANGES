@@ -1,6 +1,7 @@
 - Added doc/bundle-log.txt.  :help bundle-log
 - Added --no-updates option to make adding/deleting bundles faster.
 - Support single-letter options (-v for --verbose, -n for --no-updates).
+- It's BundleCommand though Bundle-Command and BUNDLE COMMAND still work.
 - Added --help and --version.
 - Cleanups and doc fixes by Sorin Ionescu.
 
