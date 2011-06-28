@@ -20,9 +20,9 @@ require 'open-uri'
 VERSION='0.41+'
 
 
-def dotvim *path
+def dotvim config, *path
   # Path to files inside the .vim directory, e.g., dotvim/autoload.
-  File.join $dotvim, *path
+  File.join config[:vimdir_path], *path
 end
 
 
@@ -171,7 +171,7 @@ end
 
 def remove_bundle config, dir, log
   print_log_entry log, 'Del', dir, describe_head(dir)
-  trash_dir = dotvim("Trashed-Bundles")
+  trash_dir = dotvim(config, "Trashed-Bundles")
   ensure_dir trash_dir
   1.upto(100) do |i|
     destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
@@ -223,7 +223,7 @@ def download_bundle config, dir, url, tag, doc, log
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle config, dir, log
-      ensure_dir dotvim('bundle') # If it is the last bundle, 'git rm -rf' the dir.
+      ensure_dir dotvim(config, 'bundle')
       clone_bundle config, dir, url, tagstr, log
     end
   else
@@ -298,13 +298,13 @@ end
 
 
 def update_bundles_and_docs config
-  ensure_dir dotvim('doc')
-  bundle_dir = dotvim('bundle')
+  ensure_dir dotvim(config, 'doc')
+  bundle_dir = dotvim(config, 'bundle')
   ensure_dir bundle_dir
 
-  File.open(dotvim('doc', 'bundles.txt'), "w") do |doc|
+  File.open(dotvim(config, 'doc', 'bundles.txt'), "w") do |doc|
     print_doc_header doc
-    logfile = dotvim 'doc', 'bundle-log.txt'
+    logfile = dotvim(config, 'doc', 'bundle-log.txt')
     log_already_exists = test ?f, logfile
     File.open(logfile, 'a') do |log|
       print_log_header log unless log_already_exists
@@ -370,12 +370,12 @@ end
 
 
 def ensure_vim_environment config
-  ensure_dir dotvim
-  ensure_dir dotvim('autoload')
+  ensure_dir dotvim(config)
+  ensure_dir dotvim(config, 'autoload')
 
-  unless test ?f, dotvim('autoload', 'pathogen.vim')
+  unless test ?f, dotvim(config, 'autoload', 'pathogen.vim')
     puts "Downloading Pathogen..."
-    download_file config[:pathogen_url], dotvim('autoload', 'pathogen.vim')
+    download_file config[:pathogen_url], dotvim(config, 'autoload', 'pathogen.vim')
   end
 
   unless test(?f, config[:vimrc_path])
@@ -446,7 +446,6 @@ config = {
 
 
 read_configuration config
-$dotvim = config[:vimdir_path]
 $verbose = config[:verbose]
 
 ensure_vim_environment config
