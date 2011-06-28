@@ -385,7 +385,7 @@ class TestUpdater < MiniTest::Unit::TestCase
       update_mock_repo "#{tmpdir}/plugin1", "second"
       create_mock_repo "#{tmpdir}/plugin2"
       write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" Bundle: #{tmpdir}/plugin2"
-      `./vim-update-bundles --no-updates`
+      `./vim-update-bundles -n`   # test single-letter arg
 
       # make sure plugin1 hasn't been updated but plugin2 has been added
       assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"

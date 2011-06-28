@@ -328,7 +328,8 @@ def process_options options, args, message
     arg = arg.gsub /^\s*-?-?|\s*$/, '' # Leading dashes in front of options are optional.
     return if arg == '' || arg =~ /^#/
     k,v = arg.split /\s*=\s*/, 2
-    k.gsub! '-', '_'   # 'no-updates' -> 'no_updates'
+    k = options[k.to_sym].to_s while options[k.to_sym].is_a? Symbol # expand 1-letter options, :v -> :verbose
+    k.gsub! '-', '_'             # underscorize args, 'no-updates' -> 'no_updates'
     raise "Unknown option #{k.inspect} #{message} #{i}" unless options.has_key? k.to_sym
     # Config file has changed; carry the warning for a few point releases.
     options[k.to_sym] = v ? interpolate(options,v,message,i).split("'").join("\\'") : true
@@ -402,6 +403,9 @@ configuration = {
   :verbose       => nil,     # Git commands are quiet by default; set verbose=true to see everything.
   :submodule     => false,   # If true then use Git submodules instead of cloning.
   :no_updates    => false,   # If true then don't update repos, only add or delete.
+
+  # single-character aliases for command-line options
+  :v => :verbose, :s => :submodule, :n => :no_updates,
 
   :dotfiles_path => nil,     # Full path to the dot files directory.
   :vimdir_path   => nil,     # Full path to ~/.vim (creates symlink if not in $HOME).
