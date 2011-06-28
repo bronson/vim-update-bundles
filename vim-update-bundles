@@ -84,7 +84,7 @@ end
 
 def current_date
   # Ruby's Time.now.to_s just doesn't produce very good output
-  @current_date ||= run(:date).chomp
+  $current_date ||= run(:date).chomp
 end
 
 
@@ -186,11 +186,10 @@ end
 
 def update_bundle config, dir, tag, tagstr, previous_version, log
   Dir.chdir(dir) do
-    # If the branch is checked out, then it must be pulled, not checked out again.
-    if tag && !test(?f, ".git/refs/heads/#{tag}")
-      git :checkout, tag
-    else
-      git :pull, :origin, tag || :master
+    git :checkout, tag || :master
+    if system 'git symbolic-ref HEAD -q'
+      # only pull if symbolic-ref is true, otherwise it's detached head
+      git :pull, '--ff-only', :origin, tag || :master
     end
     ignore_doc_tags
   end
@@ -211,6 +210,7 @@ def download_bundle config, dir, url, tag, doc, log
   previous_version = nil
   only_updating = false
 
+  # fetch bundle
   if test ?d, dir
     remote = Dir.chdir(dir)  { git(:config, '--get', 'remote.origin.url').chomp }
     if remote == url
@@ -230,7 +230,7 @@ def download_bundle config, dir, url, tag, doc, log
     clone_bundle config, dir, url, tagstr, log
   end
 
-  # previous_version is set only if we're updating, not if adding or deleting
+  # pull bundle
   update_bundle config, dir, tag, tagstr, previous_version, log unless only_updating && config[:no_updates]
 
   print_doc_entry dir, doc

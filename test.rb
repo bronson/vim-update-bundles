@@ -7,8 +7,6 @@ require 'test/unit'
 # You can also tell the tester to preserve the test directory after running:
 #   PRESERVE=1 ruby test.rb -n test_multiple_removes
 #
-# TODO: test checking out a SHA1
-# TODO: test Switching from a branch/tag/SHA1 to master and back.
 # TODO: what happens when checking out a branch or tag and it doesn't exist?
 # TODO: test when .vimrc and .vim/vimrc both exist, the former is preferred
 #
@@ -207,22 +205,34 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
 
+      # Check out the plugin locked at 0.2
       write_file tmpdir, ".vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       `./vim-update-bundles`
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
-      repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
-      assert_test ?f, "#{repo}/first"
-      assert_test ?f, "#{repo}/second"
-      refute_test ?f, "#{repo}/third"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/repo/third"
 
-      # Pull upstream changes.
+      # Pull upstream changes, make sure we're still locked on 0.2.
       update_mock_repo "#{tmpdir}/repo", "fourth"
       `./vim-update-bundles`
-      assert_test ?f, "#{repo}/second"
-      refute_test ?f, "#{repo}/third"
-      refute_test ?f, "#{repo}/fourth"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/repo/third"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/repo/fourth"
 
-      # TODO: Switch to master and back and to another tag and back.
+      # Switch to the branch head
+      write_file tmpdir, ".vim/vimrc", "\" Bundle: #{tmpdir}/repo"
+      `./vim-update-bundles`
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/third"
+
+      # Switch back to the tag
+      write_file tmpdir, ".vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
+      `./vim-update-bundles`
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/repo/third"
     end
   end
 
@@ -287,9 +297,24 @@ class TestUpdater < Test::Unit::TestCase
       `./vim-update-bundles`
       assert_test ?f, "#{repo}/b-second"
       assert_test ?f, "#{repo}/b-third"
+      refute_test ?f, "#{repo}/second"
       refute_test ?f, "#{repo}/third"
 
-      # TODO: Switch to master and back and to another tag and back.
+      # Switch to the master branch
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
+      `./vim-update-bundles`
+      assert_test ?f, "#{repo}/second"
+      assert_test ?f, "#{repo}/third"
+      refute_test ?f, "#{repo}/b-second"
+      refute_test ?f, "#{repo}/b-third"
+
+      # And switch back to our branch
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo abranch"
+      `./vim-update-bundles`
+      assert_test ?f, "#{repo}/b-second"
+      assert_test ?f, "#{repo}/b-third"
+      refute_test ?f, "#{repo}/second"
+      refute_test ?f, "#{repo}/third"
     end
   end
 
@@ -326,8 +351,6 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{repo}/b-second"
       assert_test ?f, "#{repo}/b-third"
       refute_test ?f, "#{repo}/third"
-
-      # TODO: Switch to master and back and to another tag and back.
     end
   end
 
