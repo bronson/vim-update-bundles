@@ -148,6 +148,27 @@ def clone_bundle config, dir, url, tagstr, log
 end
 
 
+def remove_bundle_to config, dir, destination
+  puts "Erasing #{dir}, find it in #{destination}"
+  FileUtils.mv dir, destination
+  if config[:submodule]
+    in_git_root(dir) do |mod|
+      git :rm, mod
+      ['.gitmodules', '.git/config'].each do |filename|
+        begin
+          text = File.read filename
+          File.open(filename, 'w+') do |file|
+            file.puts text.gsub(/\[submodule "#{mod}"\][^\[]+/m,'')
+          end
+        rescue
+          puts "  Could not delete submodule entries from .gitmodules and .git/config"
+        end
+      end
+    end
+  end
+end
+
+
 def remove_bundle config, dir, log
   print_log_entry log, 'Del', dir, describe_head(dir)
   trash_dir = dotvim("Trashed-Bundles")
@@ -224,27 +245,6 @@ def read_vimrc config
 end
 
 
-def remove_bundle_to config, dir, destination
-  puts "Erasing #{dir}, find it in #{destination}"
-  FileUtils.mv dir, destination
-  if config[:submodule]
-    in_git_root(dir) do |mod|
-      git :rm, mod
-      ['.gitmodules', '.git/config'].each do |filename|
-        begin
-          text = File.read filename
-          File.open(filename, 'w+') do |file|
-            file.puts text.gsub(/\[submodule "#{mod}"\][^\[]+/m,'')
-          end
-        rescue
-          puts "  Could not delete submodule entries from .gitmodules and .git/config"
-        end
-      end
-    end
-  end
-end
-
-
 def run_bundle_command dir, cmd
   puts "  running: #{cmd}"
   status = Dir.chdir(dir) { system(cmd); $? }
@@ -262,11 +262,11 @@ def update_bundles config, doc, log
   existing_bundles.reject! { |path| FileTest.file? path }
 
   dir = only_updating = nil
-  puts "# reading vimrc" if $verbose
+  puts "# reading vimrc" if config[:verbose]
   read_vimrc(config) do |line|
     if line =~ /^\s*"\s*bundle:\s*(.*)$/i
       url, tag = $1.split
-      puts "# processing '#{url}' at '#{tag}'" if $verbose
+      puts "# processing '#{url}' at '#{tag}'" if config[:verbose]
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
       if url.match /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/  # User/repository.
         url = "https://github.com/#{url}.git"
@@ -369,22 +369,22 @@ def set_default_options opts
 end
 
 
-def ensure_vim_environment configuration
+def ensure_vim_environment config
   ensure_dir dotvim
   ensure_dir dotvim('autoload')
 
   unless test ?f, dotvim('autoload', 'pathogen.vim')
     puts "Downloading Pathogen..."
-    download_file configuration[:pathogen_url], dotvim('autoload', 'pathogen.vim')
+    download_file config[:pathogen_url], dotvim('autoload', 'pathogen.vim')
   end
 
-  unless test(?f, configuration[:vimrc_path])
+  unless test(?f, config[:vimrc_path])
     puts "Downloading starter vimrc..."
-    download_file configuration[:starter_url], configuration[:vimrc_path]
+    download_file config[:starter_url], config[:vimrc_path]
   end
 
-  run :ln, '-s', configuration[:vimdir_path], "#{ENV['HOME']}/.vim"  unless test ?e, "#{ENV['HOME']}/.vim"
-  run :ln, '-s', configuration[:vimrc_path], "#{ENV['HOME']}/.vimrc" unless test ?e, "#{ENV['HOME']}/.vimrc"
+  run :ln, '-s', config[:vimdir_path], "#{ENV['HOME']}/.vim"  unless test ?e, "#{ENV['HOME']}/.vim"
+  run :ln, '-s', config[:vimrc_path], "#{ENV['HOME']}/.vimrc" unless test ?e, "#{ENV['HOME']}/.vimrc"
 end
 
 
@@ -395,16 +395,17 @@ def generate_helptags
 end
 
 
-def read_configuration configuration
+def read_configuration config
   conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
-  process_options configuration, File.open(conf_file).readlines, "in #{conf_file} line" if test(?f, conf_file)
-  process_options configuration, ARGV, "in command line argument"
+  process_options config, File.open(conf_file).readlines, "in #{conf_file} line" if test(?f, conf_file)
+  process_options config, ARGV, "in command line argument"
 
-  set_default_options configuration
+  set_default_options config
 
-  configuration.keys.sort.each { |k| puts "# option #{k} = #{configuration[k].inspect}" } if configuration[:verbose]
-  configuration.delete :dotfiles_path # Ensure it is not used accidentally later.
+  config.keys.sort.each { |k| puts "# option #{k} = #{config[k].inspect}" } if config[:verbose]
+  config.delete :dotfiles_path       # Ensure it is not used accidentally later.
 end
+
 
 def help
 <<EOL
