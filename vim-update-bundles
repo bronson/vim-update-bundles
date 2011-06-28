@@ -185,7 +185,7 @@ def update_bundle dir, tag, tagstr, previous_version, log
 end
 
 
-def download_bundle dir, url, tag, doc, log
+def download_bundle config, dir, url, tag, doc, log
   tagstr = " at #{tag}" if tag
   previous_version = nil
   only_updating = false
@@ -194,7 +194,7 @@ def download_bundle dir, url, tag, doc, log
     remote = Dir.chdir(dir)  { git(:config, '--get', 'remote.origin.url').chomp }
     if remote == url
       only_updating = true
-      unless $no_updates
+      unless config[:no_updates]
         previous_version = describe_head dir
         puts "updating #{dir} from #{url}#{tagstr}"
         Dir.chdir(dir) { git :fetch }
@@ -210,7 +210,7 @@ def download_bundle dir, url, tag, doc, log
   end
 
   # previous_version is set only if we're updating, not if adding or deleting
-  update_bundle dir, tag, tagstr, previous_version, log unless only_updating && $no_updates
+  update_bundle dir, tag, tagstr, previous_version, log unless only_updating && config[:no_updates]
 
   print_doc_entry dir, doc
   only_updating
@@ -255,7 +255,7 @@ def run_bundle_command dir, cmd
 end
 
 
-def update_bundles doc, log
+def update_bundles config, doc, log
   existing_bundles = Dir['*']
 
   # Ignore files in the bundle directory, e.g., READMEs.
@@ -274,11 +274,11 @@ def update_bundles doc, log
       if url.match /^[A-Za-z0-9._-]+$/                 # Plain repository.
         url = "https://github.com/vim-scripts/#{url}.git"
       end
-      only_updating = download_bundle dir, url, tag, doc, log
+      only_updating = download_bundle config, dir, url, tag, doc, log
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*bundle[ -]command:\s*(.*)$/i
       raise "Bundle-Command must come after Bundle" if dir.nil?
-      run_bundle_command dir, $1 unless only_updating && $no_updates
+      run_bundle_command dir, $1 unless only_updating && config[:no_updates]
     elsif line =~ /^\s*"\s*static:\s*(.*)$/i
       dir = $1
       puts "  leaving #{dir} alone"
@@ -297,7 +297,7 @@ def update_bundles doc, log
 end
 
 
-def update_bundles_and_docs
+def update_bundles_and_docs config
   ensure_dir dotvim('doc')
   bundle_dir = dotvim('bundle')
   ensure_dir bundle_dir
@@ -309,7 +309,7 @@ def update_bundles_and_docs
     File.open(logfile, 'a') do |log|
       print_log_header log unless log_already_exists
       log.puts "Updating on #{current_date}"
-      Dir.chdir(bundle_dir) { update_bundles doc, log }
+      Dir.chdir(bundle_dir) { update_bundles config, doc, log }
       log.puts "\n"
     end
     doc.puts "\n"
@@ -422,7 +422,7 @@ EOL
 end
 
 
-configuration = {
+config = {
   :verbose       => nil,     # Git commands are quiet by default; set verbose=true to see everything.
   :submodule     => false,   # If true then use Git submodules instead of cloning.
   :no_updates    => false,   # If true then don't update repos, only add or delete.
@@ -444,15 +444,14 @@ configuration = {
 }
 
 
-read_configuration configuration
-$dotvim = configuration[:vimdir_path]
-$dotvimrc = configuration[:vimrc_path]
-$submodule = configuration[:submodule]
-$verbose = configuration[:verbose]
-$no_updates = configuration[:no_updates]
+read_configuration config
+$dotvim = config[:vimdir_path]
+$dotvimrc = config[:vimrc_path]
+$submodule = config[:submodule]
+$verbose = config[:verbose]
 
-ensure_vim_environment configuration
-update_bundles_and_docs
+ensure_vim_environment config
+update_bundles_and_docs config
 generate_helptags
 puts "done!  Start Vim and type ':help bundles' to see what has been installed."
 
