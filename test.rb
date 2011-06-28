@@ -7,7 +7,6 @@ require 'test/unit'
 #
 # TODO: test checking out a SHA1
 # TODO: test Switching from a branch/tag/SHA1 to master and back.
-# TODO: test adding and removing a bundle multiple times
 # TODO: what happens when checking out a branch or tag and it doesn't exist?
 # TODO: test when .vimrc and .vim/vimrc both exist, the former is preferred
 #
@@ -318,6 +317,23 @@ class TestUpdater < Test::Unit::TestCase
       refute_test ?f, "#{repo}/third"
 
       # TODO: Switch to master and back and to another tag and back.
+    end
+  end
+
+
+  def test_multiple_removes
+    # add and remove a plugin multiple times
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/plugin1"
+      4.times do
+        write_file tmpdir, '.vimrc', "\" Bundle: #{tmpdir}/plugin1"
+        `./vim-update-bundles`
+        assert_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
+
+        write_file tmpdir, '.vimrc', ''
+        `./vim-update-bundles`
+        refute_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
+      end
     end
   end
 
