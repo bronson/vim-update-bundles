@@ -84,14 +84,16 @@ class TestUpdater < Test::Unit::TestCase
       # No symlinks are needed.
       assert_test ?d, "#{base}/.vim"
     else
-      assert_test ?l, "#{base}/.vim"
+      # it appears Rubinius has a bug  https://github.com/rubinius/rubinius/issues/1057
+      #assert_test ?l, "#{base}/.vim"
       assert_equal File.readlink("#{base}/.vim"), "#{base}/#{vimdir}"
     end
 
     if vimrc == '.vimrc'
       assert_test ?f, "#{base}/.vimrc"
     else
-      assert_test ?l, "#{base}/.vimrc"
+      # it appears Rubinius has a bug  https://github.com/rubinius/rubinius/issues/1057
+      #assert_test ?l, "#{base}/.vimrc"
       assert_equal File.readlink("#{base}/.vimrc"), "#{base}/#{vimrc}"
     end
 
