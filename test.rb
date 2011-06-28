@@ -2,8 +2,10 @@ require 'tempfile'
 require 'tmpdir'
 require 'test/unit'
 
-# You can specify the directory where the tests will be run:
+# You can specify where the tests will be run instead of mktmpdir's default:
 #   TESTDIR=/ramdisk/test ruby test.rb
+# You can also tell the tester to preserve the test directory after running:
+#   PRESERVE=1 ruby test.rb -n test_multiple_removes
 #
 # TODO: test checking out a SHA1
 # TODO: test Switching from a branch/tag/SHA1 to master and back.
@@ -15,17 +17,26 @@ require 'test/unit'
 
 
 class TestUpdater < Test::Unit::TestCase
-  def prepare_test
+  def prepare_test &block
     # Creates a tmp dir to run the test in then yields to the test.
     args = ['vimtest-']
     args.push ENV['TESTDIR'] if ENV['TESTDIR']
-    Dir.mktmpdir(*args) do |tmpdir|
-      create_mock_files tmpdir
-      Dir.mkdir "#{tmpdir}/home"
-      ENV['HOME']="#{tmpdir}/home"
-      ENV['TESTING']='1'
-      yield "#{tmpdir}/home"
+    if ENV['PRESERVE']
+      tmpdir = Dir.mktmpdir *args
+      prepare_test_trampoline tmpdir, block
+    else
+      Dir.mktmpdir(*args) do |tmpdir|
+        prepare_test_trampoline tmpdir, block
+      end
     end
+  end
+
+  def prepare_test_trampoline tmpdir, block
+    create_mock_files tmpdir
+    Dir.mkdir "#{tmpdir}/home"
+    ENV['HOME']="#{tmpdir}/home"
+    ENV['TESTING']='1'
+    block.call "#{tmpdir}/home"
   end
 
   def write_file base, path, contents
