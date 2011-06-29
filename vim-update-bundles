@@ -187,7 +187,7 @@ end
 def update_bundle config, dir, tag, tagstr, previous_version, log
   Dir.chdir(dir) do
     git :checkout, tag || :master
-    if system 'git symbolic-ref HEAD -q'
+    if system 'git symbolic-ref HEAD -q >/dev/null'
       # only pull if symbolic-ref is true, otherwise it's detached head
       git :pull, '--ff-only', :origin, tag || :master
     end
