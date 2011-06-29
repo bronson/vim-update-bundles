@@ -17,7 +17,7 @@
 require 'fileutils'
 require 'open-uri'
 
-VERSION='0.41+'
+Version = '0.6'
 
 
 def dotvim config, *path
@@ -443,7 +443,7 @@ config = {
   :no_updates    => false,   # If true then don't update repos, only add or delete.
 
   :help => lambda { |v| puts help; exit },
-  :version => lambda { |v| puts "vim-update-bundles #{VERSION}"; exit },
+  :version => lambda { |v| puts "vim-update-bundles #{Version}"; exit },
 
   # single-character aliases for command-line options
   :v => :verbose, :s => :submodule, :n => :no_updates,
@@ -459,11 +459,13 @@ config = {
 }
 
 
-read_configuration config
-$verbose = config[:verbose]
+unless $load_only     # to read the version number
+  read_configuration config
+  $verbose = config[:verbose]
 
-ensure_vim_environment config
-update_bundles_and_docs config
-generate_helptags
-puts "done!  Start Vim and type ':help bundles' to see what has been installed."
+  ensure_vim_environment config
+  update_bundles_and_docs config
+  generate_helptags
+  puts "done!  Start Vim and type ':help bundles' to see what has been installed."
+end
 

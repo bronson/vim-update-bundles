@@ -1,10 +1,11 @@
-- TODO: trap errors, suppress stack trace, print in the log when they happen
-- Added doc/bundle-log.txt.  :help bundle-log
+0.6     29 Jun 2011
+- Added doc/bundle-log.txt. :help bundle-log to see it.
 - Added --no-updates option to make adding/deleting bundles faster.
 - Support single-letter options (-v for --verbose, -n for --no-updates).
 - It's BundleCommand though Bundle-Command and BUNDLE COMMAND still work.
 - Added --help and --version.
 - Cleanups and doc fixes by Sorin Ionescu.
+- bugfix: changing branch name would merge instead of switching branches.
 
 0.4.1   11 May 2011
 - Support vundle-style short repo names thanks to Chris Toomey

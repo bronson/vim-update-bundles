@@ -22,7 +22,11 @@ Also make sure to look at the bundle-log.
 
 ## Installation
 
-    $ git clone https://github.com/bronson/vim-update-bundles.git
+One of:
+
+* git clone: `git clone https://github.com/bronson/vim-update-bundles.git`
+* rubygem: `gem install vim-update-bundles`
+* no install: `curl -s https://raw.github.com/bronson/vim-update-bundles/master/vim-update-bundles | ruby`
 
 
 ## Usage
@@ -130,9 +134,9 @@ files.
 ## Authors
 
 * [Scott Bronson](http://github.com/bronson)
+* [Sorin Ionescu](http://github.com/sorin-ionescu)
 * [steeef](http://github.com/steeef)
 * [Andreas Marienborg](http://github.com/omega)
-* [Sorin Ionescu](http://github.com/sorin-ionescu)
 
 
 ## Alternatives
