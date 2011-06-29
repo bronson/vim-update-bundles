@@ -56,7 +56,7 @@ def run *cmd
   outr.close
   Process.waitpid pid
   unless options[:acceptable_exit_codes].include?($?.exitstatus)
-    raise "command <<#{[cmd].join(" ")}>> exited with code #{$?.exitstatus}"
+    raise "'#{[cmd].join(" ")}' in #{Dir.pwd} exited with code #{$?.exitstatus}"
   end
   result
 end
@@ -110,8 +110,8 @@ def print_log_header log
 end
 
 
-def print_log_entry log, action, dir, notes
-  log.printf " %-3s %-24s %s\n", action, "|#{dir}|", notes
+def print_log_entry log, action, dir, rev, notes=""
+  log.printf " %-3s %-26s %-18s %s\n", action, "|#{dir}|", rev, notes
 end
 
 
@@ -144,7 +144,7 @@ def clone_bundle config, dir, url, tagstr, log
     puts "adding submodule #{dir} from #{url}#{tagstr}"
     in_git_root(dir) { |mod| git :submodule, :add, url, mod }
   end
-  print_log_entry log, 'Add', dir, "#{describe_head(dir)} from #{url}#{tagstr}"
+  print_log_entry log, 'Add', dir, describe_head(dir), "#{url}#{tagstr}"
 end
 
 
@@ -197,7 +197,7 @@ def update_bundle config, dir, tag, tagstr, previous_version, log
   if previous_version
     new_version = describe_head dir
     if new_version != previous_version
-      print_log_entry log, 'up', dir, "#{previous_version} -> #{new_version}#{tagstr}"
+      print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
     end
   end
 
@@ -231,7 +231,9 @@ def download_bundle config, dir, url, tag, doc, log
   end
 
   # pull bundle
-  update_bundle config, dir, tag, tagstr, previous_version, log unless only_updating && config[:no_updates]
+  unless only_updating && config[:no_updates]
+    update_bundle config, dir, tag, tagstr, previous_version, log
+  end
 
   print_doc_entry dir, doc
   only_updating
@@ -245,12 +247,15 @@ def read_vimrc config
 end
 
 
+class BundleCommandError < RuntimeError
+  def exit_code; 47; end
+end
+
 def run_bundle_command dir, cmd
   puts "  running: #{cmd}"
   status = Dir.chdir(dir) { system(cmd); $? }
   unless status.success?
-    puts "  BundleCommand command failed!"
-    exit 47
+    raise BundleCommandError.new("BundleCommand #{cmd} in #{Dir.pwd} failed!")
   end
 end
 
@@ -310,10 +315,18 @@ def update_bundles_and_docs config
     File.open(logfile, 'a') do |log|
       print_log_header log unless log_already_exists
       log.puts "Updating on #{current_date}"
-      Dir.chdir(bundle_dir) { update_bundles config, doc, log }
-      log.puts "\n"
+      begin
+        Dir.chdir(bundle_dir) { update_bundles config, doc, log }
+      rescue Exception => e
+        message = e.is_a?(Interrupt) ? "Interrupted" : "Aborted: #{e.message}"
+        log.print " #{message}\n\n"  # puts suppresses trailing newline
+        doc.puts message
+        STDERR.puts message
+        exit e.respond_to?(:exit_code) ? e.exit_code : 1
+      end
+      log.puts
     end
-    doc.puts "\n"
+    doc.puts
   end
 end
 

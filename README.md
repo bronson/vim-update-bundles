@@ -17,6 +17,7 @@ Now, run `./vim-update-bundles`.  Your plugins are installed and ready for use.
 
 Type `:help bundles` from within Vim to show the list of plugins that you have installed.
 Hit Control-] on the bundle's name to jump to its documentation.
+Also make sure to look at the bundle-log.
 
 
 ## Installation
