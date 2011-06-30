@@ -1,11 +1,13 @@
+require 'test/unit'
 require 'tempfile'
 require 'tmpdir'
-require 'test/unit'
+require 'fileutils'
 
 # You can specify where the tests will be run instead of mktmpdir's default:
 #   TESTDIR=/ramdisk/test ruby test.rb
 # You can also tell the tester to preserve the test directory after running:
 #   PRESERVE=1 ruby test.rb -n test_multiple_removes
+# Pass TRACE=1 to force vim-update-bundles to print a stack trace.
 #
 # TODO: test when .vimrc and .vim/vimrc both exist, the former is preferred
 #
@@ -47,13 +49,16 @@ class TestUpdater < Test::Unit::TestCase
     @starter_urls = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
   end
 
-  def create_mock_repo name
+  def create_mock_repo name, author=nil
     Dir.mkdir name
     Dir.chdir name do
       `git init`
       write_file name, "first", "first"
       `git add first`
-      `git commit -q -m first`
+
+      command = "git commit -q -m first"
+      command = "sh -c 'GIT_AUTHOR_NAME='\\''#{author}'\\'' #{command}'" if author
+      `#{command}`
     end
   end
 
@@ -399,6 +404,43 @@ class TestUpdater < Test::Unit::TestCase
       vim_update_bundles__expect_error
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
+  end
+
+
+  def git_sha repo, branch='HEAD'
+    # returns the sha of the topmost commit in the named branch
+    `git --git-dir='#{repo}/.git' rev-parse #{branch}`.chomp
+  end
+
+
+  def test_upstream_regenerates_ancestry
+    prepare_test do |tmpdir|
+      # Test what happens when the checked out git branch loses its ancestry.
+      create_mock_repo "#{tmpdir}/repo1"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      vim_update_bundles
+
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
+      orig_head = git_sha("#{tmpdir}/.vim/bundle/repo1")
+      assert_equal orig_head, git_sha("#{tmpdir}/repo1")
+
+      # delete/regen repo so it looks identical but all SHAs are different
+      FileUtils.rm_rf "#{tmpdir}/repo1"
+      create_mock_repo "#{tmpdir}/repo1", "Invalid .-. Second Author"
+      vim_update_bundles
+
+      new_head = git_sha("#{tmpdir}/.vim/bundle/repo1")
+      assert_not_equal orig_head, new_head
+      assert_equal new_head, git_sha("#{tmpdir}/repo1")
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+      assert_match /has different ancestry from upstream/, log
+    end
+  end
+
+
+  def test_upstream_includes_incorrect_tagfile
+    # some repos includes a bogus tags file that gets modified when we
+    # generate helptags.  That means we can't pull anymore.
   end
 
 

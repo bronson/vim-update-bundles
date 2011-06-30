@@ -4,6 +4,7 @@
 # .vim/bundles by downloading new repositories as needed. It also removes
 # bundles that are no longer used.
 
+# TODO: also check that log_error for bundle change works
 require 'fileutils'
 require 'open-uri'
 
@@ -97,6 +98,11 @@ def print_log_entry log, action, dir, rev, notes=""
 end
 
 
+def log_error log, message
+  log.print " #{message}\n\n"  # puts suppresses trailing newline
+  STDERR.puts message
+end
+
 def ignore_doc_tags
   exclude = File.read ".git/info/exclude"
   if exclude !~ /doc\/tags/
@@ -166,11 +172,39 @@ def remove_bundle config, dir, log
 end
 
 
-def update_bundle config, dir, tag, tagstr, previous_version, log
-  git :checkout, tag || :master
-  if system 'git symbolic-ref HEAD -q >/dev/null'
+def reset_bundle config, dir, url, tagstr, log
+  remove_bundle config, dir, log
+  ensure_dir "#{config[:vimdir_path]}/bundle"
+  clone_bundle config, dir, url, tagstr, log
+end
+
+
+def interpret_pull_failure msg
+  # Tries to convert the output from a failed pull into a decent error message
+  if msg =~ /Not possible to fast-forward/
+    # Looks like upstream regenerated or repased the repository?  Hopefully a one-time thing.
+    "has different ancestry from upstream, removing and re-cloning."
+  elsif msg =~ /You have unstaged changes/
+    # Files in the repo are getting changed?!  https://github.com/timcharper/textile.vim/issues/4
+    "has unsaved changes, removing and re-cloning.  Invalid doc/tags file?"
+  else
+    msg.gsub /\s+/, ' '   # scrunch newlines and runs of spaces
+  end
+end
+
+
+def update_bundle config, dir, url, tag, tagstr, previous_version, log
+  Dir.chdir(dir) do
+    git :checkout, tag || :master
     # only pull if symbolic-ref is true, otherwise it's detached head
-    git :pull, '--ff-only', :origin, tag || :master
+    if system 'git symbolic-ref HEAD -q >/dev/null'
+      output = `git pull --ff-only origin #{tag || :master} 2>&1`
+      unless $?.success?
+        log_error log, "#{dir} #{interpret_pull_failure output}"
+        reset_bundle config, dir, url, tagstr, log
+      end
+    end
+    ignore_doc_tags
   end
   ignore_doc_tags
 
@@ -201,10 +235,8 @@ def download_bundle config, dir, url, tag, doc, log
         end
       end
     else
-      puts "repo has changed from #{remote} to #{url}"
-      remove_bundle config, dir, log
-      ensure_dir "#{config[:vimdir_path]}/bundle"
-      clone_bundle config, dir, url, tagstr, log
+      log_error log, "bundle for #{dir} changed from #{remote} to #{url}"
+      Dir.chdir(dir) { reset_bundle config, dir, url, tagstr, log }
     end
   else
     clone_bundle config, dir, url, tagstr, log
@@ -213,7 +245,7 @@ def download_bundle config, dir, url, tag, doc, log
   # pull bundle
   Dir.chdir(dir) do
     unless only_updating && config[:no_updates]
-      update_bundle config, dir, tag, tagstr, previous_version, log
+      update_bundle config, dir, url, tag, tagstr, previous_version, log
     end
     print_doc_entry dir, doc
   end
@@ -302,9 +334,9 @@ def update_bundles_and_docs config
         Dir.chdir(bundle_dir) { update_bundles config, doc, log }
       rescue Exception => e
         message = e.is_a?(Interrupt) ? "Interrupted" : "Aborted: #{e.message}"
-        log.print " #{message}\n\n"  # puts suppresses trailing newline
+        log_error log, message
         doc.puts message
-        STDERR.puts message
+        STDERR.puts e.backtrace if ENV['TRACE']
         exit e.respond_to?(:exit_code) ? e.exit_code : 1
       end
       log.puts

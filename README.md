@@ -7,7 +7,7 @@ Use Pathogen and Git to manage your Vim plugins.
 
 ## Description
 
-To install a plugin, put lines like this in your ~/.vimrc:
+To install plugins, put lines like this in your ~/.vimrc:
 
     " Bundle: jQuery                                      # https://github.com/vim-scripts/jQuery
     " Bundle: scrooloose/nerdtree                         # https://github.com/scrooloose/nerdtree
@@ -17,7 +17,7 @@ Now, run `./vim-update-bundles`.  Your plugins are installed and ready for use.
 
 Type `:help bundles` from within Vim to show the list of plugins that you have installed.
 Hit Control-] on the bundle's name to jump to its documentation.
-Also make sure to look at the bundle-log.
+Also look at `:he bundle-log`.
 
 
 ## Installation
@@ -33,10 +33,10 @@ One of:
 
     $ ./vim-update-bundles --help
 
-If you're not already using Vim, vim-update-bundles will set up a typical vim environment.
-Edit your ~/.vimrc and run vim-update-bundles whenever you want changes to take effect.
+If you're not already using Vim, vim-update-bundles will install Pathogen and
+set everything up for you.
 
-vim-update-bundles will use ~/.dotfiles if it exists; so, it works seamlessly
+It will also use ~/.dotfiles if it exists.  It should work seamlessly
 with <http://github.com/ryanb/dotfiles> and friends. It also supports Git
 submodules (see the configuration section below).
 
@@ -53,7 +53,7 @@ submodules (see the configuration section below).
 
 ## Specifying Plugins
 
-vim-update-bundles reads the plugins you want installed from your ~/.vimrc.
+vim-update-bundles reads the plugins you want installed from comments in your ~/.vimrc.
 Here are the directives it recognizes:
 
 #### Bundle:
@@ -92,15 +92,13 @@ ignore, mark them as static.
 
 ## Configuration File
 
-All configuration options can be passed on the command line or placed in ~/.vim-update-bundles.conf.
-Putting "submodules=1" in the config file is the same as passing -s or --submodules on the command line.
-Blank lines and comments starting with '#' are ignored.
+All configuration options can be passed on the command line or placed in `~/.vim-update-bundles.conf`.
+Putting `submodules = 1` in the config file is the same as passing --submodules on the command line.
+Blank lines and comments starting with # are ignored.
 
-String interpolation is performed on all values. First configuration settings
-are tried then environment variables. For instance, this would expand to
-"/home/_username_/.dotfiles/_username_/vim":
-
-    vimdir_path = $dotfiles_path/$USERNAME/vim
+String interpolation is performed on all values.
+First configuration settings are tried then environment variables.
+An example: `vimdir_path = $dotfiles_path/$USERNAME/vim`
 
 
 ## Location of .vim and .vimrc
