@@ -4,7 +4,6 @@
 # .vim/bundles by downloading new repositories as needed. It also removes
 # bundles that are no longer used.
 
-# TODO: also check that log_error for bundle change works
 require 'fileutils'
 require 'open-uri'
 
@@ -103,6 +102,7 @@ def log_error log, message
   STDERR.puts message
 end
 
+
 def ignore_doc_tags
   exclude = File.read ".git/info/exclude"
   if exclude !~ /doc\/tags/
@@ -193,25 +193,36 @@ def interpret_pull_failure msg
 end
 
 
-def update_bundle config, dir, url, tag, tagstr, previous_version, log
-  Dir.chdir(dir) do
-    git :checkout, tag || :master
-    # only pull if symbolic-ref is true, otherwise it's detached head
-    if system 'git symbolic-ref HEAD -q >/dev/null'
-      output = `git pull --ff-only origin #{tag || :master} 2>&1`
-      unless $?.success?
-        log_error log, "#{dir} #{interpret_pull_failure output}"
-        reset_bundle config, dir, url, tagstr, log
-      end
-    end
-    ignore_doc_tags
-  end
-  ignore_doc_tags
+def pull_bundle dir, tag, log
+  # returns true on success, false if the bundle needs to be reset
+  git :checkout, tag || :master
 
-  if previous_version
-    new_version = describe_head
-    if new_version != previous_version
-      print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
+  # only pull if symbolic-ref is true, otherwise it's detached head
+  if system 'git symbolic-ref HEAD -q >/dev/null'
+    output = `git pull --ff-only origin #{tag || :master} 2>&1`
+    unless $?.success?
+      log_error log, "#{dir} #{interpret_pull_failure output}"
+      return false
+    end
+  end
+
+  return true
+end
+
+
+def update_bundle config, dir, url, tag, tagstr, previous_version, log
+  unless Dir.chdir(dir) { pull_bundle dir, tag, log }
+    reset_bundle config, dir, url, tagstr, log
+  end
+
+  Dir.chdir(dir) do
+    ignore_doc_tags
+
+    if previous_version
+      new_version = describe_head
+      if new_version != previous_version
+        print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
+      end
     end
   end
 end
@@ -243,12 +254,10 @@ def download_bundle config, dir, url, tag, doc, log
   end
 
   # pull bundle
-  Dir.chdir(dir) do
-    unless only_updating && config[:no_updates]
-      update_bundle config, dir, url, tag, tagstr, previous_version, log
-    end
-    print_doc_entry dir, doc
+  unless only_updating && config[:no_updates]
+    update_bundle config, dir, url, tag, tagstr, previous_version, log
   end
+  Dir.chdir(dir) { print_doc_entry dir, doc }
   in_submodule_root(dir) { |mod| git :add, mod } if config[:submodule]
 
   only_updating

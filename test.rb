@@ -409,7 +409,9 @@ class TestUpdater < Test::Unit::TestCase
 
   def git_sha repo, branch='HEAD'
     # returns the sha of the topmost commit in the named branch
-    `git --git-dir='#{repo}/.git' rev-parse #{branch}`.chomp
+    sha = `git --git-dir='#{repo}/.git' rev-parse #{branch}`.chomp
+    assert_match /^[0-9A-Fa-f]{40}/, sha
+    sha
   end
 
 
