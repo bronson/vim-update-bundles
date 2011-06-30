@@ -62,16 +62,16 @@ class TestUpdater < Test::Unit::TestCase
     end
   end
 
-  def update_mock_repo dir, name
+  def update_mock_repo dir, name, contents=nil
     Dir.chdir dir do
-      write_file dir, name, name
+      write_file dir, name, contents || name
       `git add '#{name}'`
       `git commit -q -m '#{name}'`
     end
   end
 
-  def update_mock_repo_tagged dir, name, tag
-    update_mock_repo dir, name
+  def update_mock_repo_tagged dir, name, tag, contents=nil
+    update_mock_repo dir, name, contents
     Dir.chdir(dir) { `git tag -a #{tag} -m 'tag #{tag}'` }
   end
 
@@ -416,8 +416,8 @@ class TestUpdater < Test::Unit::TestCase
 
 
   def test_upstream_regenerates_ancestry
+    # Test what happens when the checked out git branch loses its ancestry.
     prepare_test do |tmpdir|
-      # Test what happens when the checked out git branch loses its ancestry.
       create_mock_repo "#{tmpdir}/repo1"
       write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
       vim_update_bundles
@@ -440,9 +440,57 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_upstream_includes_incorrect_tagfile
-    # some repos includes a bogus tags file that gets modified when we
-    # generate helptags.  That means we can't pull anymore.
+  def test_pull_with_local_changes_resets_repo
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/repo1"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      vim_update_bundles
+      # make sure repo was successfully cloned
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
+      assert_equal "first", File.read("#{tmpdir}/.vim/bundle/repo1/first")
+
+      # make a conflicting local change and pull again
+      update_mock_repo "#{tmpdir}/repo1", "first", "second commit to first file"
+      write_file tmpdir, ".vim/bundle/repo1/first", "local change"
+      vim_update_bundles
+
+      # make sure the local repo matches the latest upstream
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
+      assert_equal "second commit to first file", File.read("#{tmpdir}/.vim/bundle/repo1/first")
+      # and also verify user's changes are preserved in .Trashed-Bundles
+      assert_test ?f, "#{tmpdir}/.vim/Trashed-Bundles/repo1-01/first"
+      assert_equal "local change", File.read("#{tmpdir}/.vim/Trashed-Bundles/repo1-01/first")
+      # finally, make sure the error is logged
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+      assert_match /repo1 has unsaved changes, removing and re-cloning/, log
+    end
+  end
+
+
+  def test_pull_with_conflicting_local_file_resets_repo
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/repo1"
+      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      vim_update_bundles
+      # make sure repo was successfully cloned
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
+      assert_equal "first", File.read("#{tmpdir}/.vim/bundle/repo1/first")
+
+      # make a conflicting local change and pull again
+      update_mock_repo "#{tmpdir}/repo1", "second"
+      write_file tmpdir, ".vim/bundle/repo1/second", "changed!"
+      vim_update_bundles
+
+      # make sure the local repo matches the latest upstream
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/second"
+      assert_equal "second", File.read("#{tmpdir}/.vim/bundle/repo1/second")
+      # and also verify user's changes are preserved in .Trashed-Bundles
+      assert_test ?f, "#{tmpdir}/.vim/Trashed-Bundles/repo1-01/second"
+      assert_equal "changed!", File.read("#{tmpdir}/.vim/Trashed-Bundles/repo1-01/second")
+      # finally, make sure the error is logged
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+      assert_match /repo1 has conflicting file, removing and re-cloning/, log
+    end
   end
 
 

@@ -27,12 +27,13 @@ end
 def run *cmd
   # Runs cmd, returns its stdout, and bails on error.
   # Mostly a backport of Ruby 1.9's IO.popen for 1.8.
-  options = { :acceptable_exit_codes => [0] }
+  options = { :acceptable_exit_codes => [0], :suppress_stderr => false }
   options.merge!(cmd.pop) if cmd.last.kind_of?(Hash)
   puts "-> #{[cmd].join(" ")}" if $verbose
   outr, outw = IO::pipe
   pid = fork {
     outr.close; STDOUT.reopen outw; outw.close
+    STDERR.reopen '/dev/null', 'w' if options[:suppress_stderr]
     exec *cmd.flatten.map { |c| c.to_s }
   }
   outw.close
@@ -99,7 +100,7 @@ end
 
 def log_error log, message
   log.print " #{message}\n\n"  # puts suppresses trailing newline
-  STDERR.puts message
+  STDERR.puts message unless ENV['TESTING']    # unit tests set TESTING
 end
 
 
@@ -181,12 +182,18 @@ end
 
 def interpret_pull_failure msg
   # Tries to convert the output from a failed pull into a decent error message
+  # TODO: this is getting heinous.  is it really a good idea?
   if msg =~ /Not possible to fast-forward/
     # Looks like upstream regenerated or repased the repository?  Hopefully a one-time thing.
     "has different ancestry from upstream, removing and re-cloning."
-  elsif msg =~ /You have unstaged changes/
+  elsif msg =~ /You have unstaged changes/ ||
+        msg =~ /Your local changes [a-z ]* would be overwritten/ ||
+        msg =~ /commit your changes or stash them before you can merge/
     # Files in the repo are getting changed?!  https://github.com/timcharper/textile.vim/issues/4
-    "has unsaved changes, removing and re-cloning.  Invalid doc/tags file?"
+    "has unsaved changes, removing and re-cloning.  Invalid doc/tags file in upstream repo?"
+  elsif msg =~ /untracked working tree files would be overwritten/
+    # untracked file was added to local repo with same name as new upstream file
+    "has conflicting file, removing and re-cloning.  doc/tags file added upstream?"
   else
     msg.gsub /\s+/, ' '   # scrunch newlines and runs of spaces
   end
@@ -242,7 +249,7 @@ def download_bundle config, dir, url, tag, doc, log
         Dir.chdir(dir) do
           previous_version = describe_head
           puts "updating #{dir} from #{url}#{tagstr}"
-          git :fetch
+          git :fetch, :suppress_stderr => true
         end
       end
     else
