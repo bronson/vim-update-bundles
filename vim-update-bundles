@@ -54,15 +54,13 @@ def git *cmd
 end
 
 
-def describe_head dir
-  Dir.chdir(dir) do
-    # Don't want to use 'git describe --all' because branch names change too often.
-    # Use `` instead of git() so we don't error out if the git call fails.
-    # (might happen if there's a directory in .vim/bundle that isn't git-revisioned).
-    version = `git describe --tags 2>/dev/null`.chomp
-    version = `git rev-parse HEAD 2>/dev/null`[0..12] unless version =~ /\S/
-    version
-  end
+def describe_head
+  # Don't want to use 'git describe --all' because branch names change too often.
+  # Use `` instead of git() so we don't error out if the git call fails.
+  # (might happen if there's a directory in .vim/bundle that isn't git-revisioned).
+  version = `git describe --tags 2>/dev/null`.chomp
+  version = `git rev-parse HEAD 2>/dev/null`[0..12] unless version =~ /\S/
+  version
 end
 
 
@@ -82,8 +80,8 @@ end
 
 
 def print_doc_entry dir, doc
-  version = describe_head dir
-  date = Dir.chdir(dir) { git(:log, '-1', '--pretty=format:%ai').chomp }
+  version = describe_head
+  date = git(:log, '-1', '--pretty=format:%ai').chomp
   doc.printf "  %-32s %-22s %s\n", "|#{dir}|", version, date.split(' ').first
 end
 
@@ -109,7 +107,7 @@ def ignore_doc_tags
 end
 
 
-def in_git_root inpath=nil
+def in_submodule_root inpath=nil
   # Submodules often require the CWD to be the Git root. If a path relative to
   # the CWD is passed, the block receives it relative to the root.
   path = File.join Dir.pwd, inpath if inpath
@@ -126,9 +124,9 @@ def clone_bundle config, dir, url, tagstr, log
     git :clone, url, dir
   else
     puts "adding submodule #{dir} from #{url}#{tagstr}"
-    in_git_root(dir) { |mod| git :submodule, :add, url, mod }
+    in_submodule_root(dir) { |mod| git :submodule, :add, url, mod }
   end
-  print_log_entry log, 'Add', dir, describe_head(dir), "#{url}#{tagstr}"
+  Dir.chdir(dir) { print_log_entry log, 'Add', dir, describe_head, "#{url}#{tagstr}" }
 end
 
 
@@ -136,7 +134,7 @@ def remove_bundle_to config, dir, destination
   puts "Erasing #{dir}, find it in #{destination}"
   FileUtils.mv dir, destination
   if config[:submodule]
-    in_git_root(dir) do |mod|
+    in_submodule_root(dir) do |mod|
       git :rm, mod
       ['.gitmodules', '.git/config'].each do |filename|
         begin
@@ -154,7 +152,7 @@ end
 
 
 def remove_bundle config, dir, log
-  print_log_entry log, 'Del', dir, describe_head(dir)
+  Dir.chdir(dir) { print_log_entry log, 'Del', dir, describe_head }
   trash_dir = "#{config[:vimdir_path]}/Trashed-Bundles"
   ensure_dir trash_dir
   1.upto(100) do |i|
@@ -169,23 +167,19 @@ end
 
 
 def update_bundle config, dir, tag, tagstr, previous_version, log
-  Dir.chdir(dir) do
-    git :checkout, tag || :master
-    if system 'git symbolic-ref HEAD -q >/dev/null'
-      # only pull if symbolic-ref is true, otherwise it's detached head
-      git :pull, '--ff-only', :origin, tag || :master
-    end
-    ignore_doc_tags
+  git :checkout, tag || :master
+  if system 'git symbolic-ref HEAD -q >/dev/null'
+    # only pull if symbolic-ref is true, otherwise it's detached head
+    git :pull, '--ff-only', :origin, tag || :master
   end
+  ignore_doc_tags
 
   if previous_version
-    new_version = describe_head dir
+    new_version = describe_head
     if new_version != previous_version
       print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
     end
   end
-
-  in_git_root(dir) { |mod| git :add, mod } if config[:submodule]
 end
 
 
@@ -200,9 +194,11 @@ def download_bundle config, dir, url, tag, doc, log
     if remote == url
       only_updating = true
       unless config[:no_updates]
-        previous_version = describe_head dir
-        puts "updating #{dir} from #{url}#{tagstr}"
-        Dir.chdir(dir) { git :fetch }
+        Dir.chdir(dir) do
+          previous_version = describe_head
+          puts "updating #{dir} from #{url}#{tagstr}"
+          git :fetch
+        end
       end
     else
       puts "repo has changed from #{remote} to #{url}"
@@ -215,11 +211,14 @@ def download_bundle config, dir, url, tag, doc, log
   end
 
   # pull bundle
-  unless only_updating && config[:no_updates]
-    update_bundle config, dir, tag, tagstr, previous_version, log
+  Dir.chdir(dir) do
+    unless only_updating && config[:no_updates]
+      update_bundle config, dir, tag, tagstr, previous_version, log
+    end
+    print_doc_entry dir, doc
   end
+  in_submodule_root(dir) { |mod| git :add, mod } if config[:submodule]
 
-  print_doc_entry dir, doc
   only_updating
 end
 
@@ -278,7 +277,7 @@ def update_bundles config, doc, log
   existing_bundles.each { |dir| remove_bundle config, dir, log }
 
   if config[:submodule]
-    in_git_root do
+    in_submodule_root do
       puts "  updating submodules"
       git :submodule, :init
       git :submodule, :update
