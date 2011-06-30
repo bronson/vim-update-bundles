@@ -38,14 +38,14 @@ class TestUpdater < Test::Unit::TestCase
     block.call "#{tmpdir}/home"
   end
 
-  def write_file base, path, contents
-    File.open(File.join(base, path), 'w') { |f| f.write contents }
+  def write_file path, contents
+    File.open(path, 'w') { |f| f.write contents }
   end
 
   def create_mock_files tmpdir
     # Creates mock files to download (it saves on bandwidth and test time).
-    write_file tmpdir, "pathogen",      "\" PATHOGEN SCRIPT"
-    write_file tmpdir, "starter-vimrc", "\" STARTER VIMRC"
+    write_file "#{tmpdir}/pathogen",      "\" PATHOGEN SCRIPT"
+    write_file "#{tmpdir}/starter-vimrc", "\" STARTER VIMRC"
     @starter_urls = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
   end
 
@@ -53,7 +53,7 @@ class TestUpdater < Test::Unit::TestCase
     Dir.mkdir name
     Dir.chdir name do
       `git init`
-      write_file name, "first", "first"
+      write_file "#{name}/first", "first"
       `git add first`
 
       command = "git commit -q -m first"
@@ -64,7 +64,7 @@ class TestUpdater < Test::Unit::TestCase
 
   def update_mock_repo dir, name, contents=nil
     Dir.chdir dir do
-      write_file dir, name, contents || name
+      write_file "#{dir}/#{name}", contents || name
       `git add '#{name}'`
       `git commit -q -m '#{name}'`
     end
@@ -144,7 +144,7 @@ class TestUpdater < Test::Unit::TestCase
 
       # Add a repository.
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
       vim_update_bundles
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
@@ -158,7 +158,7 @@ class TestUpdater < Test::Unit::TestCase
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # Remove the repository.
-      write_file tmpdir, ".vimrc", ""
+      write_file "#{tmpdir}/.vimrc", ""
       vim_update_bundles
       refute_test ?d, repo
     end
@@ -169,7 +169,7 @@ class TestUpdater < Test::Unit::TestCase
     # Do not destroy an existing .vimrc.
     prepare_test do |tmpdir|
       str = "don't tread on me"
-      write_file tmpdir, '.vimrc', str
+      write_file "#{tmpdir}/.vimrc", str
       vim_update_bundles "--vimrc_path='#{tmpdir}/.vimrc'"
       assert_equal str, File.read("#{tmpdir}/.vimrc")
     end
@@ -187,7 +187,7 @@ class TestUpdater < Test::Unit::TestCase
       # Add submodule.
       create_mock_repo "#{tmpdir}/repo"
       File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f| f.write "submodule = true" }
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
 
       vim_update_bundles
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
@@ -202,7 +202,7 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
 
       # Remove the repository.
-      write_file tmpdir, ".vimrc", ""
+      write_file "#{tmpdir}/.vimrc", ""
       vim_update_bundles
       refute_test ?d, repo
 
@@ -219,7 +219,7 @@ class TestUpdater < Test::Unit::TestCase
     # already exists.
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.vim"
-      write_file tmpdir, ".vim/vimrc", ''
+      write_file "#{tmpdir}/.vim/vimrc", ''
       vim_update_bundles
       check_tree tmpdir, ".vim", ".vim/vimrc"
 
@@ -229,7 +229,7 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo "#{tmpdir}/repo", 'third'
 
       # Check out the plugin locked at 0.2
-      write_file tmpdir, ".vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
+      write_file "#{tmpdir}/.vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       vim_update_bundles
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
@@ -244,14 +244,14 @@ class TestUpdater < Test::Unit::TestCase
       refute_test ?f, "#{tmpdir}/.vim/bundle/repo/fourth"
 
       # Switch to the branch head
-      write_file tmpdir, ".vim/vimrc", "\" Bundle: #{tmpdir}/repo"
+      write_file "#{tmpdir}/.vim/vimrc", "\" Bundle: #{tmpdir}/repo"
       vim_update_bundles
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/third"
 
       # Switch back to the tag
-      write_file tmpdir, ".vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
+      write_file "#{tmpdir}/.vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       vim_update_bundles
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
@@ -271,7 +271,7 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
 
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       vim_update_bundles '--submodule=1'
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
@@ -305,7 +305,7 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo "#{tmpdir}/repo", 'second'
 
       # Clone repository on the given branch.
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo abranch"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo abranch"
       vim_update_bundles
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
@@ -324,7 +324,7 @@ class TestUpdater < Test::Unit::TestCase
       refute_test ?f, "#{repo}/third"
 
       # Switch to the master branch
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
       vim_update_bundles
       assert_test ?f, "#{repo}/second"
       assert_test ?f, "#{repo}/third"
@@ -332,7 +332,7 @@ class TestUpdater < Test::Unit::TestCase
       refute_test ?f, "#{repo}/b-third"
 
       # And switch back to our branch
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo abranch"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo abranch"
       vim_update_bundles
       assert_test ?f, "#{repo}/b-second"
       assert_test ?f, "#{repo}/b-third"
@@ -356,7 +356,7 @@ class TestUpdater < Test::Unit::TestCase
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q master` }
       update_mock_repo "#{tmpdir}/repo", 'second'
 
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo abranch"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo abranch"
       vim_update_bundles '--submodule=1'
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
@@ -384,7 +384,7 @@ class TestUpdater < Test::Unit::TestCase
       create_mock_repo "#{tmpdir}/repo1"
       create_mock_repo "#{tmpdir}/repo2"
 
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1 nobranch\n\" Bundle: #{tmpdir}/repo2"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1 nobranch\n\" Bundle: #{tmpdir}/repo2"
       vim_update_bundles__expect_error
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
@@ -396,11 +396,11 @@ class TestUpdater < Test::Unit::TestCase
       create_mock_repo "#{tmpdir}/repo1"
       create_mock_repo "#{tmpdir}/repo2"
 
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1"
       vim_update_bundles
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
 
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1 v0.2\n\" Bundle: #{tmpdir}/repo2"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1 v0.2\n\" Bundle: #{tmpdir}/repo2"
       vim_update_bundles__expect_error
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
@@ -415,11 +415,11 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_upstream_regenerates_ancestry
+  def test_upstream_regenerates_ancestry_resets_repo
     # Test what happens when the checked out git branch loses its ancestry.
     prepare_test do |tmpdir|
       create_mock_repo "#{tmpdir}/repo1"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1"
       vim_update_bundles
 
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
@@ -443,7 +443,7 @@ class TestUpdater < Test::Unit::TestCase
   def test_pull_with_local_changes_resets_repo
     prepare_test do |tmpdir|
       create_mock_repo "#{tmpdir}/repo1"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1"
       vim_update_bundles
       # make sure repo was successfully cloned
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
@@ -451,7 +451,7 @@ class TestUpdater < Test::Unit::TestCase
 
       # make a conflicting local change and pull again
       update_mock_repo "#{tmpdir}/repo1", "first", "second commit to first file"
-      write_file tmpdir, ".vim/bundle/repo1/first", "local change"
+      write_file "#{tmpdir}/.vim/bundle/repo1/first", "local change"
       vim_update_bundles
 
       # make sure the local repo matches the latest upstream
@@ -470,7 +470,7 @@ class TestUpdater < Test::Unit::TestCase
   def test_pull_with_conflicting_local_file_resets_repo
     prepare_test do |tmpdir|
       create_mock_repo "#{tmpdir}/repo1"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo1"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1"
       vim_update_bundles
       # make sure repo was successfully cloned
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
@@ -478,7 +478,7 @@ class TestUpdater < Test::Unit::TestCase
 
       # make a conflicting local change and pull again
       update_mock_repo "#{tmpdir}/repo1", "second"
-      write_file tmpdir, ".vim/bundle/repo1/second", "changed!"
+      write_file "#{tmpdir}/.vim/bundle/repo1/second", "changed!"
       vim_update_bundles
 
       # make sure the local repo matches the latest upstream
@@ -499,11 +499,11 @@ class TestUpdater < Test::Unit::TestCase
     prepare_test do |tmpdir|
       create_mock_repo "#{tmpdir}/plugin1"
       4.times do
-        write_file tmpdir, '.vimrc', "\" Bundle: #{tmpdir}/plugin1"
+        write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1"
         vim_update_bundles
         assert_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
 
-        write_file tmpdir, '.vimrc', ''
+        write_file "#{tmpdir}/.vimrc", ''
         vim_update_bundles
         refute_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
       end
@@ -515,19 +515,19 @@ class TestUpdater < Test::Unit::TestCase
     prepare_test do |tmpdir|
       # ensure BundleCommand is called when adding a repo
       create_mock_repo "#{tmpdir}/plugin1"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" BundleCommand: touch '#{tmpdir}/sentinel1'"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" BundleCommand: touch '#{tmpdir}/sentinel1'"
       vim_update_bundles
       assert_test ?f, "#{tmpdir}/sentinel1"
 
       # ensure BundleCommand is called when updating a repo
       update_mock_repo "#{tmpdir}/plugin1", "second"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" Bundle-Command: touch '#{tmpdir}/sentinel2'"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" Bundle-Command: touch '#{tmpdir}/sentinel2'"
       vim_update_bundles
       assert_test ?f, "#{tmpdir}/sentinel2"
 
       # ensure BundleCommand is NOT called when updating a repo when --no-updates is on
       update_mock_repo "#{tmpdir}/plugin1", "second"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" BundleCommand: touch '#{tmpdir}/sentinel3'"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" BundleCommand: touch '#{tmpdir}/sentinel3'"
       vim_update_bundles '--no-updates'
       refute_test ?f, "#{tmpdir}/sentinel3"
     end
@@ -539,7 +539,7 @@ class TestUpdater < Test::Unit::TestCase
       vim_update_bundles
       check_tree tmpdir
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vimrc", <<-EOL
+      write_file "#{tmpdir}/.vimrc", <<-EOL
         " Bundle: #{tmpdir}/repo
         " Bundle command: echo hiya > #{tmpdir}/output
       EOL
@@ -557,7 +557,7 @@ class TestUpdater < Test::Unit::TestCase
       check_tree tmpdir
 
       create_mock_repo "#{tmpdir}/repo"
-      write_file tmpdir, ".vimrc", <<-EOL
+      write_file "#{tmpdir}/.vimrc", <<-EOL
         " Bundle: #{tmpdir}/repo
         " Bundle-Command: oh-no-this-command-does-not-exist
       EOL
@@ -573,7 +573,7 @@ class TestUpdater < Test::Unit::TestCase
       vim_update_bundles
       Dir.mkdir "#{tmpdir}/.vim/bundle/foreign"
       Dir.mkdir "#{tmpdir}/.vim/bundle/static"
-      write_file tmpdir, ".vimrc", '" Static: static'
+      write_file "#{tmpdir}/.vimrc", '" Static: static'
 
       vim_update_bundles
       assert_test ?d, "#{tmpdir}/.vim/bundle/static"
@@ -587,7 +587,7 @@ class TestUpdater < Test::Unit::TestCase
     # Makes sure we still add and delete even when --no-updates prevents updates
     prepare_test do |tmpdir|
       create_mock_repo "#{tmpdir}/plugin1"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1"
       vim_update_bundles '--no-updates'
 
       # make sure plugin1 was added even though --no-updates was turned on
@@ -596,7 +596,7 @@ class TestUpdater < Test::Unit::TestCase
 
       update_mock_repo "#{tmpdir}/plugin1", "second"
       create_mock_repo "#{tmpdir}/plugin2"
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" Bundle: #{tmpdir}/plugin2"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" Bundle: #{tmpdir}/plugin2"
       vim_update_bundles '-n'   # test single-letter arg
 
       # make sure plugin1 hasn't been updated but plugin2 has been added
@@ -605,7 +605,7 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{tmpdir}/.vim/bundle/plugin2/first"
 
       # Remove the repository.
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/plugin1"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1"
       vim_update_bundles '--no-updates'
 
       # make sure plugin1 hasn't been updated but plugin2 has been deleted
@@ -629,7 +629,7 @@ class TestUpdater < Test::Unit::TestCase
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/zedots"
       Dir.mkdir "#{tmpdir}/zedots/vim"
-      write_file tmpdir, "zedots/vim/vimrc", '" ignored'
+      write_file "#{tmpdir}/zedots/vim/vimrc", '" ignored'
 
       vim_update_bundles "--dotfiles_path='#{tmpdir}/zedots'"
       check_tree tmpdir, 'zedots/vim', 'zedots/vim/vimrc'
@@ -696,7 +696,7 @@ class TestUpdater < Test::Unit::TestCase
 
       # test logfiles with an empty .vimrc
       Dir.mkdir "#{tmpdir}/.vim"
-      write_file tmpdir, ".vimrc", ''
+      write_file "#{tmpdir}/.vimrc", ''
       vim_update_bundles
 
       assert_test ?f, "#{tmpdir}/.vim/doc/bundles.txt"
@@ -705,7 +705,7 @@ class TestUpdater < Test::Unit::TestCase
       # Make a repository with a tagged commit and commits after that.
       create_mock_repo "#{tmpdir}/repo"
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
-      write_file tmpdir, ".vimrc", "\" Bundle: #{tmpdir}/repo"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
       vim_update_bundles
 
       list = File.read "#{tmpdir}/.vim/doc/bundles.txt"
@@ -734,7 +734,7 @@ class TestUpdater < Test::Unit::TestCase
       # won't bother changing the remote since vim-update-bundles handles it
       # as a delete followed by an add.  might be worth testing though.
 
-      write_file tmpdir, ".vimrc", ''
+      write_file "#{tmpdir}/.vimrc", ''
       vim_update_bundles
 
       list = File.read "#{tmpdir}/.vim/doc/bundles.txt"
