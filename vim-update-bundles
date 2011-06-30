@@ -364,7 +364,7 @@ end
 
 def interpolate options, val, message, i
   raise "Interpolation is now $#{$1} instead of ENV[#{$1}] #{message} #{i}" if val =~ /ENV\[['"]?([^\]]*)['"]?\]/
-  STDERR.puts "WARNING: quotes in a config item are probably a mistake #{message} #{i}" if val =~ /["']/
+  STDERR.puts "WARNING: putting quotes in a config item is probably a mistake #{message} #{i}" if val =~ /["']/
 
   val.gsub(/\$([A-Za-z0-9_]+)/) { options[$1.to_sym] || ENV[$1] || raise("$#{$1} is not defined #{message} #{i}") }
 end

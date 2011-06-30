@@ -113,22 +113,19 @@ class TestUpdater < Test::Unit::TestCase
     assert_test ?f, "#{base}/#{vimrc}"
   end
 
-  def run_vim_update_bundles *args
-    `./vim-update-bundles #{@starter_urls} #{args.join(' ')}`
-  end
 
-
-  # runs the command under test expecting there will not be an error
+  # runs the command under test and check the exit status
   def vim_update_bundles *args
-    result = run_vim_update_bundles *args
-    raise "vim-update-bundles returned #{$?.exitstatus} RESULT: <<\n#{result}>>" unless $?.exitstatus == 0
-    result
-  end
+    options = { :acceptable_exit_codes => [0], :suppress_stderr => false }
+    options.merge!(args.pop) if args.last.kind_of?(Hash)
 
-  # runs the command under test expecting that there WILL be an error
-  def vim_update_bundles__expect_error *args
-    result = run_vim_update_bundles *args + ['2>&1']
-    raise "vim-update-bundles returned #{$?.exitstatus} RESULT: <<\n#{result}>>" unless $?.exitstatus != 0
+    redirects = ' 2>/dev/null' if options[:suppress_stderr]
+    result = `./vim-update-bundles #{@starter_urls} #{args.join(' ')} #{redirects}`
+    unless options[:acceptable_exit_codes].include?($?.exitstatus)
+      raise "vim-update-bundles returned #{$?.exitstatus} " +
+        "instead of #{options[:acceptable_exit_codes].inspect} " +
+        "RESULT: <<\n#{result}>>"
+    end
     result
   end
 
@@ -385,7 +382,7 @@ class TestUpdater < Test::Unit::TestCase
       create_mock_repo "#{tmpdir}/repo2"
 
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1 nobranch\n\" Bundle: #{tmpdir}/repo2"
-      vim_update_bundles__expect_error
+      vim_update_bundles :acceptable_exit_codes => [1], :suppress_stderr => true
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
   end
@@ -401,7 +398,7 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
 
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1 v0.2\n\" Bundle: #{tmpdir}/repo2"
-      vim_update_bundles__expect_error
+      vim_update_bundles :acceptable_exit_codes => [1], :suppress_stderr => true
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
   end
@@ -562,8 +559,7 @@ class TestUpdater < Test::Unit::TestCase
         " Bundle-Command: oh-no-this-command-does-not-exist
       EOL
 
-      vim_update_bundles__expect_error
-      assert $?.exitstatus == 47, "the bundle-command should have produced 47, not #{$?.exitstatus}"
+      vim_update_bundles :acceptable_exit_codes => [47]
     end
   end
 
@@ -672,8 +668,7 @@ class TestUpdater < Test::Unit::TestCase
 
   def test_unknown_interpolation_fails
     prepare_test do |tmpdir|
-      vim_update_bundles__expect_error "--verbose='$unknown'"
-      assert $?.exitstatus == 1, "the bundle-command should have produced 1, not #{$?.exitstatus}"
+      vim_update_bundles "--verbose='$unknown'", :acceptable_exit_codes => [1], :suppress_stderr => true
       # Make sure it didn't create any files.
       refute_test ?e, "#{tmpdir}/.vim"
       refute_test ?e, "#{tmpdir}/.vimrc"
