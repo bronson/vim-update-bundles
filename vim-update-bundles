@@ -3,27 +3,11 @@
 # Reads bundles to be installed from the .vimrc file then synchronizes
 # .vim/bundles by downloading new repositories as needed. It also removes
 # bundles that are no longer used.
-#
-# Specify a bundle in the .vimrc:
-#   " Bundle: https://git.wincent.com/command-t.git
-# Specify a refspec (branch, tag, hash) at the end:
-#   " Bundle: https://github.com/vim-ruby/vim-ruby.git noisy
-#   " Bundle: https://github.com/bronson/vim-closebuffer.git 0.2
-#   " Bundle: https://github.com/tpope/vim-rails.git 42bb0699
-#
-# If the .vim folder is stored in a Git repository, add bundles as submodules
-# by putting "submodule=true" in ~/.vim-update-bundles.conf.
 
 require 'fileutils'
 require 'open-uri'
 
 Version = '0.6'
-
-
-def dotvim config, *path
-  # Path to files inside the .vim directory, e.g., dotvim/autoload.
-  File.join config[:vimdir_path], *path
-end
 
 
 def ensure_dir dir
@@ -171,7 +155,7 @@ end
 
 def remove_bundle config, dir, log
   print_log_entry log, 'Del', dir, describe_head(dir)
-  trash_dir = dotvim(config, "Trashed-Bundles")
+  trash_dir = "#{config[:vimdir_path]}/Trashed-Bundles"
   ensure_dir trash_dir
   1.upto(100) do |i|
     destination = "#{trash_dir}/#{dir}-#{'%02d' % i}"
@@ -223,7 +207,7 @@ def download_bundle config, dir, url, tag, doc, log
     else
       puts "repo has changed from #{remote} to #{url}"
       remove_bundle config, dir, log
-      ensure_dir dotvim(config, 'bundle')
+      ensure_dir "#{config[:vimdir_path]}/bundle"
       clone_bundle config, dir, url, tagstr, log
     end
   else
@@ -304,13 +288,13 @@ end
 
 
 def update_bundles_and_docs config
-  ensure_dir dotvim(config, 'doc')
-  bundle_dir = dotvim(config, 'bundle')
+  ensure_dir "#{config[:vimdir_path]}/doc"
+  bundle_dir = "#{config[:vimdir_path]}/bundle"
   ensure_dir bundle_dir
 
-  File.open(dotvim(config, 'doc', 'bundles.txt'), "w") do |doc|
+  File.open("#{config[:vimdir_path]}/doc/bundles.txt", "w") do |doc|
     print_doc_header doc
-    logfile = dotvim(config, 'doc', 'bundle-log.txt')
+    logfile = "#{config[:vimdir_path]}/doc/bundle-log.txt"
     log_already_exists = test ?f, logfile
     File.open(logfile, 'a') do |log|
       print_log_header log unless log_already_exists
@@ -384,12 +368,12 @@ end
 
 
 def ensure_vim_environment config
-  ensure_dir dotvim(config)
-  ensure_dir dotvim(config, 'autoload')
+  ensure_dir config[:vimdir_path]
+  ensure_dir "#{config[:vimdir_path]}/autoload"
 
-  unless test ?f, dotvim(config, 'autoload', 'pathogen.vim')
+  unless test ?f, "#{config[:vimdir_path]}/autoload/pathogen.vim"
     puts "Downloading Pathogen..."
-    download_file config[:pathogen_url], dotvim(config, 'autoload', 'pathogen.vim')
+    download_file config[:pathogen_url], "#{config[:vimdir_path]}/autoload/pathogen.vim"
   end
 
   unless test(?f, config[:vimrc_path])
