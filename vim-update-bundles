@@ -135,6 +135,7 @@ def clone_bundle config, dir, url, tagstr, log
     in_submodule_root(dir) { |mod| git :submodule, :add, url, mod }
   end
   Dir.chdir(dir) { print_log_entry log, 'Add', dir, describe_head, "#{url}#{tagstr}" }
+  $bundles_added += 1
 end
 
 
@@ -168,6 +169,7 @@ def remove_bundle config, dir, log
     destination = "#{trash_dir}/#{dir}#{suffix}"
     unless test ?d, destination
       remove_bundle_to config, dir, destination
+      $bundles_removed += 1
       return
     end
   end
@@ -231,6 +233,7 @@ def update_bundle config, dir, url, tag, tagstr, previous_version, log
       new_version = describe_head
       if new_version != previous_version
         print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
+        $bundles_updated += 1
       end
     end
   end
@@ -336,10 +339,27 @@ def update_bundles config, doc, log
 end
 
 
+def bundleize count
+  "#{count} bundle#{count != 1 ? 's' : ''}"
+end
+
+def bundle_count_string
+  str = []
+  str << "#{bundleize $bundles_added} added" if $bundles_added > 0
+  str << "#{bundleize $bundles_removed} removed" if $bundles_removed > 0
+  str << "#{bundleize $bundles_updated} updated" if $bundles_updated > 0
+  return "no updates" if str.empty?
+
+  str[-1] = "and #{str[-1]}" if str.size > 2
+  str.join(", ")
+end
+
+
 def update_bundles_and_docs config
   ensure_dir "#{config[:vimdir_path]}/doc"
   bundle_dir = "#{config[:vimdir_path]}/bundle"
   ensure_dir bundle_dir
+  $bundles_added = $bundles_removed = $bundles_updated = 0
 
   File.open("#{config[:vimdir_path]}/doc/bundles.txt", "w") do |doc|
     print_doc_header doc
@@ -347,7 +367,7 @@ def update_bundles_and_docs config
     log_already_exists = test ?f, logfile
     File.open(logfile, 'a') do |log|
       print_log_header log unless log_already_exists
-      log.puts "Updating on #{current_date}"
+      log.puts "#{current_date} by vim-update-bundles #{Version}"
       begin
         Dir.chdir(bundle_dir) { update_bundles config, doc, log }
       rescue Exception => e
@@ -357,6 +377,7 @@ def update_bundles_and_docs config
         STDERR.puts e.backtrace if ENV['TRACE']
         exit e.respond_to?(:exit_code) ? e.exit_code : 1
       end
+      log.puts "   " + bundle_count_string
       log.puts
     end
     doc.puts
