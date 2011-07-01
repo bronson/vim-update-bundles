@@ -411,9 +411,6 @@ def ensure_vim_environment config
     puts "Downloading starter vimrc..."
     download_file config[:starter_url], config[:vimrc_path]
   end
-
-  run :ln, '-s', config[:vimdir_path], "#{ENV['HOME']}/.vim"  unless test ?e, "#{ENV['HOME']}/.vim"
-  run :ln, '-s', config[:vimrc_path], "#{ENV['HOME']}/.vimrc" unless test ?e, "#{ENV['HOME']}/.vimrc"
 end
 
 
@@ -466,8 +463,8 @@ config = {
   :v => :verbose, :s => :submodule, :n => :no_updates,
   :h => :help, :'?' => :help, :V => :version,
 
-  :vimdir_path   => nil,     # Full path to ~/.vim (creates symlink if not in $HOME).
-  :vimrc_path    => nil,     # Full path to ~/.vimrc (creates symlink if not in $HOME).
+  :vimdir_path   => nil,     # Full path to ~/.vim
+  :vimrc_path    => nil,     # Full path to ~/.vimrc
 
   # Used when spinning up a new Vim environment.
   :starter_url   => "https://github.com/bronson/dotfiles/raw/master/.vimrc",

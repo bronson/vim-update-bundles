@@ -1,4 +1,5 @@
 - When pull fails, remove and re-clone the repo instead of bailing.
+- vim-update-bundles no longer symlinks .vim and .vimrc into $HOME.
 - Remove the dotfile_path option, it's not necessary anymore.
 
 0.6     29 Jun 2011

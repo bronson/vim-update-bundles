@@ -89,25 +89,6 @@ class TestUpdater < Test::Unit::TestCase
   end
 
   def check_tree base, vimdir='.vim', vimrc='.vimrc'
-    # Makes sure .vim, .vimrc, and the symlinks are set up correctly.
-
-    if vimdir == '.vim'
-      # No symlinks are needed.
-      assert_test ?d, "#{base}/.vim"
-    else
-      # it appears Rubinius has a bug  https://github.com/rubinius/rubinius/issues/1057
-      #assert_test ?l, "#{base}/.vim"
-      assert_equal File.readlink("#{base}/.vim"), "#{base}/#{vimdir}"
-    end
-
-    if vimrc == '.vimrc'
-      assert_test ?f, "#{base}/.vimrc"
-    else
-      # it appears Rubinius has a bug  https://github.com/rubinius/rubinius/issues/1057
-      #assert_test ?l, "#{base}/.vimrc"
-      assert_equal File.readlink("#{base}/.vimrc"), "#{base}/#{vimrc}"
-    end
-
     assert_test ?f, "#{base}/#{vimdir}/autoload/pathogen.vim"
     assert_test ?d, "#{base}/#{vimdir}"
     assert_test ?f, "#{base}/#{vimrc}"
