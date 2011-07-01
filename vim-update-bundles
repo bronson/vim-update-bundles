@@ -432,7 +432,9 @@ def read_configuration config
   config[:vimrc_path] ||= choose_file(File.join([ENV['HOME'], '.vim', 'vimrc']),
                                     File.join([ENV['HOME'], '.vimrc']))
 
-  config.keys.sort.each { |k| puts "# option #{k} = #{config[k].inspect}" } if config[:verbose]
+  config.keys.sort.each do |k|
+    puts "# option #{k} = #{config[k].inspect}" unless config[k].is_a? Proc or config[k].is_a? Symbol
+  end if config[:verbose]
 end
 
 
