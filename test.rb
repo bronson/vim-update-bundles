@@ -455,8 +455,8 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
       assert_equal "second commit to first file", File.read("#{tmpdir}/.vim/bundle/repo1/first")
       # and also verify user's changes are preserved in .Trashed-Bundles
-      assert_test ?f, "#{tmpdir}/.vim/Trashed-Bundles/repo1-01/first"
-      assert_equal "local change", File.read("#{tmpdir}/.vim/Trashed-Bundles/repo1-01/first")
+      assert_test ?f, "#{tmpdir}/.vim/Trashed-Bundles/repo1/first"
+      assert_equal "local change", File.read("#{tmpdir}/.vim/Trashed-Bundles/repo1/first")
       # finally, make sure the error is logged
       log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
       assert_match /repo1 has unsaved changes, removing and re-cloning/, log
@@ -482,8 +482,8 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/second"
       assert_equal "second", File.read("#{tmpdir}/.vim/bundle/repo1/second")
       # and also verify user's changes are preserved in .Trashed-Bundles
-      assert_test ?f, "#{tmpdir}/.vim/Trashed-Bundles/repo1-01/second"
-      assert_equal "changed!", File.read("#{tmpdir}/.vim/Trashed-Bundles/repo1-01/second")
+      assert_test ?f, "#{tmpdir}/.vim/Trashed-Bundles/repo1/second"
+      assert_equal "changed!", File.read("#{tmpdir}/.vim/Trashed-Bundles/repo1/second")
       # finally, make sure the error is logged
       log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
       assert_match /repo1 has conflicting file, removing and re-cloning/, log
@@ -491,19 +491,24 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
+  def clone_and_delete_repo tmpdir, suffix
+    write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1"
+    vim_update_bundles
+    assert_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
+
+    write_file "#{tmpdir}/.vimrc", ''
+    vim_update_bundles
+    refute_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
+    assert_test ?d "#{tmpdir}/.vim/Trashed-Bundles/plugin1#{suffix}"
+  end
+
+
   def test_multiple_removes
     # add and remove a plugin multiple times
     prepare_test do |tmpdir|
       create_mock_repo "#{tmpdir}/plugin1"
-      4.times do
-        write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1"
-        vim_update_bundles
-        assert_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
-
-        write_file "#{tmpdir}/.vimrc", ''
-        vim_update_bundles
-        refute_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
-      end
+      clone_and_delete_repo tmpdir, ''
+      4.times { |i| clone_and_delete_repo tmpdir, "-#{i}" }
     end
   end
 
@@ -574,7 +579,7 @@ class TestUpdater < Test::Unit::TestCase
       vim_update_bundles
       assert_test ?d, "#{tmpdir}/.vim/bundle/static"
       refute_test ?d, "#{tmpdir}/.vim/bundle/foreign"
-      assert_test ?d, "#{tmpdir}/.vim/Trashed-Bundles/foreign-01"
+      assert_test ?d, "#{tmpdir}/.vim/Trashed-Bundles/foreign"
     end
   end
 
