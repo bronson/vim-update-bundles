@@ -3,6 +3,7 @@
 # Reads bundles to be installed from the .vimrc file then synchronizes
 # .vim/bundles by downloading new repositories as needed. It also removes
 # bundles that are no longer used.
+# This software is covered by the MIT License.
 
 require 'fileutils'
 require 'open-uri'
@@ -393,8 +394,8 @@ end
 
 
 # Returns the first path that exists or the last one if nothing exists.
-def choose_file *paths
-  paths.find { |p| test ?f, p } || paths[-1]
+def choose_path *paths
+  paths.find { |p| test ?e, p } || paths[-1]
 end
 
 
@@ -421,14 +422,27 @@ def generate_helptags
 end
 
 
+def locate_vim_files config
+  vimdir_guess = choose_path "#{ENV['HOME']}/.dotfiles/vim", "#{ENV['HOME']}/.vim"
+
+  vimrc_guesses = []
+  if config[:vimdir_path]
+    vimrc_guesses.push "#{config[:vimdir_path]}/.vimrc", "#{config[:vimdir_path]}/vimrc" 
+  end
+  vimrc_guesses.push "#{ENV['HOME']}/.dotfiles/vimrc", "#{ENV['HOME']}/.vimrc"
+  vimrc_guess = choose_path *vimrc_guesses
+
+  config[:vimdir_path] ||= vimdir_guess
+  config[:vimrc_path] ||= vimrc_guess
+end
+
+
 def read_configuration config
   conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
   process_options config, File.open(conf_file).readlines, "in #{conf_file} line" if test(?f, conf_file)
   process_options config, ARGV, "in command line argument"
 
-  config[:vimdir_path] ||= File.join(ENV['HOME'], '.vim')
-  config[:vimrc_path] ||= choose_file(File.join([ENV['HOME'], '.vim', 'vimrc']),
-                                    File.join([ENV['HOME'], '.vimrc']))
+  locate_vim_files config
 
   config.keys.sort.each do |k|
     puts "# option #{k} = #{config[k].inspect}" unless config[k].is_a? Proc or config[k].is_a? Symbol

@@ -50,6 +50,11 @@ submodules (see the configuration section below).
 
 * _-v -\-verbose_ prints more information about what's happening.
 
+* _-\-vimdir-path=path_ specifies the .vim directory that will contain
+  your autoload and bundles.
+
+* _\-vimrc-path_ specifies the location of your ~/.vimrc file.
+
 
 ## Specifying Plugins
 
@@ -99,20 +104,34 @@ Blank lines and comments starting with # are ignored.
 
 String interpolation is performed on all values.
 First configuration settings are tried, then environment variables.
-An example: `vimdir_path = /var/$USERNAME/vim` or `vimrc_path = $vimdir_path/vimrc`.
+Here's an example vim-update-bundles.conf file:
+
+    # use shared vim environment
+    vimdir_path = $HOME/vim/$USERNAME
+    vimrc_path = $vimdir_path/vimrc
 
 
 ## Location of .vim and .vimrc
 
-Unless you have a custom configuration, you can probably skip this section.
+vim-update-bundles will use ~/.vim and ~/.vimrc if they exist.
+Since this is also what Vim uses, most people can stop reading here.
 
-vim-update-bundles tries hard to figure out where you want to store your .vim directory and .vimrc file.
-These are the places that vim-update-bundles will look for a .vimrc:
+If ~/.dotfiles exists, vim-update-bundles will look for .dotfiles/vim and .dotfiles/vimrc.
 
-TODO: describe the path search
+If your dotfiles are in a custom place, you can specify --vimdir-path and --vimrc-path
+on the command line or in vim-update-bundles.conf.
+
+If vim-update-bundles still can't find a Vim environment, it will create one for you.
+It creates the ~/.vim directory and gives you a default ~/.vimrc, downloads and installs Pathogen,
+and leaves everything ready to roll.
+
+If you're unsure which vimdir_path and vimrc_path are being used,
+`vim-update-bundles --verbose` will tell you.
 
 
 ## Authors
+
+This software is released under the [MIT License](http://en.wikipedia.org/wiki/Mit_license).
 
 * [Scott Bronson](http://github.com/bronson)
 * [Sorin Ionescu](http://github.com/sorin-ionescu)

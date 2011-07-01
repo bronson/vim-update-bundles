@@ -8,11 +8,6 @@ require 'fileutils'
 # You can also tell the tester to preserve the test directory after running:
 #   PRESERVE=1 ruby test.rb -n test_multiple_removes
 # Pass TRACE=1 to force vim-update-bundles to print a stack trace.
-#
-# TODO: test when .vimrc and .vim/vimrc both exist, the former is preferred
-#
-# We shell to the executable; so, this isn't actually unit testing.
-# Has anyone written a functional test framework for executables?
 
 
 class TestUpdater < Test::Unit::TestCase
@@ -88,9 +83,10 @@ class TestUpdater < Test::Unit::TestCase
     end
   end
 
+
   def check_tree base, vimdir='.vim', vimrc='.vimrc'
-    assert_test ?f, "#{base}/#{vimdir}/autoload/pathogen.vim"
     assert_test ?d, "#{base}/#{vimdir}"
+    assert_test ?f, "#{base}/#{vimdir}/autoload/pathogen.vim"
     assert_test ?f, "#{base}/#{vimrc}"
   end
 
@@ -197,9 +193,9 @@ class TestUpdater < Test::Unit::TestCase
     # already exists.
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.vim"
-      write_file "#{tmpdir}/.vim/vimrc", ''
+      write_file "#{tmpdir}/.vimrc", ''
       vim_update_bundles
-      check_tree tmpdir, ".vim", ".vim/vimrc"
+      check_tree tmpdir, ".vim", ".vimrc"
 
       # Make a repository with a tagged commit and commits after that.
       create_mock_repo "#{tmpdir}/repo"
@@ -207,7 +203,7 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo "#{tmpdir}/repo", 'third'
 
       # Check out the plugin locked at 0.2
-      write_file "#{tmpdir}/.vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       vim_update_bundles
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
@@ -222,14 +218,14 @@ class TestUpdater < Test::Unit::TestCase
       refute_test ?f, "#{tmpdir}/.vim/bundle/repo/fourth"
 
       # Switch to the branch head
-      write_file "#{tmpdir}/.vim/vimrc", "\" Bundle: #{tmpdir}/repo"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
       vim_update_bundles
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/third"
 
       # Switch back to the tag
-      write_file "#{tmpdir}/.vim/vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
       vim_update_bundles
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
@@ -598,12 +594,25 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_create_dotfile_environment
-    skip "needs to be smarter"
+  def test_create_skips_dotfile_environment
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"
       vim_update_bundles
+      check_tree tmpdir, '.vim', '.vimrc'
+    end
+  end
+
+
+  def test_dotfiles_are_used_if_present
+    prepare_test do |tmpdir|
+      Dir.mkdir "#{tmpdir}/.dotfiles"
+      Dir.mkdir "#{tmpdir}/.dotfiles/vim"
+      write_file "#{tmpdir}/.dotfiles/vimrc", ''
+      vim_update_bundles
+
       check_tree tmpdir, '.dotfiles/vim', '.dotfiles/vimrc'
+      refute_test ?d, "#{tmpdir}/.vim"
+      refute_test ?f, "#{tmpdir}/.vimrc"
     end
   end
 
