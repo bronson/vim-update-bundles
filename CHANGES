@@ -1,3 +1,6 @@
+- When pull fails, remove and re-clone the repo instead of bailing.
+- Remove the dotfile_path option, it's not necessary anymore.
+
 0.6     29 Jun 2011
 - Added doc/bundle-log.txt. :help bundle-log to see it.
 - Added --no-updates option to make adding/deleting bundles faster.

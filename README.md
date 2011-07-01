@@ -94,39 +94,22 @@ ignore, mark them as static.
 
 All configuration options can be passed on the command line or placed in `~/.vim-update-bundles.conf`.
 Putting `submodules = 1` in the config file is the same as passing --submodules on the command line.
+
 Blank lines and comments starting with # are ignored.
 
 String interpolation is performed on all values.
-First configuration settings are tried then environment variables.
-An example: `vimdir_path = $dotfiles_path/$USERNAME/vim`
+First configuration settings are tried, then environment variables.
+An example: `vimdir_path = /var/$USERNAME/vim` or `vimrc_path = $vimdir_path/vimrc`.
 
 
 ## Location of .vim and .vimrc
 
-Unless you have a custom dotfiles configuration, you can probably skip this
-section.
+Unless you have a custom configuration, you can probably skip this section.
 
-vim-update-bundles tries hard to figure out where you want to store your .vim
-directory and .vimrc file. It first looks for a dotfiles directory (~/.dotfiles
-or specified by dotfiles\_path).
+vim-update-bundles tries hard to figure out where you want to store your .vim directory and .vimrc file.
+These are the places that vim-update-bundles will look for a .vimrc:
 
-* dotfiles\_path = $HOME/.dotfiles
-
-If dotfiles\_path exists, then vim-update-bundles will use it; otherwise, it
-will use the default location:
-
-* vimdir\_path = $dotfiles\_path/vim
-* vimdir\_path = $HOME/.vim
-
-Finally, these are the places that vim-update-bundles will look for a .vimrc:
-
-* vimrc\_path = $dotfiles\_path/vim/vimrc
-* vimrc\_path = $dotfiles\_path/vimrc
-* vimrc\_path = $HOME/.vim/vimrc
-* vimrc\_path = $HOME/.vimrc
-
-It always updates the ~/.vim and ~/.vimrc symlinks; so, Vim can find the correct
-files.
+TODO: describe the path search
 
 
 ## Authors

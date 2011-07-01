@@ -613,24 +613,11 @@ class TestUpdater < Test::Unit::TestCase
 
 
   def test_create_dotfile_environment
+    skip "needs to be smarter"
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"
       vim_update_bundles
       check_tree tmpdir, '.dotfiles/vim', '.dotfiles/vimrc'
-    end
-  end
-
-
-  def test_create_dotfile_environment_with_vimrc_in_vim
-    prepare_test do |tmpdir|
-      Dir.mkdir "#{tmpdir}/zedots"
-      Dir.mkdir "#{tmpdir}/zedots/vim"
-      write_file "#{tmpdir}/zedots/vim/vimrc", '" ignored'
-
-      vim_update_bundles "--dotfiles_path='#{tmpdir}/zedots'"
-      check_tree tmpdir, 'zedots/vim', 'zedots/vim/vimrc'
-      refute_test ?e, "#{tmpdir}/.dotfiles/.vimrc"
-      refute_test ?e, "#{tmpdir}/zedots/.vimrc"
     end
   end
 
