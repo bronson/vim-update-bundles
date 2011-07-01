@@ -499,7 +499,7 @@ class TestUpdater < Test::Unit::TestCase
     write_file "#{tmpdir}/.vimrc", ''
     vim_update_bundles
     refute_test ?d, "#{tmpdir}/.vim/bundle/plugin1"
-    assert_test ?d "#{tmpdir}/.vim/Trashed-Bundles/plugin1#{suffix}"
+    assert_test ?d, "#{tmpdir}/.vim/Trashed-Bundles/plugin1#{suffix}"
   end
 
 
@@ -508,7 +508,7 @@ class TestUpdater < Test::Unit::TestCase
     prepare_test do |tmpdir|
       create_mock_repo "#{tmpdir}/plugin1"
       clone_and_delete_repo tmpdir, ''
-      4.times { |i| clone_and_delete_repo tmpdir, "-#{i}" }
+      1.upto(5) { |i| clone_and_delete_repo tmpdir, "-#{"%02d" % i}" }
     end
   end
 

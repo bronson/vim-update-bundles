@@ -162,7 +162,7 @@ def remove_bundle config, dir, log
   Dir.chdir(dir) { print_log_entry log, 'Del', dir, describe_head }
   trash_dir = "#{config[:vimdir_path]}/Trashed-Bundles"
   ensure_dir trash_dir
-  suffixes = [''] + (1..1000).map { |i| "-#{i}" }
+  suffixes = [''] + (1..1000).map { |i| "-#{"%02d" % i}" }
   suffixes.each do |suffix|
     destination = "#{trash_dir}/#{dir}#{suffix}"
     unless test ?d, destination
