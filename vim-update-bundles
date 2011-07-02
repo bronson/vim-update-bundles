@@ -465,8 +465,9 @@ def read_configuration config
 
   locate_vim_files config
 
-  config.keys.sort.each do |k|
-    puts "# option #{k} = #{config[k].inspect}" unless config[k].is_a? Proc or config[k].is_a? Symbol
+  actual_keys = config.keys.reject { |k| config[k].is_a? Proc or config[k].is_a? Symbol }
+  actual_keys.map { |k| k.to_s }.sort.each do |k|
+    puts "# option #{k} = #{config[k.to_sym].inspect}"
   end if config[:verbose]
 end
 
