@@ -96,8 +96,15 @@ class TestUpdater < Test::Unit::TestCase
     options = { :acceptable_exit_codes => [0], :suppress_stderr => false }
     options.merge!(args.pop) if args.last.kind_of?(Hash)
 
+    runner = prearg = ''
+    if ENV['RCOV']
+      # run 'rake rcov' to run the coverage of all tests
+      runner = "rcov -x analyzer --aggregate '#{ENV['RCOV']}' --no-html "
+      prearg = ' -- '
+    end
+
     redirects = ' 2>/dev/null' if options[:suppress_stderr]
-    result = `./vim-update-bundles #{@starter_urls} #{args.join(' ')} #{redirects}`
+    result = `#{runner} ./vim-update-bundles #{prearg} #{@starter_urls} #{args.join(' ')} #{redirects}`
     unless options[:acceptable_exit_codes].include?($?.exitstatus)
       raise "vim-update-bundles returned #{$?.exitstatus} " +
         "instead of #{options[:acceptable_exit_codes].inspect} " +

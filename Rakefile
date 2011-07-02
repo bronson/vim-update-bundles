@@ -1,11 +1,20 @@
 require 'rake/clean'
 
-CLEAN.include('vim-update-bundles-*.gem')
+coverage_file = "aggregate.rcov"
+CLEAN.include('vim-update-bundles-*.gem', 'coverage', coverage_file)
 
 task :default => [:test]
 
 task :test do
   ruby "test.rb"
+end
+
+task :rcov do
+  system "rm -rf coverage #{coverage_file}"
+  ENV['RCOV'] = coverage_file
+  ruby "test.rb"
+  system "rcov -x analyzer --aggregate #{coverage_file} -t"
+  puts 'Open coverage/index.html to see rcov results.'
 end
 
 task :build  do
