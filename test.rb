@@ -760,5 +760,17 @@ class TestUpdater < Test::Unit::TestCase
       ensure_marker log, marker_string
     end
   end
+
+  def test_usage
+    result = vim_update_bundles '/dev/null', '--help'
+    assert_match /--no-updates/, result
+  end
+
+  def test_version
+    $load_only = true
+    Kernel.load 'vim-update-bundles'
+    result = vim_update_bundles '/dev/null', '--version'
+    assert_match /vim-update-bundles #{Version}/, result
+  end
 end
 
