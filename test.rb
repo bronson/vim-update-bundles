@@ -6,8 +6,9 @@ require 'fileutils'
 # You can specify where the tests will be run instead of mktmpdir's default:
 #   TESTDIR=/ramdisk/test ruby test.rb
 # You can also tell the tester to preserve the test directory after running:
-#   PRESERVE=1 ruby test.rb -n test_multiple_removes
-# Pass TRACE=1 to force vim-update-bundles to print a stack trace.
+#   PRESERVE=1 VERBOSE=1 ruby test.rb -n test_multiple_removes
+# VERBOSE=1 causes the vim-update-bundles commands to be printed.
+# TRACE=1 forces vim-update-bundles to include a stack trace in any errors.
 
 
 class TestUpdater < Test::Unit::TestCase
@@ -55,7 +56,7 @@ class TestUpdater < Test::Unit::TestCase
     end
   end
 
-  def update_mock_repo dir, name, contents=nil
+  def update_mock_repo dir, name="second", contents=nil
     Dir.chdir dir do
       write_file "#{dir}/#{name}", contents || name
       `git add '#{name}'`
@@ -102,7 +103,10 @@ class TestUpdater < Test::Unit::TestCase
     end
 
     redirects = ' 2>/dev/null' if options[:suppress_stderr]
-    result = `HOME='#{tmpdir}' TESTING=1 #{runner} ./vim-update-bundles #{prearg} #{@starter_urls} #{args.join(' ')} #{redirects}`
+    command = "HOME='#{tmpdir}' TESTING=1 #{runner} ./vim-update-bundles #{prearg} #{@starter_urls} #{args.join(' ')} #{redirects}"
+    STDERR.puts "Running: #{command}" if ENV['VERBOSE']
+    result = `#{command}`
+
     unless options[:acceptable_exit_codes].include?($?.exitstatus)
       raise "vim-update-bundles returned #{$?.exitstatus} " +
         "instead of #{options[:acceptable_exit_codes].inspect} " +
@@ -382,6 +386,30 @@ class TestUpdater < Test::Unit::TestCase
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1 v0.2\n\" Bundle: #{tmpdir}/repo2"
       vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :suppress_stderr => true
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
+    end
+  end
+
+
+  def test_remote_for_repo_is_changed
+    # plugin name stays the same but the Git url changes
+    prepare_test do |tmpdir|
+      Dir.mkdir "#{tmpdir}/one"
+      Dir.mkdir "#{tmpdir}/two"
+      create_mock_repo "#{tmpdir}/one/repo"
+      create_mock_repo "#{tmpdir}/two/repo"
+      update_mock_repo "#{tmpdir}/two/repo"
+
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/one/repo"
+      vim_update_bundles tmpdir
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/two/repo"
+      vim_update_bundles tmpdir
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+      assert_match /bundle for repo changed/, log
     end
   end
 

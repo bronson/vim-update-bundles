@@ -259,7 +259,7 @@ def download_bundle config, dir, url, tag, doc, log
       end
     else
       log_error log, "bundle for #{dir} changed from #{remote} to #{url}"
-      Dir.chdir(dir) { reset_bundle config, dir, url, tagstr, log }
+      reset_bundle config, dir, url, tagstr, log
     end
   else
     clone_bundle config, dir, url, tagstr, log
