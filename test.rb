@@ -532,6 +532,27 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
+  def test_multiple_remove_failure
+    # Plug up Trashed-Bundles so a bundle can't be removed to ensure
+    # that vim-update-bundles bails out and prints a decent error.
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/plugin1"
+      Dir.mkdir "#{tmpdir}/.vim"
+      Dir.mkdir "#{tmpdir}/.vim/Trashed-Bundles"
+      Dir.mkdir "#{tmpdir}/.vim/Trashed-Bundles/plugin1"
+      1.upto(99) { |i| Dir.mkdir "#{tmpdir}/.vim/Trashed-Bundles/plugin1-%02d" % i }
+
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1"
+      vim_update_bundles tmpdir
+      assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
+      write_file "#{tmpdir}/.vimrc", ''
+      output = vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :merge
+      assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
+      assert_match /unable to remove plugin1/, output
+    end
+  end
+
+
   def test_bundle_command    # oops, there's some duplication with test_working_bundle_command
     prepare_test do |tmpdir|
       # ensure BundleCommand is called when adding a repo
