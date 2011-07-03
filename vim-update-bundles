@@ -115,16 +115,29 @@ def ignore_doc_tags
 end
 
 
+# Work around Ruby's useless "conflicting chdir during another chdir block" warning
+# A better_chdir block can contain a Dir.chdir block,
+# but a Dir.chdir block can't contain better_chdir.
+def better_chdir dir
+  orig = Dir.pwd
+  begin
+    Dir.chdir dir
+    yield
+  ensure
+    # If the last bundle is removed, git will remove ~/.vim/bundle too.
+    ensure_dir orig
+    Dir.chdir orig
+  end
+end
+
+
 def in_submodule_root config, inpath=nil
   # Submodules often require the CWD to be the Git root. If a path relative to
   # the CWD is passed, the block receives it relative to the root.
   path = File.join Dir.pwd, inpath if inpath
-  Dir.chdir("./" + git('rev-parse', '--show-cdup').chomp) do
+  better_chdir("./" + git('rev-parse', '--show-cdup').chomp) do
     path.sub! /^#{Dir.pwd}\/?/, '' if path
     yield path
-    # If the last bundle is removed, git will remove ~/.vim/bundle,
-    # which will raise an error if the chdir block tries to restore it.
-    ensure_dir "#{config[:vimdir_path]}/bundle"
   end
 end
 
@@ -372,7 +385,7 @@ def update_bundles_and_docs config
       print_log_header log unless log_already_exists
       log.puts "#{current_date} by vim-update-bundles #{Version}"
       begin
-        Dir.chdir(bundle_dir) { update_bundles config, doc, log }
+        better_chdir(bundle_dir) { update_bundles config, doc, log }
       rescue Exception => e
         message = e.is_a?(Interrupt) ? "Interrupted" : "Aborted: #{e.message}"
         log_error log, message
