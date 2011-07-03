@@ -92,7 +92,7 @@ class TestUpdater < Test::Unit::TestCase
 
   # runs the command under test and check the exit status
   def vim_update_bundles tmpdir, *args
-    options = { :acceptable_exit_codes => [0], :suppress_stderr => false }
+    options = { :acceptable_exit_codes => [0], :stderr => nil }
     options.merge!(args.pop) if args.last.kind_of?(Hash)
 
     runner = prearg = ''
@@ -102,7 +102,8 @@ class TestUpdater < Test::Unit::TestCase
       prearg = ' -- '
     end
 
-    redirects = ' 2>/dev/null' if options[:suppress_stderr]
+    redirects = ' 2>/dev/null' if options[:stderr] == :suppress
+    redirects = ' 2>&1' if options[:stderr] == :merge
     command = "HOME='#{tmpdir}' TESTING=1 #{runner} ./vim-update-bundles #{prearg} #{@starter_urls} #{args.join(' ')} #{redirects}"
     STDERR.puts "Running: #{command}" if ENV['VERBOSE']
     result = `#{command}`
@@ -368,7 +369,7 @@ class TestUpdater < Test::Unit::TestCase
       create_mock_repo "#{tmpdir}/repo2"
 
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1 nobranch\n\" Bundle: #{tmpdir}/repo2"
-      vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :suppress_stderr => true
+      vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :suppress
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
   end
@@ -384,7 +385,7 @@ class TestUpdater < Test::Unit::TestCase
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
 
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo1 v0.2\n\" Bundle: #{tmpdir}/repo2"
-      vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :suppress_stderr => true
+      vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :suppress
       refute_test ?d, "#{tmpdir}/.vim/bundle/repo2"    # ensure we didn't continue cloning repos
     end
   end
@@ -576,7 +577,7 @@ class TestUpdater < Test::Unit::TestCase
         " Bundle-Command: oh-no-this-command-does-not-exist
       EOL
 
-      vim_update_bundles tmpdir, :acceptable_exit_codes => [47], :suppress_stderr => true
+      vim_update_bundles tmpdir, :acceptable_exit_codes => [47], :stderr => :suppress
     end
   end
 
@@ -685,7 +686,7 @@ class TestUpdater < Test::Unit::TestCase
 
   def test_unknown_interpolation_fails
     prepare_test do |tmpdir|
-      vim_update_bundles tmpdir, "--verbose='$unknown'", :acceptable_exit_codes => [1], :suppress_stderr => true
+      vim_update_bundles tmpdir, "--verbose='$unknown'", :acceptable_exit_codes => [1], :stderr => :suppress
       # Make sure it didn't create any files.
       refute_test ?e, "#{tmpdir}/.vim"
       refute_test ?e, "#{tmpdir}/.vimrc"
@@ -759,6 +760,17 @@ class TestUpdater < Test::Unit::TestCase
       assert_match /Del\s*\|repo\|\s*0\.3/, log
       ensure_marker log, marker_string
     end
+  end
+
+  def test_unknown_argument
+    result = vim_update_bundles '/dev/null', '--yarg', :acceptable_exit_codes => [1], :stderr => :merge
+    assert_match /Unknown option.*"yarg"/, result
+
+    result = vim_update_bundles '/dev/null', '-y', :acceptable_exit_codes => [1], :stderr => :merge
+    assert_match /Unknown option.*"y"/, result
+
+    result = vim_update_bundles '/dev/null', 'y', :acceptable_exit_codes => [1], :stderr => :merge
+    assert_match /Unknown option.*"y"/, result
   end
 
   def test_usage

@@ -403,7 +403,7 @@ def process_options options, args, message
     k.gsub! '-', '_'             # underscorize args, 'no-updates' -> 'no_updates'
 
     unless options.has_key? k.to_sym
-      puts "Unknown option: #{k.inspect} #{message} #{i}"
+      STDERR.puts "Unknown option: #{k.inspect} #{message} #{i}"
       puts "Usage: #{help}" if args.equal? ARGV
       exit 1
     end
