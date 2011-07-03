@@ -406,7 +406,9 @@ class TestUpdater < Test::Unit::TestCase
       refute_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
 
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/two/repo"
-      vim_update_bundles tmpdir
+      output = vim_update_bundles tmpdir, :stderr => :merge
+      assert_match /bundle for repo changed/, output
+
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
       log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
@@ -437,7 +439,8 @@ class TestUpdater < Test::Unit::TestCase
       # delete/regen repo so it looks identical but all SHAs are different
       FileUtils.rm_rf "#{tmpdir}/repo1"
       create_mock_repo "#{tmpdir}/repo1", "Invalid .-. Second Author"
-      vim_update_bundles tmpdir
+      output = vim_update_bundles tmpdir, :stderr => :merge
+      assert_match /has different ancestry from upstream/, output
 
       new_head = git_sha("#{tmpdir}/.vim/bundle/repo1")
       assert_not_equal orig_head, new_head
@@ -460,7 +463,8 @@ class TestUpdater < Test::Unit::TestCase
       # make a conflicting local change and pull again
       update_mock_repo "#{tmpdir}/repo1", "first", "second commit to first file"
       write_file "#{tmpdir}/.vim/bundle/repo1/first", "local change"
-      vim_update_bundles tmpdir
+      output = vim_update_bundles tmpdir, :stderr => :merge
+      assert_match /repo1 has unsaved changes, removing and re-cloning/, output
 
       # make sure the local repo matches the latest upstream
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/first"
@@ -487,7 +491,9 @@ class TestUpdater < Test::Unit::TestCase
       # make a conflicting local change and pull again
       update_mock_repo "#{tmpdir}/repo1", "second"
       write_file "#{tmpdir}/.vim/bundle/repo1/second", "changed!"
-      vim_update_bundles tmpdir
+      output = vim_update_bundles tmpdir, :stderr => :merge
+      # TODO: fails on travis-ci, re-enable once interpret_pull_failure is fixed
+      # assert_match /repo1 has conflicting file/, output
 
       # make sure the local repo matches the latest upstream
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo1/second"
@@ -495,10 +501,10 @@ class TestUpdater < Test::Unit::TestCase
       # and also verify user's changes are preserved in .Trashed-Bundles
       assert_test ?f, "#{tmpdir}/.vim/Trashed-Bundles/repo1/second"
       assert_equal "changed!", File.read("#{tmpdir}/.vim/Trashed-Bundles/repo1/second")
+
       # finally, make sure the error is logged
       log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
-
-      # I don't understand why this works locally but not on travis-ci
+      # TODO: fails on travis-ci, re-enable once interpret_pull_failure is fixed
       # assert_match /repo1 has conflicting file, removing and re-cloning/, log
     end
   end

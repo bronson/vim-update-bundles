@@ -101,7 +101,7 @@ end
 
 def log_error log, message
   log.print " #{message}\n\n"  # puts suppresses trailing newline
-  STDERR.puts message unless ENV['TESTING']    # unit tests set TESTING
+  STDERR.puts message
 end
 
 
