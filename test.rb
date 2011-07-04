@@ -545,6 +545,7 @@ class TestUpdater < Test::Unit::TestCase
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1"
       vim_update_bundles tmpdir
       assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
+
       write_file "#{tmpdir}/.vimrc", ''
       output = vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :merge
       assert_test ?f, "#{tmpdir}/.vim/bundle/plugin1/first"
@@ -553,7 +554,28 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_bundle_command    # oops, there's some duplication with test_working_bundle_command
+  def test_submodule_remove_failure
+    prepare_test do |tmpdir|
+      Dir.mkdir "#{tmpdir}/.vim"
+      Dir.chdir("#{tmpdir}/.vim") { `git init` }
+      create_mock_repo "#{tmpdir}/repo"
+      # add plugin as a submodule
+      write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
+      vim_update_bundles tmpdir, '--submodule'
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      assert_test ?f, "#{tmpdir}/.vim/.gitmodules"
+
+      # remove plugin but write-protect .gitmodules to force failure
+      write_file "#{tmpdir}/.vimrc", ''
+      File.chmod 0444, "#{tmpdir}/.vim/.gitmodules"
+      output = vim_update_bundles tmpdir, '--submodule', :acceptable_exit_codes => [1], :stderr => :merge
+      assert_match /could not delete repo from \.gitmodules/, output
+    end
+  end
+
+
+  def test_bundle_command
+    # oops, there's some duplication with test_working_bundle_command
     prepare_test do |tmpdir|
       # ensure BundleCommand is called when adding a repo
       create_mock_repo "#{tmpdir}/plugin1"

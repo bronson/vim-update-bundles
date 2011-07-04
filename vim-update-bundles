@@ -161,14 +161,16 @@ def remove_bundle_to config, dir, destination
   if config[:submodule]
     in_submodule_root(config, dir) do |mod|
       git :rm, mod
+      fn = nil
       ['.gitmodules', '.git/config'].each do |filename|
         begin
+          fn = filename
           text = File.read filename
           File.open(filename, 'w+') do |file|
             file.puts text.gsub(/\[submodule "#{mod}"\][^\[]+/m,'')
           end
-        rescue
-          puts "  Could not delete submodule entries from .gitmodules and .git/config"
+        rescue Exception => e
+          raise "could not delete #{dir} from #{fn}: #{e}"
         end
       end
     end
