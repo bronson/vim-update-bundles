@@ -9,16 +9,17 @@ Use Pathogen and Git to manage your Vim plugins.
 
 To install plugins, put lines like this in your ~/.vimrc:
 
-    " Bundle: jQuery                                      # https://github.com/vim-scripts/jQuery
-    " Bundle: scrooloose/nerdtree                         # https://github.com/scrooloose/nerdtree
-    " Bundle: https://github.com/scrooloose/nerdtree.git  # Full URL to the repository.
+    " Bundle: jQuery                                  # https://github.com/vim-scripts/jQuery
+    " Bundle: scrooloose/nerdtree                     # https://github.com/scrooloose/nerdtree
+    " Bundle: git://git.wincent.com/command-t.git     # Full URL to the repo to clone
 
-Now, run `./vim-update-bundles`.  Your plugins are installed and ready for use.
-To remove a plugin, change or remove the line.
+When you run `./vim-update-bundles`, your plugins will be installed and ready for use.
 
 Type `:help bundles` from within Vim to show the list of plugins that you have installed.
 Hit Control-] on the bundle's name to jump to its documentation.
-Also look at `:he bundle-log`.
+Also look at `:help bundle-log`.
+
+It works with [~/.dotfiles](http://github.com/ryanb/dotfiles) and Git submodules.
 
 If you're not already using Vim, just run `./vim-update-bundles` and a full environment
 will be set up for you.
@@ -35,14 +36,10 @@ One of:
 
 ## Usage
 
-    $ ./vim-update-bundles --help
-
-If you're not already using Vim, vim-update-bundles will install Pathogen and
-set everything up for you.
-
-It will also use ~/.dotfiles if it exists.  It should work seamlessly
-with <http://github.com/ryanb/dotfiles> and friends. It also supports Git
-submodules (see the configuration section below).
+Just run `./vim-update-bundles` to install and remove plugins to match
+the ones named in your ~/.vimrc.
+If you're not already using Vim, vim-update-bundles will also install
+Pathogen, a sample .vimrc, and get everything ready to go.
 
 * _-n -\-no-updates_ Adds and deletes bundles but doesn't update them.
   This prevents vim-update-bundles from laboriously scrubbing through every
@@ -58,6 +55,8 @@ submodules (see the configuration section below).
   your autoload and bundles.
 
 * _\-vimrc-path_ specifies the location of your ~/.vimrc file.
+
+* _-\-help_ prints usage information.
 
 
 ## Specifying Plugins
