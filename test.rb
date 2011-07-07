@@ -134,17 +134,23 @@ class TestUpdater < Test::Unit::TestCase
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+      assert_match /1 bundle added$/, log
 
       # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "second"
       vim_update_bundles tmpdir
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
       assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+      assert_match /1 bundle updated$/, log
 
       # Remove the repository.
       write_file "#{tmpdir}/.vimrc", ""
       vim_update_bundles tmpdir
       refute_test ?d, repo
+      log = File.read "#{tmpdir}/.vim/doc/bundle-log.txt"
+      assert_match /1 bundle removed$/, log
     end
   end
 

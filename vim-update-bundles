@@ -240,25 +240,6 @@ def pull_bundle dir, tag, log
 end
 
 
-def update_bundle config, dir, url, tag, tagstr, previous_version, log
-  unless Dir.chdir(dir) { pull_bundle dir, tag, log }
-    reset_bundle config, dir, url, tagstr, log
-  end
-
-  Dir.chdir(dir) do
-    ignore_doc_tags
-
-    if previous_version
-      new_version = describe_head
-      if new_version != previous_version
-        print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
-        $bundles_updated += 1
-      end
-    end
-  end
-end
-
-
 def install_bundle config, dir, url, tag, doc, log
   tagstr = " at #{tag}" if tag
   previous_version = nil
@@ -293,8 +274,21 @@ def install_bundle config, dir, url, tag, doc, log
 
   # pull bundle
   unless only_updating && config[:no_updates]
-    update_bundle config, dir, url, tag, tagstr, previous_version, log
+    unless Dir.chdir(dir) { pull_bundle dir, tag, log }
+      reset_bundle config, dir, url, tagstr, log
+    end
+    Dir.chdir(dir) do
+      ignore_doc_tags
+      if previous_version
+        new_version = describe_head
+        if new_version != previous_version
+          print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
+          $bundles_updated += 1 if only_updating
+        end
+      end
+    end
   end
+
   Dir.chdir(dir) { print_doc_entry dir, doc }
   in_submodule_root(config, dir) { |mod| git :add, mod } if config[:submodule]
 
