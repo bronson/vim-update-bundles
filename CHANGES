@@ -1,3 +1,4 @@
+- Support Vundle directives so both tools can read the same .vimrc.
 - Finding .vim and .vimrc has been simplified, see the readme.
 - When pull fails, remove and re-clone the repo instead of bailing.
 - vim-update-bundles no longer symlinks .vim and .vimrc into $HOME.

@@ -98,6 +98,13 @@ ignore, mark them as static.
      " Static: my-plugin
 
 
+### Vundle
+
+vim-update-bundles also supports Vundle-style directives.  This allows you to use
+either tool to manage your bundles, whichever is more convenient at the time.
+This is brand new so problems are not unexpected.
+
+
 ## Configuration File
 
 All configuration options can be passed on the command line or placed in `~/.vim-update-bundles.conf`.

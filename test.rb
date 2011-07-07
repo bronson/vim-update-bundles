@@ -609,6 +609,34 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
+  def test_vundle_directives
+    # ensure vundle directives work
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/repo"
+      # test Bundle and BundleCommand
+      write_file "#{tmpdir}/.vimrc", "Bundle '#{tmpdir}/repo'\n" +
+        "BundleCommand 'echo \"yep''s\" > ''#{tmpdir}/sentinel'''\n"
+      vim_update_bundles tmpdir
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      assert_equal "yep's\n", File.read("#{tmpdir}/sentinel")
+
+      # make sure Bundle accepts a branch/tag to check out
+      update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
+      update_mock_repo "#{tmpdir}/repo", 'third'
+      write_file "#{tmpdir}/.vimrc", "Bundle '#{tmpdir}/repo 0.2'"
+      vim_update_bundles tmpdir
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
+      refute_test ?f, "#{tmpdir}/.vim/bundle/repo/third"
+
+      # mark the bundle as static, make sure it isn't removed
+      write_file "#{tmpdir}/.vimrc", "Bundle! 'repo'\n"
+      vim_update_bundles tmpdir
+      assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
+    end
+  end
+
+
   def test_bundle_command
     # oops, there's some duplication with test_working_bundle_command
     prepare_test do |tmpdir|

@@ -316,6 +316,19 @@ def run_bundle_command dir, cmd
 end
 
 
+def vim_string str
+  if str.slice(0,1) == "'"
+    str =~ /^\s*'(.*)'\s*$/
+    return $1.gsub "''", "'"
+  elsif str.slice(0,1) == '"'
+    str =~ /^\s*"(.*)"\s*$/
+    return $1    # could do escape substitution here
+  else
+    return str
+  end
+end
+
+
 def update_bundles config, doc, log
   existing_bundles = Dir['*']
   updated_bundles = {}
@@ -325,9 +338,11 @@ def update_bundles config, doc, log
 
   dir = only_updating = nil
   puts "# reading vimrc" if config[:verbose]
+  string_re = %q{'([^']+|'')*'|"[^"]*"}  # captures single and double quoted Vim strings
   read_vimrc(config) do |line|
-    if line =~ /^\s*"\s*bundle:\s*(.*)$/i
-      url, tag = $1.split
+    if line =~ /^\s*"\s*bundle:\s*(.*)$/i ||
+       line =~ /^\s*Bundle\s*(#{string_re})/
+      url, tag = vim_string($1).split
       puts "# processing '#{url}' at '#{tag}'" if config[:verbose]
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
 
@@ -338,12 +353,14 @@ def update_bundles config, doc, log
       only_updating = install_bundle config, dir, url, tag, doc, log
       updated_bundles[dir] = url
       existing_bundles.delete dir
-    elsif line =~ /^\s*"\s*bundle[ -]?command:\s*(.*)$/i
+    elsif line =~ /^\s*"\s*bundle[ -]?command:\s*(.*)$/i ||
+          line =~ /^\s*BundleCommand\s*(#{string_re})$/
       # Want BundleCommand but BUNDLE COMMAND and Bundle-Command used to be legal too
       raise "BundleCommand must come after Bundle" if dir.nil?
-      run_bundle_command dir, $1 unless only_updating && config[:no_updates]
-    elsif line =~ /^\s*"\s*static:\s*(.*)$/i
-      dir = $1
+      run_bundle_command dir, vim_string($1) unless only_updating && config[:no_updates]
+    elsif line =~ /^\s*"\s*static:\s*(.*)$/i ||
+          line =~ /^\s*Bundle!\s*(#{string_re})$/i
+      dir = vim_string $1
       puts "  leaving #{dir} alone"
       existing_bundles.delete dir
     end
