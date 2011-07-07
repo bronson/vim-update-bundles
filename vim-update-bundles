@@ -202,7 +202,7 @@ def reset_bundle config, dir, url, tagstr, log
 end
 
 
-def interpret_pull_failure msg
+def interpret_merge_failure msg
   # Tries to convert the output from a failed pull into a decent error message
   # TODO: this is getting heinous.  is it really a good idea?
   if msg =~ /Not possible to fast-forward/
@@ -228,9 +228,10 @@ def pull_bundle dir, tag, log
 
   # only pull if symbolic-ref is true, otherwise it's detached head
   if system 'git symbolic-ref HEAD -q >/dev/null'
-    output = `git pull --ff-only origin #{tag || :master} 2>&1`
+    git :fetch, :origin, tag || :master
+    output = `git merge --ff-only FETCH_HEAD 2>&1`
     unless $?.success?
-      log_error log, "#{dir} #{interpret_pull_failure output}"
+      log_error log, "#{dir} #{interpret_merge_failure output}"
       return false
     end
   end

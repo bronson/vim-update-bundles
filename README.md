@@ -20,6 +20,9 @@ Type `:help bundles` from within Vim to show the list of plugins that you have i
 Hit Control-] on the bundle's name to jump to its documentation.
 Also look at `:he bundle-log`.
 
+If you're not already using Vim, just run `./vim-update-bundles` and a full environment
+will be set up for you.
+
 
 ## Installation
 
