@@ -391,6 +391,35 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
+  def test_duplicate_bundle_entries
+    prepare_test do |tmpdir|
+      create_mock_repo "#{tmpdir}/repo1"
+      write_file "#{tmpdir}/.vimrc",
+        "\" Bundle: #{tmpdir}/repo1\n" +
+        "\" Bundle: #{tmpdir}/repo1\n"
+      output = vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :merge
+      assert_match /duplicate entry for .*repo1/, output
+    end
+  end
+
+
+  def test_bundles_with_conflicting_names
+    prepare_test do |tmpdir|
+      Dir.mkdir "#{tmpdir}/one"
+      Dir.mkdir "#{tmpdir}/two"
+      create_mock_repo "#{tmpdir}/one/vim-repo"
+      create_mock_repo "#{tmpdir}/two/repo"
+
+      # write a single .vimrc with conflicting bundles
+      write_file "#{tmpdir}/.vimrc",
+        "\" Bundle: #{tmpdir}/one/vim-repo\n" +
+        "\" Bundle: #{tmpdir}/two/repo\n"
+      output = vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :merge
+      assert_match /urls map to the same bundle: .*vim-repo and .*repo/, output
+    end
+  end
+
+
   def test_remote_for_repo_is_changed
     # plugin name stays the same but the Git url changes
     prepare_test do |tmpdir|

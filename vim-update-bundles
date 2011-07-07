@@ -263,6 +263,13 @@ def install_bundle config, dir, url, tag, doc, log
   previous_version = nil
   only_updating = false
 
+  if url.match /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/  # User/repository.
+    url = "https://github.com/#{url}.git"
+  end
+  if url.match /^[A-Za-z0-9._-]+$/                 # Plain repository.
+    url = "https://github.com/vim-scripts/#{url}.git"
+  end
+
   # fetch bundle
   if test ?d, dir
     remote = Dir.chdir(dir)  { git(:config, '--get', 'remote.origin.url').chomp }
@@ -316,6 +323,7 @@ end
 
 def update_bundles config, doc, log
   existing_bundles = Dir['*']
+  updated_bundles = {}
 
   # Ignore files in the bundle directory, e.g., READMEs.
   existing_bundles.reject! { |path| FileTest.file? path }
@@ -327,13 +335,13 @@ def update_bundles config, doc, log
       url, tag = $1.split
       puts "# processing '#{url}' at '#{tag}'" if config[:verbose]
       dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
-      if url.match /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/  # User/repository.
-        url = "https://github.com/#{url}.git"
-      end
-      if url.match /^[A-Za-z0-9._-]+$/                 # Plain repository.
-        url = "https://github.com/vim-scripts/#{url}.git"
-      end
+
+      # quick sanity check
+      raise "duplicate entry for #{url}" if updated_bundles[dir] == url
+      raise "urls map to the same bundle: #{updated_bundles[dir]} and #{url}" if updated_bundles[dir]
+
       only_updating = install_bundle config, dir, url, tag, doc, log
+      updated_bundles[dir] = url
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*bundle[ -]?command:\s*(.*)$/i
       # Want BundleCommand but BUNDLE COMMAND and Bundle-Command used to be legal too

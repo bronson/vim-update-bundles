@@ -14,6 +14,7 @@ To install plugins, put lines like this in your ~/.vimrc:
     " Bundle: https://github.com/scrooloose/nerdtree.git  # Full URL to the repository.
 
 Now, run `./vim-update-bundles`.  Your plugins are installed and ready for use.
+To remove a plugin, change or remove the line.
 
 Type `:help bundles` from within Vim to show the list of plugins that you have installed.
 Hit Control-] on the bundle's name to jump to its documentation.
