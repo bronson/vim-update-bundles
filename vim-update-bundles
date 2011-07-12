@@ -156,7 +156,7 @@ end
 
 
 def remove_bundle_to config, dir, destination
-  puts "Erasing #{dir}, find it in #{destination}"
+  puts "Removing #{dir}, find it in #{destination}"
   FileUtils.mv dir, destination
   if config[:submodule]
     in_submodule_root(config, dir) do |mod|
@@ -344,7 +344,7 @@ def update_bundles config, doc, log
        line =~ /^\s*Bundle\s*(#{string_re})/
       url, tag = vim_string($1).split
       puts "# processing '#{url}' at '#{tag}'" if config[:verbose]
-      dir = url.split('/').last.gsub(/^vim-|\.git$/, '')
+      dir = url.split('/').last.sub(/\.git$/, '')
 
       # quick sanity check
       raise "duplicate entry for #{url}" if updated_bundles[dir] == url

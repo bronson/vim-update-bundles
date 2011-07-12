@@ -413,15 +413,15 @@ class TestUpdater < Test::Unit::TestCase
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/one"
       Dir.mkdir "#{tmpdir}/two"
-      create_mock_repo "#{tmpdir}/one/vim-repo"
+      create_mock_repo "#{tmpdir}/one/repo"
       create_mock_repo "#{tmpdir}/two/repo"
 
       # write a single .vimrc with conflicting bundles
       write_file "#{tmpdir}/.vimrc",
-        "\" Bundle: #{tmpdir}/one/vim-repo\n" +
+        "\" Bundle: #{tmpdir}/one/repo\n" +
         "\" Bundle: #{tmpdir}/two/repo\n"
       output = vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :merge
-      assert_match /urls map to the same bundle: .*vim-repo and .*repo/, output
+      assert_match /urls map to the same bundle: .*repo and .*repo/, output
     end
   end
 
