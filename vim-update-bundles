@@ -284,7 +284,7 @@ def install_bundle config, dir, url, tag, doc, log
       if previous_version
         new_version = describe_head
         if new_version != previous_version
-          print_log_entry log, 'up', dir, previous_version, "-> #{new_version}#{tagstr}"
+          print_log_entry log, 'up', dir, "#{new_version}#{tagstr}", "<- #{previous_version}"
           $bundles_updated += 1 if only_updating
         end
       end

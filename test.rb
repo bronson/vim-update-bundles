@@ -853,7 +853,7 @@ class TestUpdater < Test::Unit::TestCase
       assert_no_match /\|repo\|\s*0\.2/, list
       assert_match /\|repo\|\s*0\.3/, list
       assert_match /Add\s*\|repo\|\s*0\.2/, log
-      assert_match /up\s*\|repo\|\s*0\.2\s*->\s*0\.3/, log
+      assert_match /up\s*\|repo\|\s*0\.3\s*<-\s*0\.2/, log
       ensure_marker log, marker_string
 
       # won't bother changing the remote since vim-update-bundles handles it
@@ -868,7 +868,7 @@ class TestUpdater < Test::Unit::TestCase
       assert_no_match /\|repo\|\s*0\.2/, list
       assert_no_match /\|repo\|\s*0\.3/, list
       assert_match /Add\s*\|repo\|\s*0\.2/, log
-      assert_match /up\s*\|repo\|\s*0\.2\s*->\s*0\.3/, log
+      assert_match /up\s*\|repo\|\s*0\.3\s*<-\s*0\.2/, log
       assert_match /Del\s*\|repo\|\s*0\.3/, log
       ensure_marker log, marker_string
     end
