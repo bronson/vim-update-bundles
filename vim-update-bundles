@@ -28,20 +28,21 @@ end
 def run *cmd
   # Runs cmd, returns its stdout, and bails on error.
   # Mostly a backport of Ruby 1.9's IO.popen for 1.8.
-  options = { :acceptable_exit_codes => [0], :suppress_stderr => false }
+  options = { :acceptable_exit_codes => [0], :stderr => nil }
   options.merge!(cmd.pop) if cmd.last.kind_of?(Hash)
   puts "-> #{[cmd].join(" ")}" if $verbose
   outr, outw = IO::pipe
   pid = fork {
     outr.close; STDOUT.reopen outw; outw.close
-    STDERR.reopen '/dev/null', 'w' if options[:suppress_stderr]
+    STDERR.reopen '/dev/null', 'w' if options[:stderr] == :suppress
+    STDERR.reopen STDOUT if options[:stderr] == :merge
     exec *cmd.flatten.map { |c| c.to_s }
   }
   outw.close
   result = outr.read
   outr.close
   Process.waitpid pid
-  unless options[:acceptable_exit_codes].include?($?.exitstatus)
+  if options[:acceptable_exit_codes] != :any && !options[:acceptable_exit_codes].include?($?.exitstatus)
     raise "'#{[cmd].join(" ")}' in #{Dir.pwd} exited with code #{$?.exitstatus}"
   end
   result
@@ -58,10 +59,9 @@ end
 
 def describe_head
   # Don't want to use 'git describe --all' because branch names change too often.
-  # Use `` instead of git() so we don't error out if the git call fails.
-  # (might happen if there's a directory in .vim/bundle that isn't git-revisioned).
-  version = `git describe --tags 2>/dev/null`.chomp
-  version = `git rev-parse HEAD 2>/dev/null`[0..12] unless version =~ /\S/
+  # This will fail if there's a directory in .vim/bundle that isn't git-revisioned.
+  version = git(:describe, '--tags', :acceptable_exit_codes => :any, :stderr => :suppress).chomp
+  version = git('rev-parse', 'HEAD', :acceptable_exit_codes => :any, :stderr => :suppress)[0..12] unless version =~ /\S/
   version
 end
 
@@ -230,7 +230,7 @@ def pull_bundle dir, tag, log
   # only pull if symbolic-ref is true, otherwise it's detached head
   if system 'git symbolic-ref HEAD -q >/dev/null'
     git :fetch, :origin, tag || :master
-    output = `git merge --ff-only FETCH_HEAD 2>&1`
+    output = git(:merge, '--ff-only', :FETCH_HEAD, :acceptable_exit_codes => :any, :stderr => :merge)
     unless $?.success?
       log_error log, "#{dir} #{interpret_merge_failure output}"
       return false
@@ -262,7 +262,7 @@ def install_bundle config, dir, url, tag, doc, log
         Dir.chdir(dir) do
           previous_version = describe_head
           puts "updating #{dir} from #{url}#{tagstr}"
-          git :fetch, :suppress_stderr => true
+          git :fetch, :stderr => :suppress
         end
       end
     else
