@@ -95,7 +95,8 @@ end
 
 
 def print_log_entry log, action, dir, rev, notes=""
-  log.printf " %-3s %-26s %-18s %s\n", action, "|#{dir}|", rev, notes
+  message = " %-3s %-26s %-18s %s" % [action, "|#{dir}|", rev, notes]
+  log.puts message.sub /\s+$/, ''
 end
 
 
