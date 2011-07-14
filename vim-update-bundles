@@ -45,6 +45,7 @@ def run *cmd
   if options[:acceptable_exit_codes] != :any && !options[:acceptable_exit_codes].include?($?.exitstatus)
     raise "'#{[cmd].join(" ")}' in #{Dir.pwd} exited with code #{$?.exitstatus}"
   end
+  puts "RESULT #{$?.exitstatus}: <<#{result}>>" if $verbose && $verbose.to_i >= 2
   result
 end
 
@@ -448,7 +449,7 @@ def process_options options, args, message
     end
 
     v = options[k.to_sym].call(v) if options[k.to_sym].is_a? Proc
-    options[k.to_sym] = v ? interpolate(options,v,message,i).split("'").join("\\'") : true
+    options[k.to_sym] = v ? interpolate(options,v,message,i).split("'").join("\\'") : 1 + (options[k.to_sym] || 0)
   end
 end
 
@@ -517,7 +518,7 @@ vim-update-bundles [options...]
   Updates the installed Vim plugins.
     -n --no-updates: don't update bundles, only add or delete (faster)
     -h -? --help:    print this message
-    -v --verbose:    print exactly what's happening
+    -v --verbose:    print what's happening (multiple -v for more verbose)
   optional configurations:
     -s --submodule:  store bundles as git submodules
     --vimdir-path:   path to ~/.vim directory

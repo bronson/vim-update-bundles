@@ -901,7 +901,7 @@ class TestUpdater < Test::Unit::TestCase
     prepare_test do |tmpdir|
       result = vim_update_bundles tmpdir, '--verbose'
       assert_match /submodule = false/, result
-      assert_match /verbose = true/, result
+      assert_match /verbose = 1/, result
       assert_match /vimdir_path = "#{tmpdir}\/\.vim"/, result
       assert_match /vimrc_path = "#{tmpdir}\/\.vimrc"/, result
     end

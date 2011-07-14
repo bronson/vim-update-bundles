@@ -50,6 +50,7 @@ Pathogen, a sample .vimrc, and get everything ready to go.
   submodules before running vim-update bundles.
 
 * _-v -\-verbose_ prints more information about what's happening.
+  Pass multiple -v -v -v for more verbosity.
 
 * _-\-vimdir-path=path_ specifies the .vim directory that will contain
   your autoload and bundles.
