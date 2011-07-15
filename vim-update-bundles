@@ -204,26 +204,6 @@ def reset_bundle config, dir, url, tagstr, log
 end
 
 
-def interpret_merge_failure msg
-  # Tries to convert the output from a failed pull into a decent error message
-  # TODO: this is getting heinous.  is it really a good idea?
-  if msg =~ /Not possible to fast-forward/
-    # Looks like upstream regenerated or repased the repository?  Hopefully a one-time thing.
-    "has different ancestry from upstream, removing and re-cloning."
-  elsif msg =~ /You have unstaged changes/ ||
-        msg =~ /Your local changes [a-z ]* would be overwritten/ ||
-        msg =~ /commit your changes or stash them before you can merge/
-    # Files in the repo are getting changed?!  https://github.com/timcharper/textile.vim/issues/4
-    "has unsaved changes, removing and re-cloning.  Invalid doc/tags file in upstream repo?"
-  elsif msg =~ /untracked working tree files would be overwritten/
-    # untracked file was added to local repo with same name as new upstream file
-    "has conflicting file, removing and re-cloning.  doc/tags file added upstream?"
-  else
-    msg.gsub /\s+/, ' '   # scrunch newlines and runs of spaces
-  end
-end
-
-
 def pull_bundle dir, tag, log
   git :fetch, :origin, :stderr => :suppress  # git prints some needless warnings during fetch
   git :checkout, tag || :master
@@ -232,8 +212,8 @@ def pull_bundle dir, tag, log
   if system 'git symbolic-ref HEAD -q >/dev/null'
     output = git(:merge, '--ff-only', "origin/#{tag || :master}", :acceptable_exit_codes => :any, :stderr => :merge)
     unless $?.success?
-      log_error log, "#{dir} #{interpret_merge_failure output}"
-      return false    # bundle is not OK and needs to be reset
+      log_error log, output.gsub(/\s+/, ' ')
+      return false   # bundle is not OK and needs to be reset
     end
   end
 
