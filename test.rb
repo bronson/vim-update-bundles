@@ -610,7 +610,7 @@ class TestUpdater < Test::Unit::TestCase
       # make sure Bundle accepts a branch/tag to check out
       update_mock_repo_tagged "#{tmpdir}/repo", 'second', '0.2'
       update_mock_repo "#{tmpdir}/repo", 'third'
-      write_file "#{tmpdir}/.vimrc", "Bundle '#{tmpdir}/repo 0.2'"
+      write_file "#{tmpdir}/.vimrc", "Bundle \"#{tmpdir}/repo 0.2\""
       vim_update_bundles tmpdir
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/second"
