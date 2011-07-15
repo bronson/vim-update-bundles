@@ -225,20 +225,19 @@ end
 
 
 def pull_bundle dir, tag, log
-  # returns true on success, false if the bundle needs to be reset
+  git :fetch, :origin, :stderr => :suppress  # git prints some needless warnings during fetch
   git :checkout, tag || :master
 
-  # only pull if symbolic-ref is true, otherwise it's detached head
+  # if it's a branch, we need to merge in upstream changes
   if system 'git symbolic-ref HEAD -q >/dev/null'
-    git :fetch, :origin, tag || :master
-    output = git(:merge, '--ff-only', :FETCH_HEAD, :acceptable_exit_codes => :any, :stderr => :merge)
+    output = git(:merge, '--ff-only', "origin/#{tag || :master}", :acceptable_exit_codes => :any, :stderr => :merge)
     unless $?.success?
       log_error log, "#{dir} #{interpret_merge_failure output}"
-      return false
+      return false    # bundle is not OK and needs to be reset
     end
   end
 
-  return true
+  return true   # bundle is good, let's continue
 end
 
 
@@ -260,11 +259,8 @@ def install_bundle config, dir, url, tag, doc, log
     if remote == url
       only_updating = true
       unless config[:no_updates]
-        Dir.chdir(dir) do
-          previous_version = describe_head
-          puts "updating #{dir} from #{url}#{tagstr}"
-          git :fetch, :stderr => :suppress
-        end
+        Dir.chdir(dir) { previous_version = describe_head }
+        puts "updating #{dir} from #{url}#{tagstr}"
       end
     else
       log_error log, "bundle for #{dir} changed from #{remote} to #{url}"
