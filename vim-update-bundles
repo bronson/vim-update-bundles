@@ -8,7 +8,7 @@
 require 'fileutils'
 require 'open-uri'
 
-Version = '0.6'
+Version = '0.8'
 
 
 def ensure_dir dir

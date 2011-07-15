@@ -1,10 +1,12 @@
+0.8     15 Jul 2011
 - Support Vundle directives so both tools can read the same .vimrc.
-- Finding .vim and .vimrc has been simplified, see the readme.
-- When pull fails, remove and re-clone the repo instead of bailing.
+- When pull fails, remove and re-clone the repo instead of aborting.
 - vim-update-bundles no longer symlinks .vim and .vimrc into $HOME.
 - Remove the dotfile_path option, it's not necessary anymore.
+- Finding .vim and .vimrc has been simplified, see the readme.
 - No longer trim 'vim-' from the front of repo names in ~/.vim/bundle.
 - We now check for duplicate and conflicting Bundle entries.
+- All known tests written, all todos fixed.  1.0 is close.
 
 0.6     29 Jun 2011
 - Added doc/bundle-log.txt. :help bundle-log to see it.
