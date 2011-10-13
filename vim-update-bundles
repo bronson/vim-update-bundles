@@ -8,7 +8,7 @@
 require 'fileutils'
 require 'open-uri'
 
-Version = '0.8'
+Version = '0.82+'
 
 
 def ensure_dir dir
@@ -436,22 +436,6 @@ def choose_path *paths
 end
 
 
-def ensure_vim_environment config
-  ensure_dir config[:vimdir_path]
-  ensure_dir "#{config[:vimdir_path]}/autoload"
-
-  unless test ?f, "#{config[:vimdir_path]}/autoload/pathogen.vim"
-    puts "Downloading Pathogen..."
-    download_file config[:pathogen_url], "#{config[:vimdir_path]}/autoload/pathogen.vim"
-  end
-
-  unless test(?f, config[:vimrc_path])
-    puts "Downloading starter vimrc..."
-    download_file config[:starter_url], config[:vimrc_path]
-  end
-end
-
-
 def generate_helptags
   puts "updating helptags..."
   # Vim on a Mac often exits with 1, even when doing nothing.
@@ -520,7 +504,6 @@ config = {
 
   # Used when spinning up a new Vim environment.
   :starter_url   => "https://github.com/bronson/dotfiles/raw/master/.vimrc",
-  :pathogen_url  => "https://github.com/tpope/vim-pathogen/raw/master/autoload/pathogen.vim",
 }
 
 
@@ -528,7 +511,19 @@ unless $load_only     # to read the version number
   read_configuration config
   $verbose = config[:verbose]
 
-  ensure_vim_environment config
+  # warning for now, remove after a few releases
+  if test ?f, "#{config[:vimdir_path]}/autoload/pathogen.vim"
+    puts "Please remove #{config[:vimdir_path]}/autoload/pathogen.vim."
+    puts "See 'Runtime Path' in the vim-update-bundles README."
+    exit 1
+  end
+
+  ensure_dir config[:vimdir_path]
+  unless test(?f, config[:vimrc_path])
+    puts "Downloading starter vimrc..."
+    download_file config[:starter_url], config[:vimrc_path]
+  end
+
   update_bundles_and_docs config
   generate_helptags
   puts "done!  Start Vim and type ':help bundles' to see what has been installed."

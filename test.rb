@@ -38,9 +38,8 @@ class TestUpdater < Test::Unit::TestCase
 
   def create_mock_files tmpdir
     # Creates mock files to download (it saves on bandwidth and test time).
-    write_file "#{tmpdir}/pathogen",      "\" PATHOGEN SCRIPT"
     write_file "#{tmpdir}/starter-vimrc", "\" STARTER VIMRC"
-    @starter_urls = "starter_url='#{tmpdir}/starter-vimrc' pathogen_url='#{tmpdir}/pathogen'"
+    @starter_urls = "starter_url='#{tmpdir}/starter-vimrc'"
   end
 
   def create_mock_repo name, author=nil
@@ -85,7 +84,6 @@ class TestUpdater < Test::Unit::TestCase
 
   def check_tree base, vimdir='.vim', vimrc='.vimrc'
     assert_test ?d, "#{base}/#{vimdir}"
-    assert_test ?f, "#{base}/#{vimdir}/autoload/pathogen.vim"
     assert_test ?f, "#{base}/#{vimrc}"
   end
 

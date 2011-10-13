@@ -1,3 +1,6 @@
+- Install Pathogen as just another Vim plugin as suggested by t9md.
+  This requires a change to .vimrc! See "Runtime Path" in the README.
+
 0.8     15 Jul 2011
 - Support Vundle directives so both tools can read the same .vimrc.
 - When pull fails, remove and re-clone the repo instead of aborting.

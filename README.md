@@ -13,6 +13,12 @@ To install plugins, put lines like this in your ~/.vimrc:
     " Bundle: scrooloose/nerdtree                     # https://github.com/scrooloose/nerdtree
     " Bundle: git://git.wincent.com/command-t.git     # Full URL to the repo to clone
 
+Or, if you install Vundle:
+
+    Bundle 'jQuery'                                  # https://github.com/vim-scripts/jQuery
+    Bundle 'scrooloose/nerdtree'                     # https://github.com/scrooloose/nerdtree
+    Bundle 'git://git.wincent.com/command-t.git'     # Full URL to the repo to clone
+
 When you run `./vim-update-bundles`, your plugins will be installed and ready for use.
 
 Type `:help bundles` from within Vim to show the list of plugins that you have installed.
@@ -55,7 +61,7 @@ Pathogen, a sample .vimrc, and get everything ready to go.
 * _-\-vimdir-path=path_ specifies the .vim directory that will contain
   your autoload and bundles.
 
-* _\-vimrc-path_ specifies the location of your ~/.vimrc file.
+* _-\-vimrc-path_ specifies the location of your ~/.vimrc file.
 
 * _-\-help_ prints usage information.
 
@@ -102,8 +108,7 @@ ignore, mark them as static.
 ### Vundle
 
 vim-update-bundles also supports Vundle-style directives.  This allows you to use
-either tool to manage your bundles, whichever is more convenient at the time.
-This is brand new so problems are not unexpected.
+either tool to manage your bundles -- use whichever is more convenient at the time.
 
 
 ## Configuration File
@@ -133,11 +138,32 @@ If your dotfiles are in a custom place, you can specify --vimdir-path and --vimr
 on the command line or in vim-update-bundles.conf.
 
 If vim-update-bundles still can't find a Vim environment, it will create one for you.
-It creates the ~/.vim directory and gives you a default ~/.vimrc, downloads and installs Pathogen,
-and leaves everything ready to roll.
+It creates the ~/.vim directory, downloads a default ~/.vimrc, then installs the default
+set of plugins.
 
 If you're unsure which vimdir_path and vimrc_path are being used,
 `vim-update-bundles --verbose` will tell you.
+
+
+## Runtime Path
+
+vim-update-bundles used to manually install Pathogen into `~/.vim/autoload/pathogen.vim`.
+This meant that Pathogen would never be updated, and that alternatives such as tplugin
+and Vundle were harder to use.  No more!
+
+If you want to use Pathogen, place this at the top of your .vimrc:
+
+    runtime bundle/vim-pathogen/autoload/pathogen.vim
+    " Bundle: tpope/vim-pathogen
+    call pathogen#infect()
+
+Or, if you want to use Vundle, use this:
+
+    set rtp+=~/.vim/bundle/vundle/
+    call vundle#rc()
+    " Tell Vim to ignore BundleCommand until vundle supports it
+    com! -nargs=? BundleCommand
+    Bundle 'https://github.com/gmarik/vundle'
 
 
 ## Authors
