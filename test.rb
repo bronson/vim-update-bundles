@@ -27,19 +27,14 @@ class TestUpdater < Test::Unit::TestCase
   end
 
   def prepare_test_trampoline tmpdir, block
-    create_mock_files tmpdir
+    write_file "#{tmpdir}/starter-vimrc", "\" STARTER VIMRC"
+    @starter_urls = "starter_url='#{tmpdir}/starter-vimrc'"
     Dir.mkdir "#{tmpdir}/home"
     block.call "#{tmpdir}/home"
   end
 
   def write_file path, contents
     File.open(path, 'w') { |f| f.write contents }
-  end
-
-  def create_mock_files tmpdir
-    # Creates mock files to download (it saves on bandwidth and test time).
-    write_file "#{tmpdir}/starter-vimrc", "\" STARTER VIMRC"
-    @starter_urls = "starter_url='#{tmpdir}/starter-vimrc'"
   end
 
   def create_mock_repo name, author=nil
