@@ -481,7 +481,6 @@ vim-update-bundles [options...]
     -h -? --help:    print this message
     -v --verbose:    print what's happening (multiple -v for more verbose)
   optional configurations:
-    -s --submodule:  store bundles as git submodules
     --vimdir-path:   path to ~/.vim directory
     --vimrc-path:    path to ~/.vimrc directory
 EOL
@@ -490,14 +489,13 @@ end
 
 config = {
   :verbose       => nil,     # Git commands are quiet by default; set verbose=true to see everything.
-  :submodule     => false,   # If true then use Git submodules instead of cloning.
   :no_updates    => false,   # If true then don't update repos, only add or delete.
 
   :help => lambda { |v| puts help; exit },
   :version => lambda { |v| puts "vim-update-bundles #{Version}"; exit },
 
   # single-character aliases for command-line options
-  :v => :verbose, :s => :submodule, :n => :no_updates,
+  :v => :verbose, :n => :no_updates,
   :h => :help, :'?' => :help, :V => :version,
 
   :vimdir_path   => nil,     # Full path to ~/.vim

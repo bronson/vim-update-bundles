@@ -169,7 +169,6 @@ class TestUpdater < Test::Unit::TestCase
 
       # Add submodule.
       create_mock_repo "#{tmpdir}/repo"
-      File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f| f.write "submodule = true" }
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
 
       vim_update_bundles tmpdir
@@ -247,7 +246,7 @@ class TestUpdater < Test::Unit::TestCase
     # Ensures locking a checkout to a tag.
     prepare_test do |tmpdir|
       Dir.chdir(tmpdir) { `git init` }
-      vim_update_bundles tmpdir, '--submodule=true'
+      vim_update_bundles tmpdir
       check_tree tmpdir
 
       create_mock_repo "#{tmpdir}/repo"
@@ -255,7 +254,7 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo "#{tmpdir}/repo", 'third'
 
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo 0.2"
-      vim_update_bundles tmpdir, '--submodule=1'
+      vim_update_bundles tmpdir
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
@@ -266,7 +265,7 @@ class TestUpdater < Test::Unit::TestCase
 
       # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "third"
-      vim_update_bundles tmpdir, '--submodule=1'
+      vim_update_bundles tmpdir
       assert_test ?f, "#{repo}/second"
       refute_test ?f, "#{repo}/third"
       refute_test ?f, "#{repo}/fourth"
@@ -329,7 +328,7 @@ class TestUpdater < Test::Unit::TestCase
     # Ensures locking a checkout to a tag.
     prepare_test do |tmpdir|
       Dir.chdir(tmpdir) { `git init` }
-      vim_update_bundles tmpdir, '--submodule=true'
+      vim_update_bundles tmpdir
       check_tree tmpdir
 
       # Make a repository with another branch.
@@ -340,7 +339,7 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo "#{tmpdir}/repo", 'second'
 
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo abranch"
-      vim_update_bundles tmpdir, '--submodule=1'
+      vim_update_bundles tmpdir
       assert_equal ['.', '..', 'repo'], Dir.open("#{tmpdir}/.vim/bundle") { |d| d.sort }
       assert_test ?f, "#{tmpdir}/.gitmodules"
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
@@ -353,7 +352,7 @@ class TestUpdater < Test::Unit::TestCase
       update_mock_repo "#{tmpdir}/repo", "third"
       Dir.chdir("#{tmpdir}/repo") { `git checkout -q abranch` }
       update_mock_repo "#{tmpdir}/repo", "b-third"
-      vim_update_bundles tmpdir, '--submodule=1'
+      vim_update_bundles tmpdir
       assert_test ?f, "#{repo}/b-second"
       assert_test ?f, "#{repo}/b-third"
       refute_test ?f, "#{repo}/third"
@@ -576,14 +575,14 @@ class TestUpdater < Test::Unit::TestCase
       create_mock_repo "#{tmpdir}/repo"
       # add plugin as a submodule
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/repo"
-      vim_update_bundles tmpdir, '--submodule'
+      vim_update_bundles tmpdir
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/.gitmodules"
 
       # remove plugin but write-protect .gitmodules to force failure
       write_file "#{tmpdir}/.vimrc", ''
       File.chmod 0444, "#{tmpdir}/.vim/.gitmodules"
-      output = vim_update_bundles tmpdir, '--submodule', :acceptable_exit_codes => [1], :stderr => :merge
+      output = vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :merge
       assert_match /could not delete repo from \.gitmodules/, output
     end
   end
@@ -880,7 +879,6 @@ class TestUpdater < Test::Unit::TestCase
   def test_verbose
     prepare_test do |tmpdir|
       result = vim_update_bundles tmpdir, '--verbose'
-      assert_match /submodule = false/, result
       assert_match /verbose = 1/, result
       assert_match /vimdir_path = "#{tmpdir}\/\.vim"/, result
       assert_match /vimrc_path = "#{tmpdir}\/\.vimrc"/, result
