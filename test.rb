@@ -165,7 +165,7 @@ class TestUpdater < Test::Unit::TestCase
       Dir.mkdir "#{tmpdir}/.vim"
       Dir.chdir("#{tmpdir}/.vim") { `git init` }
       vim_update_bundles tmpdir
-      check_tree tmpdir, ".vim", ".vimrc"
+      check_tree tmpdir
 
       # Add submodule.
       create_mock_repo "#{tmpdir}/repo"
@@ -204,7 +204,7 @@ class TestUpdater < Test::Unit::TestCase
       Dir.mkdir "#{tmpdir}/.vim"
       write_file "#{tmpdir}/.vimrc", ''
       vim_update_bundles tmpdir
-      check_tree tmpdir, ".vim", ".vimrc"
+      check_tree tmpdir
 
       # Make a repository with a tagged commit and commits after that.
       create_mock_repo "#{tmpdir}/repo"
@@ -726,7 +726,7 @@ class TestUpdater < Test::Unit::TestCase
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.dotfiles"
       vim_update_bundles tmpdir
-      check_tree tmpdir, '.vim', '.vimrc'
+      check_tree tmpdir
     end
   end
 
