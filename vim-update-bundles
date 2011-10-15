@@ -269,8 +269,6 @@ def install_bundle config, dir, url, tag, doc, log
 
   Dir.chdir(dir) { print_doc_entry dir, doc }
   in_submodule_root(config, dir) { |mod| git :add, mod } if config[:submodule]
-
-  only_updating
 end
 
 
@@ -295,6 +293,7 @@ end
 
 
 def vim_string str
+  # quick & dirty, parse a single or double quoted string the way Vim would
   if str.slice(0,1) == "'"
     str =~ /^\s*'(.*)'\s*$/
     return $1.gsub "''", "'"
@@ -314,7 +313,6 @@ def update_bundles config, doc, log
   # Ignore files in the bundle directory, e.g., READMEs.
   existing_bundles.reject! { |path| FileTest.file? path }
 
-  dir = only_updating = nil
   puts "# reading vimrc" if config[:verbose]
   string_re = %q{'([^']+|'')*'|"[^"]*"}  # captures single and double quoted Vim strings
   read_vimrc(config) do |line|
@@ -328,14 +326,13 @@ def update_bundles config, doc, log
       raise "duplicate entry for #{url}" if updated_bundles[dir] == url
       raise "urls map to the same bundle: #{updated_bundles[dir]} and #{url}" if updated_bundles[dir]
 
-      only_updating = install_bundle config, dir, url, tag, doc, log
+      install_bundle config, dir, url, tag, doc, log
       updated_bundles[dir] = url
       existing_bundles.delete dir
     elsif line =~ /^\s*"\s*bundle[ -]?command:\s*(.*)$/i ||
           line =~ /^\s*BundleCommand\s*(#{string_re})$/
       # Want BundleCommand but BUNDLE COMMAND and Bundle-Command used to be legal too
-      raise "BundleCommand must come after Bundle" if dir.nil?
-      run_bundle_command dir, vim_string($1) unless only_updating && config[:no_updates]
+      run_bundle_command "#{config[:vimdir_path]}/bundle", vim_string($1)
     elsif line =~ /^\s*"\s*static:\s*(.*)$/i ||
           line =~ /^\s*Bundle!\s*(#{string_re})$/i
       dir = vim_string $1

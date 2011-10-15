@@ -89,13 +89,12 @@ vim-update-bundles never deletes files.  When you uninstall a plugin, it moves i
 
 #### BundleCommand:
 
-Some bundles need to be built after they're installed. Place any number of
-`BundleCommand:` directives after `Bundle:` to execute shell commands within
-the bundle's directory. To install Command-T and ensure "rake make" is called
-every time it's updated:
+To execute a shell command every time vim-update-bundles is run, specify a
+BundleCommand.  You can have any number of BundleCommands in your .vimrc.
+The following would install Command-T and run its rake make:
 
     " Bundle: https://git.wincent.com/command-t.git
-    " BundleCommand: rake make
+    " BundleCommand: cd command-t && rake make
 
 #### Static:
 
@@ -103,7 +102,6 @@ If you have directories in ~/.vim/bundle that you'd like vim-update-bundles to
 ignore, mark them as static.
 
      " Static: my-plugin
-
 
 ### Vundle
 

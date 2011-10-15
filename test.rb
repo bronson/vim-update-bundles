@@ -632,11 +632,11 @@ class TestUpdater < Test::Unit::TestCase
       vim_update_bundles tmpdir
       assert_test ?f, "#{tmpdir}/sentinel2"
 
-      # ensure BundleCommand is NOT called when updating a repo when --no-updates is on
+      # ensure BundleCommand is called when updating a repo even when --no-updates is on
       update_mock_repo "#{tmpdir}/plugin1", "second"
       write_file "#{tmpdir}/.vimrc", "\" Bundle: #{tmpdir}/plugin1\n\" BundleCommand: touch '#{tmpdir}/sentinel3'"
       vim_update_bundles tmpdir, '--no-updates'
-      refute_test ?f, "#{tmpdir}/sentinel3"
+      assert_test ?f, "#{tmpdir}/sentinel3"
     end
   end
 
