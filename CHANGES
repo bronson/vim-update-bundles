@@ -2,6 +2,7 @@
   This requires a change to .vimrc! See "Runtime Path" in the README.
 - BundleCommand runs in ~/.vim/bundle, no longer tied to any bundle.
 - Submodules are autodetected, no need to specify --submodule anymore.
+- No need for ~/.vim-update-bundles.conf config file anymore.
 
 0.8     15 Jul 2011
 - Support Vundle directives so both tools can read the same .vimrc.

@@ -106,21 +106,6 @@ vim-update-bundles also supports Vundle-style directives.  This allows you to us
 either tool to manage your bundles -- use whichever is more convenient at the time.
 
 
-## Configuration File
-
-All configuration options can be passed on the command line or placed in `~/.vim-update-bundles.conf`.
-
-Blank lines and comments starting with # are ignored.
-
-String interpolation is performed on all values.
-First configuration settings are tried, then environment variables.
-Here's an example vim-update-bundles.conf file:
-
-    # use shared vim environment
-    vimdir_path = $HOME/vim/$USERNAME
-    vimrc_path = $vimdir_path/vimrc
-
-
 ## Location of .vim and .vimrc
 
 vim-update-bundles will use ~/.vim and ~/.vimrc if they exist.

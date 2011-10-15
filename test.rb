@@ -753,20 +753,6 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_create_custom_conffile_environment
-    prepare_test do |tmpdir|
-      Dir.mkdir "#{tmpdir}/parent"
-      Dir.mkdir "#{tmpdir}/parent/child"
-      ENV['PARENT'] = 'parent'
-      File.open("#{tmpdir}/.vim-update-bundles.conf", 'w') { |f|
-        f.write "vimrc_path = #{tmpdir}/$PARENT/child/vv zz"
-      }
-      vim_update_bundles tmpdir
-      check_tree tmpdir, '.vim', 'parent/child/vv zz'
-    end
-  end
-
-
   def test_interpolation_works
     prepare_test do |tmpdir|
       vim_update_bundles tmpdir, "--vimdir_path='$HOME/vimmy' --vimrc_path='$vimdir_path/vimmyrc'"

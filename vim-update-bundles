@@ -460,10 +460,7 @@ end
 
 
 def read_configuration config
-  conf_file = File.join ENV['HOME'], '.vim-update-bundles.conf'
-  process_options config, File.open(conf_file).readlines, "in #{conf_file} line" if test(?f, conf_file)
   process_options config, ARGV, "in command line argument"
-
   locate_vim_files config
 
   actual_keys = config.keys.reject { |k| config[k].is_a? Proc or config[k].is_a? Symbol }
