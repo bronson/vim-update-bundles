@@ -133,24 +133,31 @@ def better_chdir dir
 end
 
 
-def in_submodule_root config, inpath=nil
-  # Submodules often require the CWD to be the Git root. If a path relative to
-  # the CWD is passed, the block receives it relative to the root.
+# If running in a submodule environment, chdirs to the submodule root
+# and then calls the block with inpath converted to be relative to the
+# subodule root.  If not running with submodules, returns false.
+def in_submodule_root inpath=nil
   path = File.join Dir.pwd, inpath if inpath
-  better_chdir("./" + git('rev-parse', '--show-cdup').chomp) do
-    path.sub! /^#{Dir.pwd}\/?/, '' if path
-    yield path
+  parent = git 'rev-parse', '--show-cdup', :acceptable_exit_codes => :any, :stderr => :suppress
+  if $?.exitstatus == 0
+    better_chdir("./" + parent.chomp) do
+      path.sub! /^#{Dir.pwd}\/?/, '' if path
+      yield path
+    end
+    return true
   end
+  return false
 end
 
 
 def clone_bundle config, dir, url, tagstr, log
-  unless config[:submodule]
+  if in_submodule_root(dir) { |mod|
+    puts "adding submodule #{dir} from #{url}#{tagstr}"
+    git :submodule, :add, url, mod
+  }
+  else
     puts "cloning #{dir} from #{url}#{tagstr}"
     git :clone, url, dir
-  else
-    puts "adding submodule #{dir} from #{url}#{tagstr}"
-    in_submodule_root(config, dir) { |mod| git :submodule, :add, url, mod }
   end
   Dir.chdir(dir) { print_log_entry log, 'Add', dir, describe_head, "#{url}#{tagstr}" }
   $bundles_added += 1
@@ -160,20 +167,19 @@ end
 def remove_bundle_to config, dir, destination
   puts "Removing #{dir}, find it in #{destination}"
   FileUtils.mv dir, destination
-  if config[:submodule]
-    in_submodule_root(config, dir) do |mod|
-      git :rm, mod
-      fn = nil
-      ['.gitmodules', '.git/config'].each do |filename|
-        begin
-          fn = filename
-          text = File.read filename
-          File.open(filename, 'w+') do |file|
-            file.puts text.gsub(/\[submodule "#{mod}"\][^\[]+/m,'')
-          end
-        rescue Exception => e
-          raise "could not delete #{dir} from #{fn}: #{e}"
+
+  in_submodule_root(dir) do |mod|
+    git :rm, mod
+    fn = nil
+    ['.gitmodules', '.git/config'].each do |filename|
+      begin
+        fn = filename
+        text = File.read filename
+        File.open(filename, 'w+') do |file|
+          file.puts text.gsub(/\[submodule "#{mod}"\][^\[]+/m,'')
         end
+      rescue Exception => e
+        raise "could not delete #{dir} from #{fn}: #{e}"
       end
     end
   end
@@ -268,7 +274,7 @@ def install_bundle config, dir, url, tag, doc, log
   end
 
   Dir.chdir(dir) { print_doc_entry dir, doc }
-  in_submodule_root(config, dir) { |mod| git :add, mod } if config[:submodule]
+  in_submodule_root(dir) { |mod| git :add, mod }
 end
 
 
@@ -284,7 +290,7 @@ class BundleCommandError < RuntimeError
 end
 
 def run_bundle_command dir, cmd
-  puts "  running: #{cmd}"
+  puts "BundleCommand: #{cmd}"
   status = Dir.chdir(dir) { system(cmd); $? }
   unless status.success?
     raise BundleCommandError.new("BundleCommand #{cmd} in #{Dir.pwd} failed!")
@@ -342,12 +348,10 @@ def update_bundles config, doc, log
   end
   existing_bundles.each { |dir| remove_bundle config, dir, log }
 
-  if config[:submodule]
-    in_submodule_root(config) do
-      puts "  updating submodules"
-      git :submodule, :init
-      git :submodule, :update
-    end
+  in_submodule_root do
+    puts "  updating submodules"
+    git :submodule, :init
+    git :submodule, :update
   end
 end
 
@@ -511,7 +515,7 @@ unless $load_only     # to read the version number
   # warning for now, remove after a few releases
   if test ?f, "#{config[:vimdir_path]}/autoload/pathogen.vim"
     puts "Please remove #{config[:vimdir_path]}/autoload/pathogen.vim."
-    puts "See 'Runtime Path' in the vim-update-bundles README."
+    puts "See 'Runtime Path' in the vim-update-bundles README for why."
     exit 1
   end
 

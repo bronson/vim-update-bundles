@@ -44,16 +44,10 @@ One of:
 
 Just run `./vim-update-bundles` to install and remove plugins to match
 the ones named in your ~/.vimrc.
-If you're not already using Vim, vim-update-bundles will also install
-Pathogen, a sample .vimrc, and get everything ready to go.
 
 * _-n -\-no-updates_ Adds and deletes bundles but doesn't update them.
   This prevents vim-update-bundles from laboriously scrubbing through every
   bundle in your .vimrc when you just want to make a quick change.
-
-* _-s -\-submodule_ installs bundles as submodules intead of plain Git
-  repositories. You must create the parent repository to contain the
-  submodules before running vim-update bundles.
 
 * _-v -\-verbose_ prints more information about what's happening.
   Pass multiple -v -v -v for more verbosity.
@@ -64,6 +58,9 @@ Pathogen, a sample .vimrc, and get everything ready to go.
 * _-\-vimrc-path_ specifies the location of your ~/.vimrc file.
 
 * _-\-help_ prints usage information.
+
+Submodules and dotfiles are autodetected.  Run with --verbose to ensure
+that everything is being detected correctly.
 
 
 ## Specifying Plugins
@@ -112,7 +109,6 @@ either tool to manage your bundles -- use whichever is more convenient at the ti
 ## Configuration File
 
 All configuration options can be passed on the command line or placed in `~/.vim-update-bundles.conf`.
-Putting `submodules = 1` in the config file is the same as passing --submodules on the command line.
 
 Blank lines and comments starting with # are ignored.
 
@@ -145,10 +141,6 @@ If you're unsure which vimdir_path and vimrc_path are being used,
 
 ## Runtime Path
 
-vim-update-bundles used to manually install Pathogen into `~/.vim/autoload/pathogen.vim`.
-This meant that Pathogen would never be updated, and that alternatives such as tplugin
-and Vundle were harder to use.  No more!
-
 If you want to use Pathogen, place this at the top of your .vimrc:
 
     runtime bundle/vim-pathogen/autoload/pathogen.vim
@@ -162,6 +154,12 @@ Or, if you want to use Vundle, use this:
     " Tell Vim to ignore BundleCommand until vundle supports it
     com! -nargs=? BundleCommand
     Bundle 'https://github.com/gmarik/vundle'
+
+If you're wondering why you're being asked to delete pathogen.vim, it's because
+of a big improvement to the way vim-update-bundles works.  Now, instead of
+downloading Pathogen and then never updating it, vim-update-bundles will use
+the plugin manager you specify in your .vimrc and keep it up to date with the
+rest of your plugins.
 
 
 ## Authors
