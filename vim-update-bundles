@@ -108,15 +108,23 @@ def log_error log, message
   STDERR.puts message
 end
 
-
-def ignore_doc_tags
-  exclude = test(?f, ".git/info/exclude") && File.read(".git/info/exclude")
-  if !exclude || exclude !~ /doc\/tags/
-    ensure_dir ".git/info"
+def write_exclude_file contents=""
+  if contents !~ /doc\/tags/
     File.open(".git/info/exclude", "w") { |f|
-      f.write(exclude.chomp+"\n\n") if exclude
+      f.write(contents.chomp+"\n\n") if contents
       f.write "# added by vim-update-bundles\ndoc/tags\n"
     }
+  end
+end
+
+def ignore_doc_tags
+  if test(?f, ".git/info/exclude")
+    write_exclude_file File.read(".git/info/exclude")
+  elsif test(?d, ".git")
+    ensure_dir ".git/info"
+    write_exclude_file
+  else
+    # it's a submodule, no need
   end
 end
 
