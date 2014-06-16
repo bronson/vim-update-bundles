@@ -4,6 +4,8 @@
 # .vim/bundles by downloading new repositories as needed. It also removes
 # bundles that are no longer used.
 # This software is covered by the MIT License.
+#
+# TODO: add a --trace option, get rid of TRACE=1, and print note in rescue
 
 require 'fileutils'
 require 'open-uri'
@@ -108,10 +110,12 @@ end
 
 
 def ignore_doc_tags
-  exclude = File.read ".git/info/exclude"
-  if exclude !~ /doc\/tags/
+  exclude = test(?f, ".git/info/exclude") && File.read(".git/info/exclude")
+  if !exclude || exclude !~ /doc\/tags/
+    ensure_dir ".git/info"
     File.open(".git/info/exclude", "w") { |f|
-      f.write exclude.chomp + "\ndoc/tags\n"
+      f.write(exclude.chomp+"\n\n") if exclude
+      f.write "# added by vim-update-bundles\ndoc/tags\n"
     }
   end
 end
