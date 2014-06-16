@@ -53,7 +53,8 @@ end
 
 
 def git *cmd
-  if !$verbose && %w{checkout clone fetch pull}.include?(cmd.first.to_s)
+  # submodule is so 'submodule add' doesn't print 'Cloning into bundle/repo'
+  if !$verbose && %w{checkout clone fetch pull submodule}.include?(cmd.first.to_s)
     cmd.insert 1, '-q'
   end
   run :git, *cmd
