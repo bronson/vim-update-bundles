@@ -5,7 +5,7 @@ rvm:
   # friggin minitest broke backward compat.  soooo lame.
   # - 2.0.0
   # - 2.1.1
-  - ruby-head
+  # - ruby-head
   - ree
 
 before_install:
