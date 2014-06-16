@@ -6,6 +6,9 @@
 # This software is covered by the MIT License.
 #
 # TODO: add a --trace option, get rid of TRACE=1, and print note in rescue
+# TODO: read .gvimrc too
+# TODO: update on launch so removing Bundle directive takes effect immediatley
+# TODO: simpler usecase?  https://github.com/taq/vim-bundles-updater
 
 require 'fileutils'
 require 'open-uri'
