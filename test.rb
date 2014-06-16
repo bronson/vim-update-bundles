@@ -176,7 +176,6 @@ class TestUpdater < Test::Unit::TestCase
       repo = "#{tmpdir}/.vim/bundle/repo" # The local repository, not the origin.
       assert_test ?f, "#{repo}/first"
       assert_test ?f, "#{tmpdir}/.vim/.gitmodules"
-      assert_equal 1, File.read("#{repo}/.git/info/exclude").scan("doc/tags").size
 
       # Pull upstream changes.
       update_mock_repo "#{tmpdir}/repo", "second"
