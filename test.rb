@@ -568,7 +568,7 @@ class TestUpdater < Test::Unit::TestCase
   end
 
 
-  def test_submodule_remove_failure
+  def test_submodule_remove
     prepare_test do |tmpdir|
       Dir.mkdir "#{tmpdir}/.vim"
       Dir.chdir("#{tmpdir}/.vim") { `git init` }
@@ -578,12 +578,15 @@ class TestUpdater < Test::Unit::TestCase
       vim_update_bundles tmpdir
       assert_test ?f, "#{tmpdir}/.vim/bundle/repo/first"
       assert_test ?f, "#{tmpdir}/.vim/.gitmodules"
+      # this might be relying on git internals a little too closely...
+      assert_match /\[submodule "bundle\/repo"\]/, File.read("#{tmpdir}/.vim/.gitmodules")
 
       # remove plugin but write-protect .gitmodules to force failure
       write_file "#{tmpdir}/.vimrc", ''
-      File.chmod 0444, "#{tmpdir}/.vim/.gitmodules"
-      output = vim_update_bundles tmpdir, :acceptable_exit_codes => [1], :stderr => :merge
-      assert_match /could not delete repo from \.gitmodules/, output
+      vim_update_bundles tmpdir
+      refute_test ?d, "#{tmpdir}/.vim/bundle/repo"
+      assert_test ?f, "#{tmpdir}/.vim/.gitmodules"
+      assert_no_match /\[submodule "bundle\/repo"\]/, File.read("#{tmpdir}/.vim/.gitmodules")
     end
   end
 
