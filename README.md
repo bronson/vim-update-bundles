@@ -9,12 +9,6 @@ Use Pathogen and Git to manage your Vim plugins.
 
 To install plugins, put lines like this in your ~/.vimrc:
 
-    " Bundle: jQuery                                  # https://github.com/vim-scripts/jQuery
-    " Bundle: scrooloose/nerdtree                     # https://github.com/scrooloose/nerdtree
-    " Bundle: git://git.wincent.com/command-t.git     # Full URL to the repo to clone
-
-Or, if you install Vundle:
-
     Bundle 'jQuery'                                  # https://github.com/vim-scripts/jQuery
     Bundle 'scrooloose/nerdtree'                     # https://github.com/scrooloose/nerdtree
     Bundle 'git://git.wincent.com/command-t.git'     # Full URL to the repo to clone
@@ -75,12 +69,12 @@ interpreted as a bundle to download.  _URL_ points to a Git repository and
 _REV_ is an optional refspec (Git branch, tag, or hash). This allows you to
 follow a branch or lock the bundle to a specific tag or commit, i.e.:
 
-    " Bundle: https://github.com/tpope/vim-endwise.git v1.0
+    Bundle: https://github.com/tpope/vim-endwise.git v1.0
 
 If the script lives on vim-scripts or GitHub, the URL can be abbreviated:
 
-    " Bundle: tpope/vim-endwise    ->    https://github.com/tpope/vim-endwise.git
-    " Bundle: endwise.vim          ->    https://github.com/vim-scripts/endwise.vim.git
+    Bundle: tpope/vim-endwise    ->    https://github.com/tpope/vim-endwise.git
+    Bundle: endwise.vim          ->    https://github.com/vim-scripts/endwise.vim.git
 
 vim-update-bundles never deletes files.  When you uninstall a plugin, it moves it to the .vim/Trashed-Bundles directory.
 
