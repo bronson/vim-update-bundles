@@ -10,6 +10,7 @@
 # TODO: update on launch so removing Bundle directive takes effect immediatley
 # TODO: simpler usecase?  https://github.com/taq/vim-bundles-updater
 # TODO: nice: https://github.com/edkolev/poor-mans-plugin-downloader.vim
+# TODO: how does YCM automatically call git init submodules?  automatic vundle thing?
 
 require 'fileutils'
 require 'open-uri'
