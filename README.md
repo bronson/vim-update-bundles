@@ -5,6 +5,16 @@ Use Pathogen and Git to manage your Vim plugins.
 [![Travis Build Status](http://travis-ci.org/bronson/vim-update-bundles.png)](http://travis-ci.org/bronson/vim-update-bundles)
 
 
+# End of Life
+
+It's [official](https://github.com/bronson/dotfiles/commit/5eec6f3cf83ba59ff0f32eab30964c142560cec9).
+This has been a great run, thanks to everyone who supplied patches.
+Now I'm watching [Vim Mode Plus](https://github.com/t9md/atom-vim-mode-plus) with great interest.
+
+Nothing has changed in the code, vim-update-bundles should work as well
+as it always has.
+
+
 ## Description
 
 To install plugins, put lines like this in your ~/.vimrc:
