@@ -2,8 +2,6 @@
 
 Use Pathogen and Git to manage your Vim plugins.
 
-[![Travis Build Status](http://travis-ci.org/bronson/vim-update-bundles.png)](http://travis-ci.org/bronson/vim-update-bundles)
-
 
 # End of Life
 
